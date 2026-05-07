@@ -80,17 +80,13 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       <svg viewBox="0 0 1080 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
         <defs>
           <linearGradient id="fade" x1="0" x2="1" y1="0" y2="0">
-            <!-- Mask is fully opaque (hides) outside the row span x=114..966.
-                 Quick 5-unit soft edges at each row boundary so bytes "cap"
-                 cleanly at the JSON / 142 bytes labels on both sides — no
-                 bleed past either label. (jsonRowX/1080 = 10.555%; (jsonRowX
-                 + jsonRowWidth)/1080 = 89.444%.) -->
-            <stop offset="0%"     stop-color="#0A0A0A" stop-opacity="1" />
-            <stop offset="10.55%" stop-color="#0A0A0A" stop-opacity="1" />
-            <stop offset="11.0%"  stop-color="#0A0A0A" stop-opacity="0" />
-            <stop offset="89.0%"  stop-color="#0A0A0A" stop-opacity="0" />
-            <stop offset="89.45%" stop-color="#0A0A0A" stop-opacity="1" />
-            <stop offset="100%"   stop-color="#0A0A0A" stop-opacity="1" />
+            <!-- Symmetric gentle fade on both sides: bytes ease in on the
+                 left at the JSON label and ease out on the right at the
+                 142-bytes label. -->
+            <stop offset="0%"   stop-color="#0A0A0A" stop-opacity="1" />
+            <stop offset="11%"  stop-color="#0A0A0A" stop-opacity="0" />
+            <stop offset="89%"  stop-color="#0A0A0A" stop-opacity="0" />
+            <stop offset="100%" stop-color="#0A0A0A" stop-opacity="1" />
           </linearGradient>
           <mask id="fadeMask">
             <rect x="0" y="0" width="1080" height="270" fill="white" />
@@ -105,6 +101,13 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
           <clipPath id="funnelClip">
             <polygon points={`${jsonRowX},${funnelTopY} ${jsonRowX + jsonRowWidth},${funnelTopY} ${codecRowX + codecRowWidth},${funnelBottomY} ${codecRowX},${funnelBottomY}`} />
           </clipPath>
+
+          <!-- Hard clip for the JSON byte row so the drift-loop's second
+               copy can't visibly spill past the 142-bytes label. The mask
+               above still provides the gentle soft fade INSIDE this clip. -->
+          <clipPath id="jsonRowClip">
+            <rect x={jsonRowX} y={jsonRowY - 6} width={jsonRowWidth} height={jsonRowHeight + 12} />
+          </clipPath>
         </defs>
 
         <!-- Top row labels -->
@@ -112,8 +115,11 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
         <text x={jsonRowX} y={jsonRowY - 12} class="row-sub">~ 1 byte / character</text>
         <text x={jsonRowX + jsonRowWidth} y={jsonRowY - 12} text-anchor="end" class="row-count">142 bytes</text>
 
-        <!-- JSON byte stream (drifts continuously, fades at right edge) -->
-        <g transform={`translate(${jsonRowX}, ${jsonRowY})`} mask="url(#fadeMask)">
+        <!-- JSON byte stream: clipped hard to row bounds so no spill past
+             the labels, with a gentle fade mask INSIDE the clip for soft
+             edges that mirror each other on both sides. -->
+        <g clip-path="url(#jsonRowClip)">
+          <g transform={`translate(${jsonRowX}, ${jsonRowY})`} mask="url(#fadeMask)">
           <g class="json-stream">
             {jsonBytes.map((b) => (
               <rect
@@ -136,6 +142,7 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
                 fill={b.isStruct ? "#374151" : "#525B6B"}
               />
             ))}
+          </g>
           </g>
         </g>
 
