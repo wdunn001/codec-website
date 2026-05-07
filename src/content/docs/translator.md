@@ -32,8 +32,14 @@ The table only depends on the two maps, so two long-running agents talking back 
 ```ts
 import { Translator, decodeStream, loadMap } from "@codecai/web";
 
-const qwen  = await loadMap({ url: "...qwen.json",  hash: "sha256:..." });
-const llama = await loadMap({ url: "...llama.json", hash: "sha256:..." });
+const qwen = await loadMap({
+  url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
+  hash: "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+});
+const llama = await loadMap({
+  url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/meta-llama/llama-3.json",
+  hash: "sha256:79b707aea8c2b41c2883ec7913b0c4a0c880044ac844d89a9a03e779eb92db04",
+});
 
 const tr = new Translator(qwen, llama);
 

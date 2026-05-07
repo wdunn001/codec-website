@@ -30,7 +30,7 @@ from codecai import (
 ```python
 map = await load_map(
     url="https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-    hash="sha256:c73972f7a580...",
+    hash="sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
 )
 ```
 
@@ -132,8 +132,14 @@ The watcher matches reserved control IDs with a single `uint32` compare per toke
 ```python
 from codecai import Translator
 
-qwen  = await load_map(url="...", hash="...")
-llama = await load_map(url="...", hash="...")
+qwen  = await load_map(
+    url="https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
+    hash="sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+)
+llama = await load_map(
+    url="https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/meta-llama/llama-3.json",
+    hash="sha256:79b707aea8c2b41c2883ec7913b0c4a0c880044ac844d89a9a03e779eb92db04",
+)
 
 tr = Translator(qwen, llama)
 

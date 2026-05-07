@@ -28,7 +28,7 @@ using Codec;
 ```csharp
 var map = await MapLoader.LoadAsync(new LoadOptions {
     Url  = "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-    Hash = "sha256:c73972f7a580...",
+    Hash = "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
 });
 ```
 
@@ -128,8 +128,14 @@ Single `uint` compare per token, no detokenization on the hot path. See [Tool ca
 ## Translating across vocabularies
 
 ```csharp
-var qwen  = await MapLoader.LoadAsync(new LoadOptions { Url = "...", Hash = "..." });
-var llama = await MapLoader.LoadAsync(new LoadOptions { Url = "...", Hash = "..." });
+var qwen  = await MapLoader.LoadAsync(new LoadOptions {
+    Url  = "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
+    Hash = "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+});
+var llama = await MapLoader.LoadAsync(new LoadOptions {
+    Url  = "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/meta-llama/llama-3.json",
+    Hash = "sha256:79b707aea8c2b41c2883ec7913b0c4a0c880044ac844d89a9a03e779eb92db04",
+});
 
 var tr = new Translator(qwen, llama);
 
