@@ -46,6 +46,67 @@ curl http://localhost:8080/v1/completions \
 
 The `model` field is ignored when only one model is loaded at a time &mdash; the supervisor proxies whichever model is currently loaded. Use `/admin/load` to swap.
 
+## Running your own models
+
+Three ways to point the image at any model you like, progressively more "self-serve":
+
+### 1. Override `CODEC_INITIAL_MODEL` at `docker run` time
+
+Any Hugging Face repo id (or any path inside the container) &mdash; the supervisor downloads + boots on first start and caches in the volume.
+
+```bash
+docker run --gpus all -p 8080:8080 \
+  -e CODEC_INITIAL_MODEL=meta-llama/Llama-3.1-8B-Instruct \
+  -e HF_TOKEN=hf_xxxxx \
+  -v hf-cache:/root/.cache/huggingface \
+  wdunn001/codec-sglang:latest
+```
+
+`HF_TOKEN` is only required for gated models.
+
+### 2. Mount a local model directory
+
+For checkpoints or fine-tunes you don't want to upload to HF &mdash; bind-mount the directory and point `CODEC_INITIAL_MODEL` at the in-container path:
+
+```bash
+docker run --gpus all -p 8080:8080 \
+  -e CODEC_INITIAL_MODEL=/models/my-finetune \
+  -v /path/to/my-finetune:/models/my-finetune:ro \
+  wdunn001/codec-sglang:latest
+```
+
+The mount is read-only inside the container, so the supervisor can't mutate your weights.
+
+### 3. Hot-swap via the admin API after boot
+
+This is what the supervisor adds on top of stock sglang &mdash; the container stays up, only the model process swaps. See the [Admin endpoints](#admin-endpoints) section below for the full surface; the short version:
+
+```bash
+# Pull from HF into the persistent registry
+curl -X POST http://localhost:8080/admin/models/pull \
+  -H "Content-Type: application/json" \
+  -d '{"repo_id": "Qwen/Qwen2.5-7B-Instruct"}'
+
+# Or upload a tarball of a local fine-tune (multipart, name as query param)
+tar -cf my-finetune.tar -C ./checkpoints/my-finetune .
+curl -X POST "http://localhost:8080/admin/models/upload?name=my-finetune" \
+  -F "file=@my-finetune.tar"
+
+# Hot-swap to it
+curl -X POST http://localhost:8080/admin/load \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-finetune"}'
+
+# Or load an HF id directly without staging it first
+curl -X POST http://localhost:8080/admin/load \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Qwen/Qwen2.5-7B-Instruct", "allow_remote": true}'
+```
+
+Pass `CODEC_BACKEND_ARGS` to tune sglang per-model (`--tp 2 --quantization fp8 --mem-fraction-static 0.9`, etc.); for per-load tuning, add `extra_args` to the `/admin/load` body to override the supervisor's default for that single load.
+
+> **Hot-swap caveat**: there's a few-second gap during the swap (terminate child &rarr; fork new &rarr; poll `/health`). For zero-downtime multi-model serving, run multiple containers behind a router &mdash; the supervisor is single-model-per-container by design.
+
 ## Volumes and persistence
 
 | Mount | Purpose |
@@ -59,7 +120,13 @@ In the quick-start above, both are named Docker volumes. For production, mount a
 
 | Variable | Default | Effect |
 |---|---|---|
-| `CODEC_INITIAL_MODEL` | none | Model to load on first boot. If unset, the supervisor starts up but no backend is running until you call `/admin/load`. |
+| `CODEC_PORT` | `8080` | Port the supervisor listens on (host-side via `-p`). |
+| `CODEC_INITIAL_MODEL` | _(unset)_ | Model to load on first boot. HF repo id, local name in `/models`, or absolute path. If unset, the supervisor starts but no backend is running until you call `/admin/load`. |
+| `CODEC_BACKEND_ARGS` | `--mem-fraction-static 0.85 --attention-backend triton` | Verbatim arguments appended to `python3 -m sglang.launch_server`. Use this for `--tp`, `--quantization`, mem fractions, etc. |
+| `CODEC_BACKEND_PORT` | `30000` | Internal-only sglang port; rarely needs changing. |
+| `CODEC_MODELS_DIR` | `/models` | Where uploaded / HF-pulled models land. Volume-mounted in the quick-start. |
+| `CODEC_STARTUP_TIMEOUT_S` | `1800` | How long to wait for sglang's `/health` after launch (large models take a while). |
+| `HF_TOKEN` | _(unset)_ | Required only for gated HF models. |
 
 ## Admin endpoints
 
@@ -82,30 +149,49 @@ The supervisor on `:8080` mixes admin routes with a transparent proxy:
 ```bash
 curl -X POST http://localhost:8080/admin/models/pull \
   -H "Content-Type: application/json" \
-  -d '{"repo":"Qwen/Qwen2.5-7B-Instruct"}'
+  -d '{"repo_id":"Qwen/Qwen2.5-7B-Instruct"}'
 ```
+
+Optional fields: `revision` (branch / tag / commit) and `token` (per-request HF token; otherwise falls back to the `HF_TOKEN` env var).
 
 ### Hot-swap to a different model
 
 ```bash
 curl -X POST http://localhost:8080/admin/load \
   -H "Content-Type: application/json" \
-  -d '{"model":"Qwen/Qwen2.5-7B-Instruct"}'
+  -d '{"name":"qwen2.5-7b"}'
+```
+
+`name` resolves first against the local `/models` registry. To load a fresh HF id without staging it first, set `allow_remote: true`:
+
+```bash
+curl -X POST http://localhost:8080/admin/load \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Qwen/Qwen2.5-7B-Instruct","allow_remote":true}'
 ```
 
 The supervisor stops the running backend, releases the GPU, and starts a new one with the requested model. Inflight requests against `/v1/*` see a brief unavailable window during the swap.
 
-### Upload a model tarball
-
-For air-gapped setups or pre-baked models:
+To override sglang flags for just this load (`--tp`, `--quantization`, etc.), pass `extra_args`:
 
 ```bash
-curl -X POST http://localhost:8080/admin/models/upload \
-  -F "name=my-fine-tune" \
-  -F "file=@./my-fine-tune.tar.gz"
+curl -X POST http://localhost:8080/admin/load \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Qwen/Qwen2.5-7B-Instruct","allow_remote":true,
+       "extra_args":["--tp","2","--quantization","fp8"]}'
 ```
 
-The tarball is extracted into `/models/<name>/`; afterwards it's loadable via `/admin/load`.
+### Upload a model tarball
+
+For air-gapped setups or pre-baked models. `name` is a query parameter; the tarball is the multipart `file` field:
+
+```bash
+tar -cf my-fine-tune.tar -C ./checkpoints/my-fine-tune .
+curl -X POST "http://localhost:8080/admin/models/upload?name=my-fine-tune" \
+  -F "file=@./my-fine-tune.tar"
+```
+
+The tarball is extracted into `/models/<name>/` (path-traversal-safe; symlinks are rejected). Afterwards it's loadable via `/admin/load`.
 
 ## Pointing a Codec client at it
 
