@@ -130,7 +130,7 @@ const toolBars = [
       <ul class="bench-legend">
         {series.map((s) => (
           <li class={s.className.replace("line", "swatch")}>
-            <span class="swatch__dot"></span>
+            <span class="swatch__line" aria-hidden="true"></span>
             <span class="swatch__label">{s.label}</span>
           </li>
         ))}
@@ -326,11 +326,28 @@ const toolBars = [
     font-family: var(--font-mono);
     font-size: 0.8125rem;
   }
-  .bench-legend li { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--fg-muted); }
-  .swatch__dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
-  .swatch--json   .swatch__dot { background: #6B7280; }
-  .swatch--codec-id .swatch__dot { background: var(--data); opacity: 0.6; }
-  .swatch--codec-gz .swatch__dot { background: var(--control); }
+  .bench-legend li { display: inline-flex; align-items: center; gap: 0.625rem; color: var(--fg-muted); }
+  .swatch__line {
+    display: inline-block;
+    width: 32px;
+    height: 3px;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+  .swatch--json   .swatch__line { background: #6B7280; }
+  .swatch--codec-id .swatch__line {
+    /* dashed pattern matches the chart's stroke-dasharray="4 4" on this series */
+    background: repeating-linear-gradient(
+      to right,
+      var(--data) 0 4px,
+      transparent 4px 8px
+    );
+    opacity: 0.7;
+  }
+  .swatch--codec-gz .swatch__line { background: var(--control); }
+  .swatch--json   .swatch__label { color: #9CA3AF; }
+  .swatch--codec-id .swatch__label { color: color-mix(in srgb, var(--data) 80%, var(--fg-muted)); }
+  .swatch--codec-gz .swatch__label { color: color-mix(in srgb, var(--control) 80%, var(--fg-muted)); }
 
   /* Chart 2 (horizontal bars) */
   .tool-bar rect {
