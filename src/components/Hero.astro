@@ -86,8 +86,8 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
           </mask>
 
           <linearGradient id="funnelGrad" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%"   stop-color="#3B82F6" stop-opacity="0.10" />
-            <stop offset="100%" stop-color="#3B82F6" stop-opacity="0.04" />
+            <stop offset="0%"   stop-color="#3B82F6" stop-opacity="0.20" />
+            <stop offset="100%" stop-color="#3B82F6" stop-opacity="0.06" />
           </linearGradient>
 
           <clipPath id="funnelClip">
@@ -132,14 +132,14 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
           <polygon
             points={`${jsonRowX},${funnelTopY} ${jsonRowX + jsonRowWidth},${funnelTopY} ${codecRowX + codecRowWidth},${funnelBottomY} ${codecRowX},${funnelBottomY}`}
             fill="url(#funnelGrad)"
-            stroke="#1F2A3A"
+            stroke="#2C3E55"
             stroke-width="1"
           />
 
-          <!-- Convergence guide lines at low opacity -->
-          <line x1={jsonRowX + jsonRowWidth * 0.30} y1={funnelTopY} x2={codecRowX + codecRowWidth * 0.30} y2={funnelBottomY} stroke="#1F2937" stroke-width="0.5" />
-          <line x1={jsonRowX + jsonRowWidth * 0.55} y1={funnelTopY} x2={codecRowX + codecRowWidth * 0.55} y2={funnelBottomY} stroke="#1F2937" stroke-width="0.5" />
-          <line x1={jsonRowX + jsonRowWidth * 0.80} y1={funnelTopY} x2={codecRowX + codecRowWidth * 0.80} y2={funnelBottomY} stroke="#1F2937" stroke-width="0.5" />
+          <!-- Convergence guide lines -->
+          <line x1={jsonRowX + jsonRowWidth * 0.30} y1={funnelTopY} x2={codecRowX + codecRowWidth * 0.30} y2={funnelBottomY} stroke="#2C3E55" stroke-width="0.75" stroke-dasharray="2 4" />
+          <line x1={jsonRowX + jsonRowWidth * 0.55} y1={funnelTopY} x2={codecRowX + codecRowWidth * 0.55} y2={funnelBottomY} stroke="#2C3E55" stroke-width="0.75" stroke-dasharray="2 4" />
+          <line x1={jsonRowX + jsonRowWidth * 0.80} y1={funnelTopY} x2={codecRowX + codecRowWidth * 0.80} y2={funnelBottomY} stroke="#2C3E55" stroke-width="0.75" stroke-dasharray="2 4" />
 
           <!-- Compression sweep: a horizontal line that travels top -> bottom inside the clipped funnel -->
           <g clip-path="url(#funnelClip)">
@@ -268,36 +268,36 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
   }
 
   /* Compression sweep: a thin line travels top -> bottom inside the funnel,
-     pauses at the bottom, then snaps back. Triggers Codec cells to pop. */
+     repeating every few seconds. Decorative — does NOT gate cell visibility. */
   .sweep {
-    transform-origin: 50% 50%;
-    animation: sweep 4.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    animation: sweep 5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
     opacity: 0;
   }
   @keyframes sweep {
     0%   { transform: translateY(0px);  opacity: 0; }
-    8%   { opacity: 0.55; }
-    65%  { transform: translateY(90px); opacity: 0.95; }
-    72%  { transform: translateY(90px); opacity: 0; }
+    10%  { opacity: 0.6; }
+    70%  { transform: translateY(90px); opacity: 0.85; }
+    78%  { transform: translateY(90px); opacity: 0; }
     100% { transform: translateY(90px); opacity: 0; }
   }
 
-  /* Codec cells fade in once per loop, staggered, sync'd to the sweep landing */
+  /* Codec cells: STEADY visible (subtle pulse, never invisible).
+     Each cell stays at >=70% opacity at all times, briefly brightens to
+     100% in a left-to-right wave triggered every 5s in sync with the sweep. */
   .codec-cell {
-    opacity: 0;
     transform-box: fill-box;
     transform-origin: center;
-    animation: cellPop 4.5s ease-out infinite;
-    animation-delay: calc(var(--ti) * 0.02s);
+    opacity: 0.78;
+    animation: cellWave 5s ease-out infinite;
+    animation-delay: calc(0.5s + var(--ti) * 0.025s);
   }
-  @keyframes cellPop {
-    0%, 65%   { opacity: 0; transform: translateY(-3px); }
-    72%       { opacity: 1; transform: translateY(0); }
-    96%       { opacity: 1; transform: translateY(0); }
-    100%      { opacity: 0; transform: translateY(-3px); }
+  @keyframes cellWave {
+    0%, 60%, 100% { opacity: 0.78; transform: translateY(0); }
+    68%           { opacity: 1;    transform: translateY(-1.5px); }
+    76%           { opacity: 1;    transform: translateY(0); }
   }
   .codec-cell--ctrl {
-    /* control byte (green) gets a subtle steady glow once it's visible */
-    filter: drop-shadow(0 0 2px color-mix(in srgb, var(--control) 60%, transparent));
+    /* control byte (green) reads as the punctuation; subtle steady glow */
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--control) 70%, transparent));
   }
 </style>
