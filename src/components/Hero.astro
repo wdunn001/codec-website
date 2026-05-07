@@ -80,11 +80,17 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       <svg viewBox="0 0 1080 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
         <defs>
           <linearGradient id="fade" x1="0" x2="1" y1="0" y2="0">
-            <!-- Symmetric fade matching the centered byte row at x=114..966 -->
-            <stop offset="0%"   stop-color="#0A0A0A" stop-opacity="1" />
-            <stop offset="11%"  stop-color="#0A0A0A" stop-opacity="0" />
-            <stop offset="89%"  stop-color="#0A0A0A" stop-opacity="0" />
-            <stop offset="100%" stop-color="#0A0A0A" stop-opacity="1" />
+            <!-- Mask is fully opaque (hides) outside the row span x=114..966.
+                 Quick 5-unit soft edges at each row boundary so bytes "cap"
+                 cleanly at the JSON / 142 bytes labels on both sides — no
+                 bleed past either label. (jsonRowX/1080 = 10.555%; (jsonRowX
+                 + jsonRowWidth)/1080 = 89.444%.) -->
+            <stop offset="0%"     stop-color="#0A0A0A" stop-opacity="1" />
+            <stop offset="10.55%" stop-color="#0A0A0A" stop-opacity="1" />
+            <stop offset="11.0%"  stop-color="#0A0A0A" stop-opacity="0" />
+            <stop offset="89.0%"  stop-color="#0A0A0A" stop-opacity="0" />
+            <stop offset="89.45%" stop-color="#0A0A0A" stop-opacity="1" />
+            <stop offset="100%"   stop-color="#0A0A0A" stop-opacity="1" />
           </linearGradient>
           <mask id="fadeMask">
             <rect x="0" y="0" width="1080" height="270" fill="white" />
