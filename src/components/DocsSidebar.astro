@@ -1,0 +1,135 @@
+---
+import { getCollection } from "astro:content";
+
+interface Props {
+  currentSlug: string;
+}
+
+const { currentSlug } = Astro.props;
+
+const all = await getCollection("docs");
+
+const sectionOrder = ["Start", "Frameworks", "Server", "Reference"] as const;
+type Section = (typeof sectionOrder)[number];
+
+const grouped = sectionOrder.reduce<Record<Section, typeof all>>((acc, s) => {
+  acc[s] = all
+    .filter((e) => e.data.section === s)
+    .sort((a, b) => a.data.order - b.data.order);
+  return acc;
+}, { Start: [], Frameworks: [], Server: [], Reference: [] } as Record<Section, typeof all>);
+---
+<aside class="docs-side" aria-label="Docs navigation">
+  <a href="/docs" class={`docs-side__home${currentSlug === "" ? " is-active" : ""}`}>
+    <span class="docs-side__home-bytes">
+      <span></span><span></span><span></span><span class="ctrl"></span>
+    </span>
+    <span>Codec docs</span>
+  </a>
+
+  {sectionOrder.map((s) => (
+    grouped[s].length > 0 && (
+      <section class="docs-side__section">
+        <h2 class="docs-side__heading">{s}</h2>
+        <ul>
+          {grouped[s].map((entry) => {
+            const href = `/docs/${entry.id}/`;
+            const active = currentSlug === entry.id;
+            return (
+              <li>
+                <a href={href} class={active ? "is-active" : ""}>
+                  {entry.data.title}
+                  {entry.data.status === "draft" && <span class="docs-side__draft">draft</span>}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    )
+  ))}
+</aside>
+
+<style>
+  .docs-side {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+  @media (min-width: 880px) {
+    .docs-side {
+      position: sticky;
+      top: 5.5rem;
+      align-self: start;
+      max-height: calc(100dvh - 6rem);
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+  }
+
+  .docs-side__home {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--fg);
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 6px;
+  }
+  .docs-side__home:hover { background: var(--bg-elev); }
+  .docs-side__home.is-active { background: var(--bg-elev); color: var(--data); }
+
+  .docs-side__home-bytes {
+    display: inline-flex;
+    gap: 1.5px;
+  }
+  .docs-side__home-bytes span {
+    width: 7px;
+    height: 7px;
+    background: var(--data);
+    border-radius: 1px;
+  }
+  .docs-side__home-bytes .ctrl { background: var(--control); }
+
+  .docs-side__section { margin-bottom: 1.5rem; }
+  .docs-side__heading {
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    margin: 0 0 0.5rem 0.5rem;
+    font-weight: 500;
+  }
+  .docs-side ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.125rem;
+  }
+  .docs-side a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.375rem 0.625rem;
+    border-radius: 6px;
+    color: var(--fg-muted);
+    border-bottom: 0;
+  }
+  .docs-side a:hover { background: var(--bg-elev); color: var(--fg); }
+  .docs-side a.is-active {
+    background: color-mix(in srgb, var(--data) 12%, transparent);
+    color: var(--data);
+  }
+
+  .docs-side__draft {
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    color: var(--fg-faint);
+    border: 1px solid var(--border);
+    padding: 0 0.3rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+</style>

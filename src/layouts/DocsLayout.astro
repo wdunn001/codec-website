@@ -1,0 +1,208 @@
+---
+import Base from "./Base.astro";
+import DocsSidebar from "../components/DocsSidebar.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+  slug: string;
+  status?: "ready" | "draft";
+  editUrl?: string;
+}
+
+const { title, description, slug, status = "ready", editUrl } = Astro.props;
+const pageTitle = `${title} — Codec docs`;
+---
+<Base title={pageTitle} description={description}>
+  <div class="docs-shell container">
+    <DocsSidebar currentSlug={slug} />
+
+    <article class="docs-article">
+      {status === "draft" && (
+        <p class="docs-draft">
+          <strong>Draft.</strong> This page is sketched but not finished.
+          The framework's API is stable; the prose just isn't done yet.
+        </p>
+      )}
+
+      <header class="docs-head">
+        <h1 class="docs-title">{title}</h1>
+        {description && <p class="docs-desc">{description}</p>}
+      </header>
+
+      <div class="docs-prose">
+        <slot />
+      </div>
+
+      <footer class="docs-foot">
+        {editUrl && (
+          <a class="docs-edit" href={editUrl} rel="noopener">
+            Edit this page on GitHub &rarr;
+          </a>
+        )}
+      </footer>
+    </article>
+  </div>
+
+  <style>
+    .docs-shell {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      padding-top: 2rem;
+      padding-bottom: 4rem;
+    }
+    @media (min-width: 880px) {
+      .docs-shell {
+        grid-template-columns: 240px minmax(0, 1fr);
+        gap: 3rem;
+      }
+    }
+
+    .docs-article {
+      min-width: 0; /* enable text wrapping inside grid */
+      max-width: 740px;
+    }
+
+    .docs-draft {
+      border: 1px solid color-mix(in srgb, var(--data) 50%, var(--border));
+      background: var(--data-soft);
+      color: var(--fg);
+      padding: 0.875rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .docs-head { margin-bottom: 2rem; }
+    .docs-title {
+      font-size: clamp(1.875rem, 4vw, 2.5rem);
+      letter-spacing: -0.02em;
+      margin: 0 0 0.5rem;
+    }
+    .docs-desc {
+      color: var(--fg-muted);
+      max-width: 60ch;
+      margin: 0;
+    }
+
+    .docs-prose :global(h2) {
+      font-size: 1.375rem;
+      margin-top: 2.5rem;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+    }
+    .docs-prose :global(h3) {
+      font-size: 1.05rem;
+      margin-top: 1.75rem;
+      margin-bottom: 0.5rem;
+      color: var(--fg);
+    }
+    .docs-prose :global(p),
+    .docs-prose :global(li) {
+      color: var(--fg-muted);
+      line-height: 1.7;
+    }
+    .docs-prose :global(p) { margin: 0 0 1rem; max-width: 64ch; }
+    .docs-prose :global(strong) { color: var(--fg); font-weight: 600; }
+
+    .docs-prose :global(a) {
+      color: var(--data);
+      border-bottom: 1px dotted color-mix(in srgb, var(--data) 50%, transparent);
+    }
+    .docs-prose :global(a:hover) {
+      border-bottom-color: var(--data);
+      color: var(--data);
+    }
+
+    .docs-prose :global(code) {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      padding: 0.05rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.875em;
+      color: var(--fg);
+    }
+
+    /* Astro/Shiki injects <pre class="astro-code ..."><code>...</code></pre>.
+       Override the inline background to match our surface tokens. */
+    .docs-prose :global(pre.astro-code),
+    .docs-prose :global(pre) {
+      background: #08080B !important;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.125rem;
+      overflow-x: auto;
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin: 1rem 0 1.25rem;
+    }
+    .docs-prose :global(pre code) {
+      background: transparent;
+      border: 0;
+      padding: 0;
+      color: inherit;
+      font-size: inherit;
+    }
+
+    .docs-prose :global(ul),
+    .docs-prose :global(ol) {
+      padding-left: 1.25rem;
+      margin: 0 0 1.25rem;
+    }
+    .docs-prose :global(li) { margin: 0.25rem 0; }
+
+    .docs-prose :global(blockquote) {
+      border-left: 3px solid var(--data);
+      background: var(--bg-elev);
+      margin: 1rem 0 1.25rem;
+      padding: 0.75rem 1rem;
+      color: var(--fg-muted);
+      border-radius: 0 6px 6px 0;
+    }
+    .docs-prose :global(blockquote p) { margin: 0; }
+
+    .docs-prose :global(table) {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0 1.25rem;
+      font-size: 0.875rem;
+    }
+    .docs-prose :global(thead) { border-bottom: 1px solid var(--border-strong); }
+    .docs-prose :global(th),
+    .docs-prose :global(td) {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .docs-prose :global(th) {
+      color: var(--fg-faint);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .docs-prose :global(hr) {
+      border: 0;
+      border-top: 1px solid var(--border);
+      margin: 2rem 0;
+    }
+
+    .docs-foot {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+    }
+    .docs-edit {
+      color: var(--fg-muted);
+      border-bottom: 1px dotted var(--border-strong);
+    }
+    .docs-edit:hover { color: var(--data); border-bottom-color: var(--data); }
+  </style>
+</Base>
