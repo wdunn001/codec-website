@@ -36,6 +36,13 @@ map = await load_map(
 
 `load_map` is async because it fetches over the network. It verifies the response bytes against `hash` and caches the parsed map.
 
+If the vendor publishes their own map under [`/.well-known/codec/`](/docs/discovery/), skip the URL/hash and resolve from `(origin, id)`:
+
+```python
+from codecai import discover_map
+map = await discover_map(origin="https://example.com", id="qwen2")
+```
+
 ### 2. Send a request
 
 A normal `/v1/completions` POST with `stream_format` added:

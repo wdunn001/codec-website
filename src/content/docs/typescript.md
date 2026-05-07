@@ -43,6 +43,13 @@ const map = await loadMap({
 
 Maps for the major model families are pre-built in [codec-maps](https://github.com/wdunn001/codec-maps); their hashes are pinned in that repo's README.
 
+If the vendor publishes their own map under [`/.well-known/codec/`](/docs/discovery/), you can skip the URL/hash entirely and resolve from `(origin, id)`:
+
+```ts
+import { discoverMap } from "@codecai/web/discover";
+const map = await discoverMap({ origin: "https://example.com", id: "qwen2" });
+```
+
 ### 2. Send a request
 
 A Codec request is **a normal `/v1/completions` POST with one extra field**: `stream_format`. The server reads the field and switches its response body from JSON-SSE to the matching binary frame format.

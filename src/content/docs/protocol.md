@@ -63,6 +63,17 @@ Maps are addressed by **sha256 of the canonical JSON bytes**. `loadMap({url, has
 
 The community-curated set of pre-built maps for major model families (Llama, Qwen, Mistral, GPT-OSS, etc.) lives at [github.com/wdunn001/codec-maps](https://github.com/wdunn001/codec-maps).
 
+### Discovery
+
+If you don't want to track URLs and hashes out of band, model maintainers can publish maps at a stable `/.well-known/codec/` path on a domain they control. Clients then resolve a map from `(origin, id)` alone:
+
+```ts
+import { discoverMap } from "@codecai/web/discover";
+const map = await discoverMap({ origin: "https://example.com", id: "qwen2" });
+```
+
+This is the resolution to PROTOCOL.md's old Open Question #3 (decentralised first; a registry remains an option for cross-org and air-gapped use). Full convention: [Self-hosted discovery](/docs/discovery/).
+
 ## HTTP transports
 
 The spec defines three patterns over plain HTTP, in increasing weirdness:
