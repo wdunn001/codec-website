@@ -1,19 +1,57 @@
 ---
-// Hero — the byte-collapse animation is the point.
-// Top wire: a JSON-tokenized text stream (lots of byte cells, scrolls).
-// Bottom wire: the same payload as raw token IDs (uint32, fixed cells, pulses).
+// Hero — proportional byte-collapse figure.
+//
+// Top row: 142 small grey cells representing JSON wire bytes (one per char).
+// Funnel: a subtle wedge that visually narrows from JSON-row width down to
+//         Codec-row width.
+// Bottom row: 32 same-sized cells (8 token groups of 4), but rendered in
+//             the *same scale* as the top — so the contrast in TOTAL WIDTH
+//             reads at a glance as "4× shorter".
+// Compression sweep: a thin horizontal line travels top→bottom through the
+//                    funnel every few seconds, suggesting active flow.
+//
 // Pure SVG + CSS keyframes. Zero JS.
 
-const jsonBytes = Array.from({ length: 96 }, (_unused, i) => ({
-  x: i * 9,
-  isStruct: i % 11 === 0 || i % 11 === 5,
+// JSON row geometry
+const jsonByteW = 6;
+const jsonByteCount = 142;
+const jsonRowX = 180;
+const jsonRowY = 80;
+const jsonRowHeight = 18;
+const jsonRowWidth = jsonByteCount * jsonByteW; // 852
+
+// Codec row geometry: same per-byte width as JSON so the totals are
+// directly comparable. Group of 4 bytes per token, 4px gap between groups.
+const codecByteW = 6;
+const codecByteH = 26;
+const codecRowX = 180;
+const codecRowY = 200;
+const codecTokenCount = 8;
+const codecGapBetweenGroups = 4;
+const codecGroupWidth = 4 * codecByteW; // 24
+const codecRowWidth =
+  codecTokenCount * codecGroupWidth + (codecTokenCount - 1) * codecGapBetweenGroups; // 220
+
+// Funnel: from full JSON width down to Codec row width
+const funnelTopY = 102;
+const funnelBottomY = 192;
+
+// Build the JSON byte cells (alternating two greys for visual rhythm)
+const jsonBytes = Array.from({ length: jsonByteCount }, (_unused, i) => ({
+  x: i * jsonByteW,
+  isStruct: i % 13 === 0 || i % 13 === 6, // mimic JSON's structural chars
 }));
 
-const tokens = Array.from({ length: 8 }, (_unused, i) => ({
-  groupX: i * 84,
-  index: i,
-  isLast: i === 7,
-}));
+// Build the Codec byte cells
+const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
+  const groupX = t * (codecGroupWidth + codecGapBetweenGroups);
+  return Array.from({ length: 4 }, (_unused2, b) => ({
+    x: groupX + b * codecByteW,
+    isCtrl: t === codecTokenCount - 1 && b === 3,
+    tokenIndex: t,
+    byteIndex: b,
+  }));
+}).flat();
 ---
 <section class="section section--hero hero">
   <div class="container">
@@ -33,68 +71,111 @@ const tokens = Array.from({ length: 8 }, (_unused, i) => ({
       <a href="https://github.com/wdunn001/Codec" rel="noopener" class="btn">github / wdunn001/Codec</a>
     </div>
 
-    <figure class="wire" aria-label="Diagram: same prompt, two wire formats. JSON (top) versus Codec (bottom).">
-      <svg viewBox="0 0 1080 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+    <figure class="wire" aria-label="Diagram: a 142-byte JSON wire stream collapses through a funnel into a 32-byte Codec stream — about 4× shorter on the wire.">
+      <svg viewBox="0 0 1080 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
         <defs>
           <linearGradient id="fade" x1="0" x2="1" y1="0" y2="0">
             <stop offset="0%"  stop-color="#0A0A0A" stop-opacity="1" />
-            <stop offset="6%"  stop-color="#0A0A0A" stop-opacity="0" />
-            <stop offset="94%" stop-color="#0A0A0A" stop-opacity="0" />
+            <stop offset="3%"  stop-color="#0A0A0A" stop-opacity="0" />
+            <stop offset="92%" stop-color="#0A0A0A" stop-opacity="0" />
             <stop offset="100%" stop-color="#0A0A0A" stop-opacity="1" />
           </linearGradient>
           <mask id="fadeMask">
-            <rect width="1080" height="320" fill="white" />
-            <rect width="1080" height="320" fill="url(#fade)" />
+            <rect x="0" y="0" width="1080" height="270" fill="white" />
+            <rect x="0" y="0" width="1080" height="270" fill="url(#fade)" />
           </mask>
+
+          <linearGradient id="funnelGrad" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%"   stop-color="#3B82F6" stop-opacity="0.10" />
+            <stop offset="100%" stop-color="#3B82F6" stop-opacity="0.04" />
+          </linearGradient>
+
+          <clipPath id="funnelClip">
+            <polygon points={`${jsonRowX},${funnelTopY} ${jsonRowX + jsonRowWidth},${funnelTopY} ${codecRowX + codecRowWidth},${funnelBottomY} ${codecRowX},${funnelBottomY}`} />
+          </clipPath>
         </defs>
 
-        <!-- TOP: JSON wire (text bytes) -->
-        <g class="wire-row wire-row--json">
-          <text x="40" y="60" class="wire-label">JSON</text>
-          <text x="40" y="80" class="wire-sub">~ 1 byte / character &middot; 142 bytes</text>
-          <g transform="translate(180, 50)" mask="url(#fadeMask)">
-            <g class="wire-stream wire-stream--text">
-              {jsonBytes.map((b) => (
-                <rect
-                  x={b.x}
-                  y={-2}
-                  width="6"
-                  height="14"
-                  rx="1"
-                  fill={b.isStruct ? "#374151" : "#4B5563"}
-                  opacity="0.85"
-                />
-              ))}
-            </g>
-          </g>
-        </g>
+        <!-- Top row labels -->
+        <text x={jsonRowX} y={jsonRowY - 28} class="row-label">JSON</text>
+        <text x={jsonRowX} y={jsonRowY - 12} class="row-sub">~ 1 byte / character</text>
+        <text x={jsonRowX + jsonRowWidth} y={jsonRowY - 12} text-anchor="end" class="row-count">142 bytes</text>
 
-        <!-- divider hint -->
-        <g class="wire-collapse">
-          <line x1="180" y1="160" x2="900" y2="160" stroke="#1F1F26" stroke-dasharray="2 6" />
-          <text x="540" y="155" text-anchor="middle" class="wire-collapse-label">collapse</text>
-        </g>
-
-        <!-- BOTTOM: Codec wire (4-byte uint32 token IDs) -->
-        <g class="wire-row wire-row--codec">
-          <text x="40" y="230" class="wire-label">CodeC</text>
-          <text x="40" y="250" class="wire-sub">4 bytes / token &middot; 32 bytes</text>
-          <g transform="translate(180, 220)">
-            {tokens.map((t) => (
-              <g class="wire-token" style={`--i:${t.index}`}>
-                <rect x={t.groupX +  0} y={-4} width="14" height="22" rx="2" fill="var(--data)" />
-                <rect x={t.groupX + 18} y={-4} width="14" height="22" rx="2" fill="var(--data)" />
-                <rect x={t.groupX + 36} y={-4} width="14" height="22" rx="2" fill="var(--data)" />
-                <rect x={t.groupX + 54} y={-4} width="14" height="22" rx="2" fill={t.isLast ? "var(--control)" : "var(--data)"} />
-              </g>
+        <!-- JSON byte stream (drifts continuously, fades at right edge) -->
+        <g transform={`translate(${jsonRowX}, ${jsonRowY})`} mask="url(#fadeMask)">
+          <g class="json-stream">
+            {jsonBytes.map((b) => (
+              <rect
+                x={b.x}
+                y={0}
+                width={jsonByteW - 1}
+                height={jsonRowHeight}
+                rx="1"
+                fill={b.isStruct ? "#374151" : "#525B6B"}
+              />
+            ))}
+            {/* Repeat the byte pattern once shifted right so the drift loops cleanly */}
+            {jsonBytes.map((b) => (
+              <rect
+                x={b.x + jsonRowWidth}
+                y={0}
+                width={jsonByteW - 1}
+                height={jsonRowHeight}
+                rx="1"
+                fill={b.isStruct ? "#374151" : "#525B6B"}
+              />
             ))}
           </g>
         </g>
+
+        <!-- Funnel + compression sweep -->
+        <g class="funnel">
+          <polygon
+            points={`${jsonRowX},${funnelTopY} ${jsonRowX + jsonRowWidth},${funnelTopY} ${codecRowX + codecRowWidth},${funnelBottomY} ${codecRowX},${funnelBottomY}`}
+            fill="url(#funnelGrad)"
+            stroke="#1F2A3A"
+            stroke-width="1"
+          />
+
+          <!-- Convergence guide lines at low opacity -->
+          <line x1={jsonRowX + jsonRowWidth * 0.30} y1={funnelTopY} x2={codecRowX + codecRowWidth * 0.30} y2={funnelBottomY} stroke="#1F2937" stroke-width="0.5" />
+          <line x1={jsonRowX + jsonRowWidth * 0.55} y1={funnelTopY} x2={codecRowX + codecRowWidth * 0.55} y2={funnelBottomY} stroke="#1F2937" stroke-width="0.5" />
+          <line x1={jsonRowX + jsonRowWidth * 0.80} y1={funnelTopY} x2={codecRowX + codecRowWidth * 0.80} y2={funnelBottomY} stroke="#1F2937" stroke-width="0.5" />
+
+          <!-- Compression sweep: a horizontal line that travels top -> bottom inside the clipped funnel -->
+          <g clip-path="url(#funnelClip)">
+            <rect class="sweep" x={jsonRowX} y={funnelTopY} width={jsonRowWidth} height="2" fill="#3B82F6" />
+          </g>
+
+          <!-- "4× shorter" annotation in the funnel mid-region -->
+          <text x={(jsonRowX + jsonRowX + jsonRowWidth) / 2} y={funnelTopY + (funnelBottomY - funnelTopY) / 2 + 4} text-anchor="middle" class="funnel-label">4&times; shorter on the wire</text>
+        </g>
+
+        <!-- Bottom row labels -->
+        <text x={codecRowX} y={codecRowY - 12} class="row-label">CodeC</text>
+        <text x={codecRowX} y={codecRowY + codecByteH + 18} class="row-sub">8 token IDs &middot; 4 bytes each (uint32)</text>
+        <text x={codecRowX + codecRowWidth + 16} y={codecRowY + codecByteH / 2 + 5} class="row-count row-count--accent">32 bytes</text>
+
+        <!-- Codec byte cells (8 token groups, last byte is control) -->
+        <g transform={`translate(${codecRowX}, ${codecRowY})`}>
+          {codecCells.map((c, i) => (
+            <rect
+              class={`codec-cell${c.isCtrl ? " codec-cell--ctrl" : ""}`}
+              x={c.x}
+              y={0}
+              width={codecByteW - 1}
+              height={codecByteH}
+              rx="2"
+              fill={c.isCtrl ? "var(--control)" : "var(--data)"}
+              style={`--ti:${i}`}
+            />
+          ))}
+        </g>
       </svg>
+
       <figcaption class="wire__caption">
-        Same prompt. JSON wraps every character in syntax. Codec ships token IDs
-        the model already speaks — and uses the last byte slot for control
-        signals.
+        Same prompt, same vocab. JSON wraps every character in syntax;
+        Codec ships token IDs the model already speaks. The last byte slot
+        is reserved for control signals.
       </figcaption>
     </figure>
   </div>
@@ -134,54 +215,89 @@ const tokens = Array.from({ length: 8 }, (_unused, i) => ({
     margin: 0;
     border: 1px solid var(--border);
     border-radius: 12px;
-    background: linear-gradient(180deg, var(--bg-elev) 0%, var(--bg) 100%);
-    padding: 1.25rem 0 1rem;
+    background:
+      radial-gradient(80% 100% at 0% 0%, color-mix(in srgb, var(--data) 6%, transparent), transparent 60%),
+      linear-gradient(180deg, var(--bg-elev) 0%, var(--bg) 100%);
+    padding: 1rem 0 1rem;
     overflow: hidden;
   }
   .wire svg { display: block; width: 100%; height: auto; }
   .wire__caption {
-    padding: 0 1.5rem 0.5rem;
+    padding: 0 1.5rem 0.25rem;
     color: var(--fg-faint);
     font-size: 0.8125rem;
     max-width: 70ch;
   }
-  .wire-label {
+
+  .row-label {
     fill: var(--fg);
     font-family: var(--font-mono);
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: -0.02em;
   }
-  .wire-sub {
+  .row-sub {
     fill: var(--fg-faint);
     font-family: var(--font-mono);
     font-size: 11px;
+    letter-spacing: 0.02em;
   }
-  .wire-collapse-label {
+  .row-count {
+    fill: var(--fg-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .row-count--accent { fill: var(--control); font-weight: 700; }
+
+  .funnel-label {
     fill: var(--fg-faint);
     font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.18em;
+    font-size: 11px;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
   }
 
-  /* Top wire scrolls left (lots of bytes flying past),
-     bottom wire pulses one token at a time (steady, deliberate). */
-  .wire-stream--text {
-    animation: drift 9s linear infinite;
+  /* JSON stream drifts left forever; the second copy of the byte pattern fills back in */
+  .json-stream {
+    animation: drift 14s linear infinite;
   }
   @keyframes drift {
     from { transform: translateX(0); }
-    to   { transform: translateX(-99px); } /* 11 bytes * 9px */
+    to   { transform: translateX(-852px); } /* one full pattern width */
   }
 
-  .wire-token {
-    transform-origin: center;
-    animation: tokenPulse 2.4s ease-in-out infinite;
-    animation-delay: calc(var(--i) * 0.15s);
+  /* Compression sweep: a thin line travels top -> bottom inside the funnel,
+     pauses at the bottom, then snaps back. Triggers Codec cells to pop. */
+  .sweep {
+    transform-origin: 50% 50%;
+    animation: sweep 4.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    opacity: 0;
   }
-  @keyframes tokenPulse {
-    0%, 60%, 100% { opacity: 0.55; transform: translateY(0); }
-    30%           { opacity: 1;    transform: translateY(-2px); }
+  @keyframes sweep {
+    0%   { transform: translateY(0px);  opacity: 0; }
+    8%   { opacity: 0.55; }
+    65%  { transform: translateY(90px); opacity: 0.95; }
+    72%  { transform: translateY(90px); opacity: 0; }
+    100% { transform: translateY(90px); opacity: 0; }
+  }
+
+  /* Codec cells fade in once per loop, staggered, sync'd to the sweep landing */
+  .codec-cell {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: cellPop 4.5s ease-out infinite;
+    animation-delay: calc(var(--ti) * 0.02s);
+  }
+  @keyframes cellPop {
+    0%, 65%   { opacity: 0; transform: translateY(-3px); }
+    72%       { opacity: 1; transform: translateY(0); }
+    96%       { opacity: 1; transform: translateY(0); }
+    100%      { opacity: 0; transform: translateY(-3px); }
+  }
+  .codec-cell--ctrl {
+    /* control byte (green) gets a subtle steady glow once it's visible */
+    filter: drop-shadow(0 0 2px color-mix(in srgb, var(--control) 60%, transparent));
   }
 </style>
