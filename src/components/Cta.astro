@@ -1,0 +1,32 @@
+---
+// Final CTA: a sober, bytes-themed call to the spec.
+---
+<section class="section cta">
+  <div class="container cta__inner">
+    <h2 class="cta__title">Ready to ship bytes, not sentences?</h2>
+    <p class="cta__lede">
+      Codec is source-available under BSL 1.1, free for non-production use
+      and for production use under US&nbsp;$5M annual revenue.
+    </p>
+    <div class="cta__buttons">
+      <a class="btn btn--primary" href="https://github.com/wdunn001/Codec" rel="noopener">Read the spec</a>
+      <a class="btn" href="mailto:licensing@quasarke.com">Commercial licensing</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta { padding-bottom: clamp(4rem, 10vw, 7rem); }
+  .cta__inner {
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    padding: clamp(2rem, 5vw, 3rem);
+    background:
+      radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--data) 14%, transparent), transparent 60%),
+      radial-gradient(120% 140% at 100% 100%, color-mix(in srgb, var(--control) 10%, transparent), transparent 55%),
+      var(--bg-elev);
+  }
+  .cta__title { max-width: 24ch; }
+  .cta__lede { max-width: 60ch; margin-bottom: 1.5rem; }
+  .cta__buttons { display: inline-flex; flex-wrap: wrap; gap: 0.625rem; }
+</style>

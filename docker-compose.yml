@@ -1,0 +1,31 @@
+# codec-website -- joins the existing jwilder/nginx-proxy network on the host.
+# The proxy + letsencrypt-companion (running outside this compose) auto-route
+# https://codecai.net to this container and provision the TLS cert.
+
+services:
+  codec-website:
+    container_name: codec-website
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: codec-website:latest
+    restart: unless-stopped
+    expose:
+      - "80"
+    environment:
+      VIRTUAL_HOST: ${PROXY_CODEC_HOSTS:-codecai.net,www.codecai.net}
+      VIRTUAL_PORT: "80"
+      LETSENCRYPT_HOST: ${PROXY_CODEC_HOSTS:-codecai.net,www.codecai.net}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL:-licensing@quasarke.com}
+    networks:
+      - nginx-proxy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  nginx-proxy:
+    external: true
+    name: ${NGINX_PROXY_NETWORK:-nginx-proxy}

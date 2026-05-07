@@ -1,0 +1,187 @@
+---
+// Hero — the byte-collapse animation is the point.
+// Top wire: a JSON-tokenized text stream (lots of byte cells, scrolls).
+// Bottom wire: the same payload as raw token IDs (uint32, fixed cells, pulses).
+// Pure SVG + CSS keyframes. Zero JS.
+
+const jsonBytes = Array.from({ length: 96 }, (_unused, i) => ({
+  x: i * 9,
+  isStruct: i % 11 === 0 || i % 11 === 5,
+}));
+
+const tokens = Array.from({ length: 8 }, (_unused, i) => ({
+  groupX: i * 84,
+  index: i,
+  isLast: i === 7,
+}));
+---
+<section class="section section--hero hero">
+  <div class="container">
+    <p class="eyebrow">v0.1 &middot; source-available</p>
+    <h1 class="hero__title">
+      Token-native binary transport<br/>
+      <span class="hero__title-accent">for AI APIs.</span>
+    </h1>
+    <p class="hero__lede">
+      Codec is a wire format for computer-to-computer AI traffic. Skip the
+      <code>JSON&nbsp;{`{ "role": "user", "content": "..." }`}</code> tax.
+      Stream token IDs as <code>uint32</code> bytes, end to end.
+    </p>
+
+    <div class="hero__cta">
+      <a href="#how" class="btn btn--primary">See it on the wire &rarr;</a>
+      <a href="https://github.com/wdunn001/Codec" rel="noopener" class="btn">github / wdunn001/Codec</a>
+    </div>
+
+    <figure class="wire" aria-label="Diagram: same prompt, two wire formats. JSON (top) versus Codec (bottom).">
+      <svg viewBox="0 0 1080 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+        <defs>
+          <linearGradient id="fade" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%"  stop-color="#0A0A0A" stop-opacity="1" />
+            <stop offset="6%"  stop-color="#0A0A0A" stop-opacity="0" />
+            <stop offset="94%" stop-color="#0A0A0A" stop-opacity="0" />
+            <stop offset="100%" stop-color="#0A0A0A" stop-opacity="1" />
+          </linearGradient>
+          <mask id="fadeMask">
+            <rect width="1080" height="320" fill="white" />
+            <rect width="1080" height="320" fill="url(#fade)" />
+          </mask>
+        </defs>
+
+        <!-- TOP: JSON wire (text bytes) -->
+        <g class="wire-row wire-row--json">
+          <text x="40" y="60" class="wire-label">JSON</text>
+          <text x="40" y="80" class="wire-sub">~ 1 byte / character &middot; 142 bytes</text>
+          <g transform="translate(180, 50)" mask="url(#fadeMask)">
+            <g class="wire-stream wire-stream--text">
+              {jsonBytes.map((b) => (
+                <rect
+                  x={b.x}
+                  y={-2}
+                  width="6"
+                  height="14"
+                  rx="1"
+                  fill={b.isStruct ? "#374151" : "#4B5563"}
+                  opacity="0.85"
+                />
+              ))}
+            </g>
+          </g>
+        </g>
+
+        <!-- divider hint -->
+        <g class="wire-collapse">
+          <line x1="180" y1="160" x2="900" y2="160" stroke="#1F1F26" stroke-dasharray="2 6" />
+          <text x="540" y="155" text-anchor="middle" class="wire-collapse-label">collapse</text>
+        </g>
+
+        <!-- BOTTOM: Codec wire (4-byte uint32 token IDs) -->
+        <g class="wire-row wire-row--codec">
+          <text x="40" y="230" class="wire-label">CodeC</text>
+          <text x="40" y="250" class="wire-sub">4 bytes / token &middot; 32 bytes</text>
+          <g transform="translate(180, 220)">
+            {tokens.map((t) => (
+              <g class="wire-token" style={`--i:${t.index}`}>
+                <rect x={t.groupX +  0} y={-4} width="14" height="22" rx="2" fill="var(--data)" />
+                <rect x={t.groupX + 18} y={-4} width="14" height="22" rx="2" fill="var(--data)" />
+                <rect x={t.groupX + 36} y={-4} width="14" height="22" rx="2" fill="var(--data)" />
+                <rect x={t.groupX + 54} y={-4} width="14" height="22" rx="2" fill={t.isLast ? "var(--control)" : "var(--data)"} />
+              </g>
+            ))}
+          </g>
+        </g>
+      </svg>
+      <figcaption class="wire__caption">
+        Same prompt. JSON wraps every character in syntax. Codec ships token IDs
+        the model already speaks — and uses the last byte slot for control
+        signals.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<style>
+  .hero { padding-bottom: clamp(2rem, 6vw, 4rem); }
+  .hero__title {
+    font-size: clamp(2.5rem, 6.5vw, 4.5rem);
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    max-width: 18ch;
+  }
+  .hero__title-accent { color: var(--data); }
+  .hero__lede {
+    font-size: clamp(1rem, 1.5vw, 1.125rem);
+    color: var(--fg-muted);
+    max-width: 60ch;
+    margin-bottom: 2rem;
+  }
+  .hero__lede code {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.35rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--fg);
+  }
+  .hero__cta {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    margin-bottom: 3rem;
+  }
+
+  .wire {
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: linear-gradient(180deg, var(--bg-elev) 0%, var(--bg) 100%);
+    padding: 1.25rem 0 1rem;
+    overflow: hidden;
+  }
+  .wire svg { display: block; width: 100%; height: auto; }
+  .wire__caption {
+    padding: 0 1.5rem 0.5rem;
+    color: var(--fg-faint);
+    font-size: 0.8125rem;
+    max-width: 70ch;
+  }
+  .wire-label {
+    fill: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .wire-sub {
+    fill: var(--fg-faint);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .wire-collapse-label {
+    fill: var(--fg-faint);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* Top wire scrolls left (lots of bytes flying past),
+     bottom wire pulses one token at a time (steady, deliberate). */
+  .wire-stream--text {
+    animation: drift 9s linear infinite;
+  }
+  @keyframes drift {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-99px); } /* 11 bytes * 9px */
+  }
+
+  .wire-token {
+    transform-origin: center;
+    animation: tokenPulse 2.4s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 0.15s);
+  }
+  @keyframes tokenPulse {
+    0%, 60%, 100% { opacity: 0.55; transform: translateY(0); }
+    30%           { opacity: 1;    transform: translateY(-2px); }
+  }
+</style>

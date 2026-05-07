@@ -1,0 +1,25 @@
+Copyright (c) 2026 Quasarke LLC. All Rights Reserved.
+
+This repository contains the source code for the marketing website at
+codecai.net. The source code, copy, imagery, and design assets in this
+repository are proprietary to Quasarke LLC and are made publicly visible
+solely for transparency and reference.
+
+You may NOT, without prior written permission from Quasarke LLC:
+  - Reproduce, mirror, or republish the marketing copy, design, or imagery
+    in this repository, in whole or in substantial part.
+  - Use the "CodeC" name, the codec logo, or any related trademark in a
+    way that suggests endorsement, affiliation, or sponsorship.
+
+You MAY, without prior permission:
+  - Read, study, fork on GitHub, and reference the source for personal,
+    non-commercial educational purposes.
+  - Submit issues or pull requests to suggest fixes or improvements; merged
+    contributions are licensed back to Quasarke LLC under these same terms.
+
+The Codec protocol itself is published separately under the Business
+Source License 1.1 in https://github.com/wdunn001/Codec ; this repository
+covers only the marketing site and is licensed differently.
+
+For any other use, including any commercial reuse of the design or copy,
+contact licensing@quasarke.com.

@@ -1,0 +1,195 @@
+---
+// Side-by-side: same request, two wire formats.
+const codecRows = [
+  { hex: "01 00 00 04", note: "vocab=gpt-4 / role=user", ctrl: true },
+  { hex: "00 00 0F A1", note: '"What"' },
+  { hex: "00 00 09 BE", note: '" is"' },
+  { hex: "00 00 04 21", note: '" the"' },
+  { hex: "00 00 1C 33", note: '" capital"' },
+  { hex: "00 00 02 5A", note: '" of"' },
+  { hex: "00 00 1F 90", note: '" France"' },
+  { hex: "00 00 02 30", note: '"?"' },
+];
+
+const jsonSample = `POST /v1/chat/completions HTTP/2
+content-type: application/json
+
+{
+  "model": "gpt-4",
+  "messages": [
+    { "role": "user",
+      "content": "What is the capital of France?" }
+  ]
+}`;
+
+const codecHeader = `POST /v1/chat HTTP/2
+content-type: application/codec`;
+---
+<section id="compare" class="section compare">
+  <div class="container">
+    <p class="eyebrow">on the wire</p>
+    <h2>Same payload. Different planet.</h2>
+    <p class="compare__lede">
+      An LLM doesn't read words &mdash; it reads token IDs. The JSON envelope,
+      the UTF-8 string, the per-character escaping: that's all shipping bytes
+      the model immediately throws away. Codec ships what the model actually
+      speaks.
+    </p>
+
+    <div class="compare__grid">
+      <article class="card">
+        <header class="card__head">
+          <span class="card__tag card__tag--neutral">JSON</span>
+          <span class="card__sub">~ 142 bytes &middot; text</span>
+        </header>
+        <pre class="code"><code>{jsonSample}</code></pre>
+        <footer class="card__foot">
+          Re-tokenized on the server. UTF-8 to tokens to UTF-8 to UTF-8 to
+          tokens again. Every hop pays the same tax.
+        </footer>
+      </article>
+
+      <article class="card card--codec">
+        <header class="card__head">
+          <span class="card__tag card__tag--data">CodeC</span>
+          <span class="card__sub">32 bytes &middot; binary</span>
+        </header>
+        <pre class="code"><code><span class="dim">{codecHeader}</span>{"\n\n"}{codecRows.map((r) => (
+  <span class="row">
+    <span class={r.ctrl ? "hex hex--ctrl" : "hex hex--data"}>{r.hex}</span>
+    <span class="hex-note">  {r.note}</span>
+    {"\n"}
+  </span>
+))}</code></pre>
+        <footer class="card__foot">
+          Token IDs that the model already speaks. One control word at the
+          head names the vocab and message role &mdash; that's the only
+          framing.
+        </footer>
+      </article>
+    </div>
+
+    <ul class="compare__bullets">
+      <li>
+        <span class="bullet-num">4&times;</span>
+        <span class="bullet-body">Smaller on the wire for typical short
+        prompts. The win compounds for streaming and tool-call traffic.</span>
+      </li>
+      <li>
+        <span class="bullet-num">0</span>
+        <span class="bullet-body">Re-tokenization round-trips. Server speaks
+        the same vocab as the client, by handshake.</span>
+      </li>
+      <li>
+        <span class="bullet-num">1</span>
+        <span class="bullet-body">Spec, four implementations: C, .NET, Python,
+        TypeScript &mdash; bit-identical encoder output.</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<style>
+  .compare__lede { max-width: 64ch; margin-bottom: 2.5rem; }
+
+  .compare__grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 880px) {
+    .compare__grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card--codec { border-color: color-mix(in srgb, var(--data) 50%, var(--border)); }
+  .card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+  .card__tag {
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    color: var(--fg-muted);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .card__tag--data {
+    background: var(--data-soft);
+    border-color: color-mix(in srgb, var(--data) 60%, transparent);
+    color: var(--data);
+  }
+  .card__sub { color: var(--fg-faint); }
+
+  .code {
+    margin: 0;
+    padding: 1.25rem 1.25rem 1rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.65;
+    color: var(--fg);
+  }
+  .code code { white-space: pre; display: block; }
+
+  .dim { color: var(--fg-faint); }
+  .row { display: contents; }
+  .hex { font-weight: 600; }
+  .hex--ctrl { color: var(--control); }
+  .hex--data { color: var(--data); }
+  .hex-note { color: var(--fg-faint); }
+
+  .card__foot {
+    padding: 0.875rem 1.25rem 1rem;
+    color: var(--fg-faint);
+    font-size: 0.8125rem;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .compare__bullets {
+    list-style: none;
+    padding: 0;
+    margin: 2.5rem 0 0;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 720px) {
+    .compare__bullets { grid-template-columns: repeat(3, 1fr); }
+  }
+  .compare__bullets li {
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    padding: 1rem 1.125rem;
+    border-radius: 8px;
+  }
+  .bullet-num {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--data);
+    letter-spacing: -0.02em;
+    min-width: 2.5rem;
+  }
+  .bullet-body {
+    color: var(--fg-muted);
+    font-size: 0.9375rem;
+  }
+</style>
