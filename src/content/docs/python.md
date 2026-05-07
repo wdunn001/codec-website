@@ -134,6 +134,62 @@ async for frame in decode_msgpack_stream(resp.aiter_raw()):
 
 The watcher matches reserved control IDs with a single `uint32` compare per token. It never detokenizes &mdash; that's the whole point. See [Tool calling](/docs/tool-calling/) for the agentic-loop pattern.
 
+## Negotiating zstd-with-dict
+
+For deployments with pre-trained zstd dictionaries (see [Protocol &raquo; Compression](/docs/protocol/#zstd-is-dict-only)), `codecai` ships small helpers in `codecai.compression`. The pattern: load the dict bytes once, advertise `zstd` in `Accept-Encoding`, validate the server's `Codec-Zstd-Dict` header before decompressing.
+
+```python
+from codecai import (
+    CodecZstdDictError,
+    hash_zstd_dict,
+    select_zstd_dict_for_response,
+)
+
+# 1. Load whatever dicts you trust — typically fetched from the
+#    tokenizer map's zstd_dictionaries[] entry, hash-verified.
+with open("qwen2.5-msgpack-v1.dict", "rb") as f:
+    msgpack_dict = f.read()
+loaded_dicts = {hash_zstd_dict(msgpack_dict): msgpack_dict}
+
+# 2. Send the request with zstd advertised.
+async with httpx.AsyncClient() as http:
+    async with http.stream(
+        "POST", "http://localhost:8000/v1/completions",
+        headers={"Accept-Encoding": "zstd, gzip"},
+        json={
+            "model": "Qwen/Qwen2.5-7B-Instruct",
+            "prompt": "Explain entropy.",
+            "stream_format": "msgpack",
+            "max_tokens": 256,
+        },
+    ) as resp:
+
+        # 3. Decide how to read the body based on what the server returned.
+        try:
+            zdict_bytes = select_zstd_dict_for_response(
+                resp.headers, loaded_dicts=loaded_dicts,
+            )
+        except CodecZstdDictError as e:
+            # Server used a dict we don't have — fetch it from the map's
+            # zstd_dictionaries[] entry whose hash matches, or retry with
+            # Accept-Encoding: gzip. Don't try to decompress a guess.
+            raise
+
+        if zdict_bytes is None:
+            # Not zstd — httpx auto-decompresses gzip/br. Decode normally.
+            async for frame in decode_msgpack_stream(resp.aiter_raw()):
+                ...
+        else:
+            # zstd-with-dict — use a streaming zstd decoder seeded with
+            # the right dict bytes, then feed its output to the codec
+            # frame decoder.
+            ...
+```
+
+`select_zstd_dict_for_response` returns the matching dict bytes when the response is `Content-Encoding: zstd` and the server's `Codec-Zstd-Dict` header points at a dict you've loaded. Returns `None` when the response isn't zstd (so your normal gzip / identity path stays untouched). Raises `CodecZstdDictError` on any of: missing header on a zstd response, malformed `sha256:` value, hash unknown to your local registry. Wrong-dict zstd produces garbage bytes &mdash; failing fast is the only safe option.
+
+The matching server-side helper in sglang and vLLM is `set_zstd_dict(stream_format, dict_bytes)` &mdash; see [sglang &raquo; zstd, with a dict](/docs/sglang/#zstd-with-a-dict).
+
 ## Translating across vocabularies
 
 ```python

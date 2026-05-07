@@ -118,11 +118,55 @@ For very large prompts where even the JSON envelope is too big. The whole reques
 
 ## Compression
 
-Codec is **streaming-safe with gzip**. Set `Accept-Encoding: gzip, identity` on the request; the server compresses if it's worth it. Identity is always a valid response.
+Codec is **streaming-safe with gzip**. Set `Accept-Encoding: gzip, identity` on the request; the server compresses if it's worth it. Identity is always a valid response. Brotli underperforms gzip at every payload size measured (per-block overhead doesn't amortize on small frames).
 
-> **Trap:** zstd is a winning compressor for batch but **breaks streaming** &mdash; it buffers the entire response before sending. At 2,048 tokens, zstd's TTFT is **3.7&nbsp;s** while gzip's is **12&nbsp;ms**. Use zstd only for non-streaming agent-mode workloads. See [RESULTS.md §1d](https://github.com/wdunn001/Codec/blob/main/RESULTS.md).
+### zstd is dict-only
 
-Brotli underperforms gzip at every payload size measured.
+zstd without a pre-trained dictionary is a trap on Codec streams: its wire-byte advantage over gzip is essentially zero (both reach &asymp;3.4&nbsp;B/token, within noise &mdash; [RESULTS.md §1f](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md)) but the shipped buffered middleware in every gateway eats a **334&times; TTFB cliff** at 2K tokens (11&nbsp;ms &rarr; 3,684&nbsp;ms). Same bytes as gzip, much worse first-token latency.
+
+**The pre-trained dictionary is the precondition for using zstd at all** &mdash; not an optimization layered on top. Tokenizer maps now declare zstd dictionaries inline:
+
+```json
+{
+  "id": "qwen/qwen2",
+  "vocab": { ... },
+  "merges": [ ... ],
+  "zstd_dictionaries": [
+    {
+      "format":     "msgpack",
+      "url":        "https://raw.githubusercontent.com/wdunn001/Codec/main/dictionaries/qwen2.5-msgpack-v1.dict",
+      "hash":       "sha256:...",
+      "size_bytes": 16384
+    },
+    {
+      "format":     "protobuf",
+      "url":        "https://raw.githubusercontent.com/wdunn001/Codec/main/dictionaries/qwen2.5-protobuf-v1.dict",
+      "hash":       "sha256:...",
+      "size_bytes": 16384
+    }
+  ]
+}
+```
+
+A server with a matching dict loaded compresses against it; a client decompresses against the same one (matched by hash). The two formats train against different byte distributions, so dicts are not interchangeable across `msgpack` / `protobuf`. Without a loaded dict, servers MUST fall through to gzip &mdash; the picker enforces this and the wire-compress library refuses to advertise zstd unless a matching dict is in place.
+
+With a dict, dict-zstd beats gzip by **16&ndash;38%** on bytes ([RESULTS.md §1g](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md)) at +0.13&nbsp;ms streaming TTFB &mdash; sub-millisecond, dwarfed by network. So for a deployment with a dict shipped alongside the model, zstd is the right pick for both interactive and agent traffic.
+
+### `Codec-Zstd-Dict` response header
+
+When a server responds with `Content-Encoding: zstd`, it MUST emit the hash of the dictionary it used as a `Codec-Zstd-Dict` header:
+
+```http
+Content-Encoding: zstd
+Codec-Zstd-Dict:  sha256:79b707aea8c2b41c2883ec7913b0c4a0c880044ac844d89a9a03e779eb92db04
+Vary:             Accept-Encoding
+```
+
+The header value is `sha256:` followed by the lowercase hex digest of the raw dictionary bytes &mdash; same shape as the `hash` field in `zstd_dictionaries[]` entries.
+
+Clients check the hash against a dict they have loaded. Hash mismatch is a fatal stream error (wrong-dict zstd decompression yields garbage); a missing header on a zstd response is a server protocol error. Why a header rather than inferring from `tokenizer_id`: a single tokenizer can have multiple dict versions over time (re-trained on fresher corpora, specialised per workload). The header lets a deployment upgrade its dict without bumping the tokenizer-map version, and lets intermediaries identify the active dict by reading headers alone.
+
+Reference dicts ship at [`dictionaries/`](https://github.com/wdunn001/Codec/tree/main/dictionaries) in the main repo; the training pipeline is [`packages/bench/scripts/train-zstd-dict.py`](https://github.com/wdunn001/Codec/blob/main/packages/bench/scripts/train-zstd-dict.py).
 
 ## Polyglot bit-identical
 

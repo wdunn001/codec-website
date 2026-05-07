@@ -180,7 +180,7 @@ Full reference: [Translator](/docs/translator/).
 ## Production checklist
 
 - **Pin the map hash.** Never call `loadMap({ url, hash: undefined })` &mdash; the hash is the supply-chain seal.
-- **Set `Accept-Encoding: gzip, identity`.** Streaming-safe and ~5&times; smaller than identity. Don't request zstd on streams &mdash; it buffers the whole response.
+- **Set `Accept-Encoding: gzip, identity`.** Streaming-safe and ~5&times; smaller than identity. zstd is supported but only when the server has a pre-trained dictionary loaded for the request &mdash; see [Protocol &raquo; Compression](/docs/protocol/#zstd-is-dict-only). Without a dict, advertising `zstd` is a no-op (server falls through to gzip).
 - **Reuse `Detokenizer` and `Tokenizer` instances** across requests. Both are reusable; only `decodeStream` is per-response.
 - **Detokenize at the edge.** If you're forwarding the stream to another agent or to a server-side tool dispatcher, leave the IDs as IDs.
 
