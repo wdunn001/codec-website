@@ -101,6 +101,13 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
           <clipPath id="funnelClip">
             <polygon points={`${jsonRowX},${funnelTopY} ${jsonRowX + jsonRowWidth},${funnelTopY} ${codecRowX + codecRowWidth},${funnelBottomY} ${codecRowX},${funnelBottomY}`} />
           </clipPath>
+
+          <!-- Hard clip for the JSON byte row so the drift-loop's second
+               copy can't visibly spill past the 142-bytes label. The mask
+               above still provides the gentle soft fade INSIDE this clip. -->
+          <clipPath id="jsonRowClip">
+            <rect x={jsonRowX} y={jsonRowY - 6} width={jsonRowWidth} height={jsonRowHeight + 12} />
+          </clipPath>
         </defs>
 
         <!-- Top row labels -->
@@ -108,11 +115,11 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
         <text x={jsonRowX} y={jsonRowY - 12} class="row-sub">~ 1 byte / character</text>
         <text x={jsonRowX + jsonRowWidth} y={jsonRowY - 12} text-anchor="end" class="row-count">142 bytes</text>
 
-        <!-- JSON byte stream: gentle symmetric fade on both edges via the
-             mask gradient. Bytes fade in on the left toward the JSON label
-             and fade out on the right toward the 142-bytes label, mirror
-             image. -->
-        <g transform={`translate(${jsonRowX}, ${jsonRowY})`} mask="url(#fadeMask)">
+        <!-- JSON byte stream: clipped hard to row bounds so no spill past
+             the labels, with a gentle fade mask INSIDE the clip for soft
+             edges that mirror each other on both sides. -->
+        <g clip-path="url(#jsonRowClip)">
+          <g transform={`translate(${jsonRowX}, ${jsonRowY})`} mask="url(#fadeMask)">
           <g class="json-stream">
             {jsonBytes.map((b) => (
               <rect
@@ -135,6 +142,7 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
                 fill={b.isStruct ? "#374151" : "#525B6B"}
               />
             ))}
+          </g>
           </g>
         </g>
 
