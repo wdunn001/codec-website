@@ -80,13 +80,18 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       <svg viewBox="0 0 1080 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
         <defs>
           <linearGradient id="fade" x1="0" x2="1" y1="0" y2="0">
-            <!-- Symmetric gentle fade on both sides: bytes ease in on the
-                 left at the JSON label and ease out on the right at the
-                 142-bytes label. -->
-            <stop offset="0%"   stop-color="#0A0A0A" stop-opacity="1" />
-            <stop offset="11%"  stop-color="#0A0A0A" stop-opacity="0" />
-            <stop offset="89%"  stop-color="#0A0A0A" stop-opacity="0" />
-            <stop offset="100%" stop-color="#0A0A0A" stop-opacity="1" />
+            <!-- Symmetric long fade on both sides, anchored to the clip
+                 edges. Bytes are fully hidden at the clip boundary
+                 (10.55% / 89.45%), fade in over ~13% of the viewBox to
+                 fully visible at 23.9%, stay visible through 76.1%, then
+                 fade out symmetrically to fully hidden at 89.45%. The
+                 right fade is the mirror of the left. -->
+            <stop offset="0%"     stop-color="#0A0A0A" stop-opacity="1" />
+            <stop offset="10.55%" stop-color="#0A0A0A" stop-opacity="1" />
+            <stop offset="23.9%"  stop-color="#0A0A0A" stop-opacity="0" />
+            <stop offset="76.1%"  stop-color="#0A0A0A" stop-opacity="0" />
+            <stop offset="89.45%" stop-color="#0A0A0A" stop-opacity="1" />
+            <stop offset="100%"   stop-color="#0A0A0A" stop-opacity="1" />
           </linearGradient>
           <mask id="fadeMask">
             <rect x="0" y="0" width="1080" height="270" fill="white" />
