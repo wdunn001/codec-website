@@ -1,0 +1,388 @@
+---
+// Benchmarks section: real measurements from live runs.
+// Source: github.com/wdunn001/Codec/blob/main/RESULTS.md
+//
+// All numbers are measured -- no projections.
+// Hardware: RTX 3090 / Qwen2.5-0.5B-Instruct / sglang nightly.
+
+// Chart 1: streaming wire bytes vs payload size (log Y).
+// Data points are log10-mapped onto a fixed plot rectangle.
+
+type Series = {
+  label: string;
+  className: string;
+  values: { x: number; bytes: number; display: string }[];
+};
+
+const series: Series[] = [
+  {
+    label: "JSON-SSE",
+    className: "line line--json",
+    values: [
+      { x: 90,  bytes: 15200,  display: "15.2 KB" },
+      { x: 380, bytes: 121600, display: "121.6 KB" },
+      { x: 680, bytes: 479300, display: "479.3 KB" },
+    ],
+  },
+  {
+    label: "Codec (identity)",
+    className: "line line--codec-id",
+    values: [
+      { x: 90,  bytes: 975,   display: "975 B" },
+      { x: 380, bytes: 7400,  display: "7.4 KB" },
+      { x: 680, bytes: 28800, display: "28.8 KB" },
+    ],
+  },
+  {
+    label: "Codec + gzip",
+    className: "line line--codec-gz",
+    values: [
+      { x: 90,  bytes: 226,  display: "226 B" },
+      { x: 380, bytes: 890,  display: "890 B" },
+      { x: 680, bytes: 1000, display: "1.0 KB" },
+    ],
+  },
+];
+
+// Map a byte count onto the plot's Y coordinate (log10).
+// log10(100) = 2 -> y=310 ; log10(1_000_000) = 6 -> y=30 ; 70px per decade.
+const yFor = (bytes: number) => {
+  const lg = Math.log10(bytes);
+  return Math.round((310 - (lg - 2) * 70) * 100) / 100;
+};
+
+// Build SVG polyline path for each series.
+const linePath = (s: Series) =>
+  s.values.map((v) => `${v.x},${yFor(v.bytes)}`).join(" ");
+
+// Chart 2: tool-call detection latency on a 1M-token stream
+// (from libcodec ToolWatcher microbench, RESULTS.md §7 / 12).
+const toolMaxMs = 60.4;
+const toolPlotX0 = 200;
+const toolPlotW  = 480;
+const toolBars = [
+  { label: "Detokenize + regex",          ms: 60.4, klass: "tool-bar tool-bar--text" },
+  { label: "Codec ToolWatcher (uint32)",  ms: 0.61, klass: "tool-bar tool-bar--codec" },
+];
+---
+
+<section id="benchmarks" class="section bench">
+  <div class="container">
+    <p class="eyebrow">receipts</p>
+    <h2>Real measurements. Live runs. <span class="bench__title-mute">No projections.</span></h2>
+    <p class="bench__lede">
+      Numbers below are from a real <code>sglang</code> server running
+      Qwen-2.5&nbsp;0.5B on an RTX&nbsp;3090. Every cell is measured, not
+      modeled. Sources are linked in <a href="https://github.com/wdunn001/Codec/blob/main/RESULTS.md" rel="noopener">RESULTS.md</a>.
+    </p>
+
+    <!-- ============== CHART 1: streaming wire bytes ============== -->
+    <article class="bench-card">
+      <header class="bench-card__head">
+        <div>
+          <h3 class="bench-card__title">Streaming wire bytes by payload size</h3>
+          <p class="bench-card__sub">Lower is better. Y axis is log scale &mdash; each gridline is 10&times;.</p>
+        </div>
+        <div class="bench-card__hero">
+          <span class="bench-card__hero-num">470&times;</span>
+          <span class="bench-card__hero-cap">smaller at 2,048 tokens</span>
+        </div>
+      </header>
+
+      <div class="bench-chart">
+        <svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Line chart: streaming wire bytes by payload size. JSON-SSE grows from 15.2 KB at 64 tokens to 479.3 KB at 2,048 tokens. Codec with gzip stays between 226 B and 1 KB across the same range.">
+          <!-- Y gridlines + labels -->
+          {[
+            { y: 30,  label: "1 MB" },
+            { y: 100, label: "100 KB" },
+            { y: 170, label: "10 KB" },
+            { y: 240, label: "1 KB" },
+            { y: 310, label: "100 B" },
+          ].map((g) => (
+            <g class="grid">
+              <line x1="80" x2="690" y1={g.y} y2={g.y} />
+              <text x="72" y={g.y + 4} text-anchor="end" class="axis-label">{g.label}</text>
+            </g>
+          ))}
+
+          <!-- X axis labels -->
+          {[
+            { x: 90,  label: "64 tokens" },
+            { x: 380, label: "512 tokens" },
+            { x: 680, label: "2,048 tokens" },
+          ].map((t) => (
+            <text x={t.x} y={335} text-anchor="middle" class="axis-label">{t.label}</text>
+          ))}
+
+          <!-- Series lines + dots + end-labels -->
+          {series.map((s) => (
+            <g class={s.className}>
+              <polyline points={linePath(s)} fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+              {s.values.map((v) => (
+                <circle cx={v.x} cy={yFor(v.bytes)} r="4" />
+              ))}
+              <text x={s.values[s.values.length - 1].x + 10} y={yFor(s.values[s.values.length - 1].bytes) + 4} class="line-end-label">{s.values[s.values.length - 1].display}</text>
+            </g>
+          ))}
+        </svg>
+      </div>
+
+      <ul class="bench-legend">
+        {series.map((s) => (
+          <li class={s.className.replace("line", "swatch")}>
+            <span class="swatch__dot"></span>
+            <span class="swatch__label">{s.label}</span>
+          </li>
+        ))}
+      </ul>
+
+      <footer class="bench-card__foot">
+        At 2&nbsp;K tokens the JSON-SSE stream ships <strong>479&nbsp;KB</strong>;
+        Codec with gzip ships <strong>1&nbsp;KB</strong>. Wall-clock overhead
+        is &lt; 1% &mdash; the wire reduction is essentially free in time.
+      </footer>
+    </article>
+
+    <!-- ============== CHART 2: tool-call detection ============== -->
+    <article class="bench-card bench-card--solo">
+      <header class="bench-card__head">
+        <div>
+          <h3 class="bench-card__title">Tool-call detection on a 1&nbsp;M-token stream</h3>
+          <p class="bench-card__sub">Time to detect that a token range is a tool-call region. Lower is better.</p>
+        </div>
+        <div class="bench-card__hero">
+          <span class="bench-card__hero-num">100&times;</span>
+          <span class="bench-card__hero-cap">faster, no detokenize</span>
+        </div>
+      </header>
+
+      <div class="bench-chart">
+        <svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart: tool-call detection on a 1 million token stream. Detokenize plus regex takes 60.4 milliseconds; Codec ToolWatcher takes 0.61 milliseconds.">
+          {toolBars.map((b, i) => {
+            const y = 30 + i * 90;
+            const w = Math.max(2, (b.ms / toolMaxMs) * toolPlotW);
+            return (
+              <g class={b.klass}>
+                <text x={toolPlotX0 - 12} y={y + 32} text-anchor="end" class="bar-label">{b.label}</text>
+                <rect x={toolPlotX0} y={y} width={w} height="50" rx="3" />
+                <text x={toolPlotX0 + w + 12} y={y + 32} class="bar-value">{b.ms} ms</text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      <footer class="bench-card__foot">
+        ToolWatcher matches reserved control IDs in the token stream with a
+        single 32-bit compare per token. The text path has to detokenize back
+        to UTF-8 first &mdash; the same work the model just did in reverse,
+        every chunk.
+      </footer>
+    </article>
+
+    <p class="bench-source">
+      Source: <a href="https://github.com/wdunn001/Codec/blob/main/RESULTS.md" rel="noopener">RESULTS.md</a>
+      &middot; sglang nightly &middot; Qwen-2.5 0.5B &middot; RTX&nbsp;3090
+      &middot; temp 0.0 &middot; numbers reproducible from the bench harness in
+      <code>packages/bench/</code>.
+    </p>
+  </div>
+</section>
+
+<style>
+  .bench__title-mute { color: var(--fg-faint); font-weight: 500; }
+  .bench__lede { max-width: 64ch; margin-bottom: 2.5rem; }
+  .bench__lede code {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.35rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--fg);
+  }
+
+  .bench-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem clamp(1rem, 3vw, 2rem) 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .bench-card--solo { margin-bottom: 0; }
+
+  .bench-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .bench-card__title {
+    margin: 0 0 0.25rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .bench-card__sub {
+    margin: 0;
+    color: var(--fg-faint);
+    font-size: 0.8125rem;
+    font-family: var(--font-mono);
+  }
+
+  .bench-card__hero {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    line-height: 1.05;
+  }
+  .bench-card__hero-num {
+    font-family: var(--font-mono);
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 700;
+    color: var(--data);
+    letter-spacing: -0.03em;
+  }
+  .bench-card__hero-cap {
+    margin-top: 0.25rem;
+    color: var(--fg-faint);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+  }
+
+  .bench-chart {
+    margin: 0 -0.5rem;
+    overflow: hidden;
+  }
+  .bench-chart svg { display: block; width: 100%; height: auto; }
+
+  /* Chart 1 */
+  .grid line { stroke: var(--border); stroke-dasharray: 2 5; }
+  .axis-label {
+    fill: var(--fg-faint);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .line--json polyline   { stroke: #6B7280; }
+  .line--json circle     { fill: #6B7280; }
+  .line--codec-id polyline { stroke: var(--data); opacity: 0.6; stroke-dasharray: 4 4; }
+  .line--codec-id circle   { fill: var(--data); opacity: 0.6; }
+  .line--codec-gz polyline { stroke: var(--control); }
+  .line--codec-gz circle   { fill: var(--control); }
+
+  .line-end-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    fill: var(--fg);
+    font-weight: 600;
+  }
+  .line--json .line-end-label   { fill: #9CA3AF; }
+  .line--codec-id .line-end-label { fill: var(--data); }
+  .line--codec-gz .line-end-label { fill: var(--control); }
+
+  /* Animate the polylines drawing in (zero JS).
+     Each path is given a long dasharray; we animate the offset to 0. */
+  .line polyline {
+    stroke-dasharray: 1500;
+    stroke-dashoffset: 1500;
+    animation: drawIn 1.6s ease-out forwards;
+  }
+  .line--codec-id polyline { animation-delay: 0.25s; }
+  .line--codec-gz polyline { animation-delay: 0.5s; }
+  .line circle {
+    opacity: 0;
+    animation: dotIn 0.4s ease-out forwards;
+  }
+  .line--json circle:nth-of-type(1)     { animation-delay: 0.50s; }
+  .line--json circle:nth-of-type(2)     { animation-delay: 0.85s; }
+  .line--json circle:nth-of-type(3)     { animation-delay: 1.20s; }
+  .line--codec-id circle:nth-of-type(1) { animation-delay: 0.75s; }
+  .line--codec-id circle:nth-of-type(2) { animation-delay: 1.10s; }
+  .line--codec-id circle:nth-of-type(3) { animation-delay: 1.45s; }
+  .line--codec-gz circle:nth-of-type(1) { animation-delay: 1.00s; }
+  .line--codec-gz circle:nth-of-type(2) { animation-delay: 1.35s; }
+  .line--codec-gz circle:nth-of-type(3) { animation-delay: 1.70s; }
+  .line .line-end-label {
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out forwards;
+    animation-delay: 1.9s;
+  }
+  @keyframes drawIn { to { stroke-dashoffset: 0; } }
+  @keyframes dotIn  { to { opacity: 1; } }
+  @keyframes fadeIn { to { opacity: 1; } }
+
+  /* Legend */
+  .bench-legend {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+  .bench-legend li { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--fg-muted); }
+  .swatch__dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+  .swatch--json   .swatch__dot { background: #6B7280; }
+  .swatch--codec-id .swatch__dot { background: var(--data); opacity: 0.6; }
+  .swatch--codec-gz .swatch__dot { background: var(--control); }
+
+  /* Chart 2 (horizontal bars) */
+  .tool-bar rect {
+    transform-origin: left center;
+    animation: barIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform: scaleX(0);
+  }
+  .tool-bar--text rect  { fill: #6B7280; animation-delay: 0.1s; }
+  .tool-bar--codec rect { fill: var(--control); animation-delay: 0.45s; }
+  @keyframes barIn { to { transform: scaleX(1); } }
+
+  .bar-label {
+    fill: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .bar-value {
+    fill: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .tool-bar--text .bar-value  { fill: #9CA3AF; }
+  .tool-bar--codec .bar-value { fill: var(--control); }
+
+  .bench-card__foot {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--fg-muted);
+    font-size: 0.875rem;
+  }
+  .bench-card__foot strong { color: var(--fg); font-weight: 600; }
+
+  .bench-source {
+    margin-top: 1.5rem;
+    color: var(--fg-faint);
+    font-size: 0.8125rem;
+    font-family: var(--font-mono);
+  }
+  .bench-source a { color: var(--fg-muted); border-bottom: 1px dotted var(--border-strong); }
+  .bench-source a:hover { color: var(--data); border-bottom-color: var(--data); }
+  .bench-source code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+
+  @media (max-width: 640px) {
+    .bench-card__head { gap: 0.75rem; }
+    .bench-card__hero { align-items: flex-start; text-align: left; }
+  }
+</style>
