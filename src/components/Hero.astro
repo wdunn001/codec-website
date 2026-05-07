@@ -22,15 +22,17 @@ const jsonRowWidth = jsonByteCount * jsonByteW; // 852
 
 // Codec row geometry: same per-byte width as JSON so the totals are
 // directly comparable. Group of 4 bytes per token, 4px gap between groups.
+// Codec row is HORIZONTALLY CENTERED in the viewBox (1080 wide) so the
+// figure reads as balanced rather than left-heavy.
 const codecByteW = 6;
 const codecByteH = 26;
-const codecRowX = 180;
 const codecRowY = 200;
 const codecTokenCount = 8;
 const codecGapBetweenGroups = 4;
 const codecGroupWidth = 4 * codecByteW; // 24
 const codecRowWidth =
   codecTokenCount * codecGroupWidth + (codecTokenCount - 1) * codecGapBetweenGroups; // 220
+const codecRowX = (1080 - codecRowWidth) / 2; // = 430 — centered on viewBox
 
 // Funnel: from full JSON width down to Codec row width
 const funnelTopY = 102;
@@ -146,8 +148,8 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
             <rect class="sweep" x={jsonRowX} y={funnelTopY} width={jsonRowWidth} height="2" fill="#3B82F6" />
           </g>
 
-          <!-- "4× shorter" annotation in the funnel mid-region -->
-          <text x={(jsonRowX + jsonRowX + jsonRowWidth) / 2} y={funnelTopY + (funnelBottomY - funnelTopY) / 2 + 4} text-anchor="middle" class="funnel-label">4&times; shorter on the wire</text>
+          <!-- "4× shorter" annotation centered on viewBox (matches the funnel bottom centerline) -->
+          <text x={1080 / 2} y={funnelTopY + (funnelBottomY - funnelTopY) / 2 + 4} text-anchor="middle" class="funnel-label">4&times; shorter on the wire</text>
         </g>
 
         <!-- Bottom row labels -->
