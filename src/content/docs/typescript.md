@@ -123,7 +123,7 @@ const resp = await fetch("http://localhost:8000/v1/completions", {
 });
 ```
 
-`BPETokenizer.encode()` is bit-identical to the upstream model's tokenizer (verified across all four reference bindings). If the server's BPE produces different IDs from yours, [open an issue](https://github.com/wdunn001/Codec/issues) &mdash; the map is wrong.
+`BPETokenizer.encode()` is bit-identical to the upstream model's tokenizer (verified across all reference bindings). If the server's BPE produces different IDs from yours, [open an issue](https://github.com/wdunn001/Codec/issues) &mdash; the map is wrong.
 
 ## Watching for tool calls
 

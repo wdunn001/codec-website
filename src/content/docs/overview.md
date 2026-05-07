@@ -37,6 +37,6 @@ Each Codec frame is **4-byte big-endian length** + **msgpack or protobuf body**.
 
 ## Source-available, BSL 1.1
 
-The protocol and the four reference implementations are published under [BSL 1.1](https://github.com/wdunn001/Codec/blob/main/LICENSE) by Quasarke LLC. Free for non-production use and for production use under US&nbsp;$5M annual revenue. Each release auto-converts to Apache-2.0 four years after publication. For commercial licensing, [licensing@quasarke.com](mailto:licensing@quasarke.com).
+The protocol and the six reference implementations are published under [BSL 1.1](https://github.com/wdunn001/Codec/blob/main/LICENSE) by Quasarke LLC. Free for non-production use and for production use under US&nbsp;$5M annual revenue. Each release auto-converts to Apache-2.0 four years after publication. For commercial licensing, [licensing@quasarke.com](mailto:licensing@quasarke.com).
 
 Next: pick a runtime in the sidebar, or jump to the [quickstart](/docs/quickstart/).

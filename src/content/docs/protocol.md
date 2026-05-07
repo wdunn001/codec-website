@@ -5,7 +5,7 @@ section: Start
 order: 3
 ---
 
-This is a tour of [PROTOCOL.md](https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md), the canonical spec. If you're using one of the four reference implementations you don't need to read it &mdash; the bindings already speak the protocol for you.
+This is a tour of [PROTOCOL.md](https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md), the canonical spec. If you're using one of the six reference implementations you don't need to read it &mdash; the bindings already speak the protocol for you.
 
 ## Layers
 
@@ -126,4 +126,4 @@ Brotli underperforms gzip at every payload size measured.
 
 ## Polyglot bit-identical
 
-The four reference implementations (TypeScript, Python, .NET, C) all produce **byte-identical** wire output for the same inputs. The CI matrix encodes the same prompt with each binding and asserts a SHA match. If your fifth implementation matches the bytes from any one of those, you're correct.
+The six reference implementations (TypeScript, Python, .NET, C, Rust, Java) all produce **byte-identical** wire output for the same inputs. The CI matrix encodes the same prompt with each binding and asserts a SHA match. If your seventh implementation matches the bytes from any one of those, you're correct.

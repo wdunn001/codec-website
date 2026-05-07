@@ -91,6 +91,6 @@ Faster setup, but you lose stream safety. Use the stateful `Translator` whenever
 
 ## See also
 
-- [TypeScript](/docs/typescript/) / [Python](/docs/python/) / [.NET](/docs/dotnet/) walkthroughs &mdash; each ends with a Translator section.
+- [TypeScript](/docs/typescript/) / [Python](/docs/python/) / [.NET](/docs/dotnet/) / [Rust](/docs/rust/) / [Java](/docs/java/) walkthroughs &mdash; each ends with a Translator section.
 - [PROTOCOL.md](https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md) &mdash; the wire spec.
-- The merged PRs that shipped Translator across the four bindings: [PR #8](https://github.com/wdunn001/Codec/pull/8) (.NET), [PR #10](https://github.com/wdunn001/Codec/pull/10) (C-bpe-translator), [PR #12](https://github.com/wdunn001/Codec/pull/12) (C translator).
+- The merged PRs that shipped Translator across the bindings: [PR #8](https://github.com/wdunn001/Codec/pull/8) (.NET), [PR #10](https://github.com/wdunn001/Codec/pull/10) (C-bpe-translator), [PR #12](https://github.com/wdunn001/Codec/pull/12) (C translator).

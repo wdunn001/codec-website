@@ -159,5 +159,5 @@ The bundled SGLang itself is unchanged from upstream and remains under Apache-2.
 ## See also
 
 - [sglang &mdash; vanilla setup](/docs/sglang/) for the DIY path.
-- [TypeScript](/docs/typescript/), [Python](/docs/python/), [.NET](/docs/dotnet/), [C](/docs/c/) walkthroughs &mdash; client-side patterns.
+- [TypeScript](/docs/typescript/), [Python](/docs/python/), [.NET](/docs/dotnet/), [C](/docs/c/), [Rust](/docs/rust/), [Java](/docs/java/) walkthroughs &mdash; client-side patterns.
 - [Tool calling](/docs/tool-calling/) &mdash; ToolWatcher events from the server-side detector that PR #24557 enables.
