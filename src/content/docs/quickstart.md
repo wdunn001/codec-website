@@ -7,7 +7,7 @@ order: 2
 
 This is the fastest path. Pick the language you'd like to write the *client* in &mdash; the *server* (sglang or vLLM) speaks Codec on the same `/v1/completions` endpoint it already serves; no special build.
 
-> **Server prerequisites.** You need an LLM server that speaks Codec on its completions endpoint. As of 2026, [sglang](/docs/sglang/) is the easiest path: any nightly with PR #24483 merged accepts `stream_format: "msgpack"` against any model. vLLM support is in flight ([PR #41765](https://github.com/vllm-project/vllm/pulls)).
+> **Server prerequisites.** You need an LLM server that speaks Codec on its completions endpoint. The fastest path is the pre-built [`codec-sglang` Docker image](/docs/codec-sglang/) &mdash; `docker run --gpus all -p 8080:8080 wdunn001/codec-sglang:latest` and you're done. If you'd rather DIY, see [vanilla sglang](/docs/sglang/) for cherry-picking the two PRs into your own build. vLLM support is in flight ([PR #41765](https://github.com/vllm-project/vllm/pulls)).
 
 ## TypeScript / Node
 

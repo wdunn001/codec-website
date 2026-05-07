@@ -1,11 +1,13 @@
 ---
-title: Server — sglang
-description: How to serve Codec from sglang. No special build — point your Codec client at the existing /v1/completions endpoint.
+title: sglang (vanilla)
+description: Run upstream sglang with the Codec patches applied yourself. Use this when you need a custom build; otherwise prefer the pre-built codec-sglang Docker image.
 section: Server
-order: 1
+order: 2
 ---
 
-[sglang](https://github.com/sgl-project/sglang) is the easiest path to a Codec-speaking server today. As of [PR #24483](https://github.com/sgl-project/sglang/pulls) (merged) the standard sglang `/v1/completions` endpoint accepts `stream_format: "msgpack" | "protobuf"` against any model it can serve.
+> **If you just want a working server**, use the pre-built [codec-sglang Docker image](/docs/codec-sglang/) &mdash; one container, GPU-ready, supervisor and patches already applied. This page is for the DIY path: vanilla upstream sglang plus the two Codec PRs.
+
+[sglang](https://github.com/sgl-project/sglang) is the easiest path to a Codec-speaking server. As of [PR #24483](https://github.com/sgl-project/sglang/pulls) (merged) the standard sglang `/v1/completions` endpoint accepts `stream_format: "msgpack" | "protobuf"` against any model it can serve.
 
 ## Run a Codec-capable sglang server
 
