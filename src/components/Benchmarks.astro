@@ -129,7 +129,7 @@ const toolBars = [
 
       <ul class="bench-legend">
         {series.map((s) => (
-          <li class={s.className.replace("line", "swatch")}>
+          <li class={s.className.replaceAll("line", "swatch")}>
             <span class="swatch__line" aria-hidden="true"></span>
             <span class="swatch__label">{s.label}</span>
           </li>
