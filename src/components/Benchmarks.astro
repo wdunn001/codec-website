@@ -186,12 +186,14 @@ const toolBars = [
 <section id="benchmarks" class="section bench">
   <div class="container">
     <p class="eyebrow">receipts</p>
-    <h2>Real measurements. Live runs. <span class="bench__title-mute">No projections.</span></h2>
+    <h2>What falls out when the inference layer stays token-native.</h2>
     <p class="bench__lede">
-      Numbers below are from the cross-stack benchmark matrix &mdash; same
-      prompt, same model, three real inference engines, six real client
-      languages. Every cell is measured. Sources are linked under each chart
-      and the full SCHEMA-v1 result JSONs live in
+      Compression isn't the headline &mdash; the primitives are. But once
+      every hop runs on raw <code>uint32</code> token IDs, the wire reduction
+      and the tool-call latency floor are measurable byproducts. Numbers
+      below are from the cross-stack benchmark matrix: same prompt, same
+      model, three real inference engines, six real client languages. Every
+      cell is measured. Full SCHEMA-v1 result JSONs in
       <a href="https://github.com/wdunn001/Codec/tree/main/packages/bench/results" rel="noopener"><code>packages/bench/results/</code></a>.
     </p>
 

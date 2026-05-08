@@ -62,17 +62,19 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
   <div class="container">
     <p class="eyebrow">v0.1 &middot; source-available</p>
     <h1 class="hero__title">
-      Token-native binary transport<br/>
-      <span class="hero__title-accent">for AI APIs.</span>
+      The control plane<br/>
+      <span class="hero__title-accent">for AI inference.</span>
     </h1>
     <p class="hero__lede">
-      Codec is a wire format for computer-to-computer AI traffic. Skip the
-      <code>JSON&nbsp;{`{ "role": "user", "content": "..." }`}</code> tax.
-      Stream token IDs as <code>uint32</code> bytes, end to end.
+      Codec is the substrate that lets gateways, routers, agents, and tool
+      dispatchers operate on raw token IDs end-to-end. Detokenize once, at
+      the only edge that needs text &mdash; never per-token, never per-hop.
+      Compression and wire reduction are byproducts; what you actually buy is
+      the ability to run the inference layer like infrastructure.
     </p>
 
     <div class="hero__cta">
-      <a href="#how" class="btn btn--primary">See it on the wire &rarr;</a>
+      <a href="#use-cases" class="btn btn--primary">What it gives you &rarr;</a>
       <a href="https://github.com/wdunn001/Codec" rel="noopener" class="btn">github / wdunn001/Codec</a>
     </div>
 
@@ -206,9 +208,10 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       </svg>
 
       <figcaption class="wire__caption">
-        Same prompt, same vocab. JSON wraps every character in syntax;
-        Codec ships token IDs the model already speaks. The last byte slot
-        is reserved for control signals.
+        Token IDs straight on the wire. Tool-call dispatch, observability,
+        cross-vocab handoff &mdash; all the things you'd want to do at the
+        inference layer reduce to integer compares on the stream. Detokenize
+        becomes a byproduct, not a per-token cost.
       </figcaption>
     </figure>
   </div>

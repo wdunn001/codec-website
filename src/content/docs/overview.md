@@ -1,40 +1,40 @@
 ---
 title: What is Codec?
-description: A token-native binary transport protocol for AI APIs. Replaces JSON-SSE with msgpack or protobuf frames carrying raw token IDs.
+description: A control-plane primitive for AI inference. Lets gateways, routers, agents, and tool dispatchers operate on raw token IDs end-to-end, with detokenization localized at the edges that need text.
 section: Start
 order: 1
 ---
 
-Codec is a wire format for **computer-to-computer** AI traffic. Where JSON-SSE wraps every character of every model output in syntax the LLM never reads, Codec ships **token IDs** &mdash; the integers a model already speaks &mdash; in compact length-prefixed frames.
+**Codec is a control-plane primitive for AI inference.** It's the substrate that lets gateways, routers, agents, tool dispatchers, and observers operate on raw token IDs end-to-end &mdash; no detokenize on the hot path, no JSON-parse per token, no UTF-8 round-trip at every hop. Compression and wire reduction are byproducts of the framing; what you actually buy is the ability to run the inference layer like infrastructure.
 
 It separates three concerns that today's `/v1/chat/completions` mashes together:
 
-1. **Token IDs** &mdash; the model layer. The protocol carries `uint32` IDs directly.
-2. **Framing** &mdash; the transport layer. Length-prefixed msgpack or protobuf frames.
-3. **UTF-8 text** &mdash; the presentation layer. Detokenization happens at the *edge*, only when a human is going to read the output.
+1. **Token IDs** &mdash; the model layer. The protocol carries `uint32` IDs directly. Routing, sampling, observability, and tool dispatch all reduce to integer compares on the stream.
+2. **Framing** &mdash; the transport layer. Length-prefixed msgpack or protobuf frames; the same wire on every engine in the matrix.
+3. **UTF-8 text** &mdash; the presentation layer. Detokenization happens at the *edge*, only at the boundary that has a real reason to need text (a human display, a JSON-RPC tool call, a logging sink). Never per-token, never per-hop.
 
-The wins:
+Three primitives fall out of that layering:
 
-- **Wire bytes collapse** &mdash; up to **1,404&times;** smaller than JSON-SSE at 2,048-token streams on sglang with the full Codec stack (msgpack + dict-zstd). 126&times; on vllm and 33&times; on llama.cpp with gzip alone. Live cross-stack numbers in [RESULTS.md](https://github.com/wdunn001/Codec/blob/main/RESULTS.md).
-- **No latency tax** &mdash; TTFB at 2 K tokens is 40.7 ms (llama.cpp) / 45.6 ms (sglang) / 67.3 ms (vllm) on the Codec path, within 1 ms of JSON-SSE on the same engines. Wire reduction is essentially free in time.
-- **Tool-call detection without detokenizing** &mdash; servers and middleboxes dispatch on reserved control IDs with a single 32-bit compare per token: 0.61 ms vs 60.4 ms on a 1 M-token stream (~100&times; faster than the text path).
-- **Cross-vocab agent handoff** &mdash; the `Translator` re-tokenizes a stream from one model's vocab to another's mid-flight, no UTF-8 on the wire. Measured on a Llama-3 &rarr; Qwen-2 handoff at 2,048 tokens, the bridge produces Qwen-2 IDs **~30% sooner** (**10.9 ms &rarr; 7.6 ms**, the latency the next agent waits on) and ingests **15.1&times;** fewer wire bytes (10.4 KB &rarr; 709 B, gzip on both paths). Both paths emit byte-identical Qwen-2 IDs &mdash; the bench asserts strict equality.
+- **Wire-native streaming.** Token IDs flow as length-prefixed binary frames over plain HTTP. Compression layers on top of the same wire. Receipts: a short chat reply ships in 226&nbsp;B (vs 15.2&nbsp;KB JSON-SSE = ~67&times;); a 2 K-token agent stream in 354&nbsp;B (1,404&times;) on sglang with the full stack. TTFB is within 1&nbsp;ms of the JSON path on the same server. [Cross-stack matrix](https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-08T01-15-02Z/MATRIX.md) covers three engines and six client languages.
+- **Tool-call dispatch without detokenization.** `ToolWatcher` matches reserved control IDs in the raw token stream &mdash; one 32-bit compare per token. Microbench: **0.61 ms vs 60.4 ms** on a 1 M-token stream (~100&times; faster than detokenize+regex). The [MetaMCP gateway](/docs/codec-metamcp/) is the canonical place this primitive lives in production; the same hook works in any inference proxy, agent runtime, or middleware.
+- **Cross-vocab agent handoff.** `Translator` pipes a stream from V_A to V_B via one in-process detokenize/retokenize step &mdash; UTF-8 never crosses the wire. Llama-3 &rarr; Qwen-2 at 2 K tokens: the bridge produces target-vocab IDs **~30% sooner** (10.9&nbsp;ms &rarr; 7.7&nbsp;ms bridge CPU) on **15.1&times;** fewer wire bytes. Both paths emit byte-identical Qwen-2 output; the bench asserts strict equality.
 
 ## Wire format in five sentences
 
 Each Codec frame is **4-byte big-endian length** + **msgpack or protobuf body**. The body carries a packed array of `uint32` token IDs, a `done` boolean, and an optional `finish_reason`. A vocab handshake (a sha256-addressed JSON map &mdash; see [codec-maps](https://github.com/wdunn001/codec-maps)) tells both ends which tokenizer the IDs belong to. Frames stream over plain HTTP responses, with `Accept-Encoding: gzip` for streaming-safe compression. That's the whole spec &mdash; nothing else.
 
-## Where Codec wins
+## Where Codec earns its keep
 
 Codec is opt-in per request (`stream_format: "msgpack" | "protobuf"`, default `"json"`), so adding it never disturbs existing JSON-SSE traffic on the same endpoint. Pick the format that fits the call.
 
-- **Human-facing chat UIs.** The wire is still ~1,400&times; smaller at 2 K tokens (sglang dict-zstd), TTFB is within 1 ms of JSON-SSE on the same server, and the client decodes once into a string before render. Mobile, edge, and chat-platform-scale traffic all benefit; the bandwidth bill drops without the user noticing anything except faster paint on flaky networks. See [the cross-stack benchmark matrix](https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-08T01-15-02Z/MATRIX.md).
-- **Agent-to-agent traffic.** No human is reading these tokens. The vocab is fixed at handshake, the dict is pre-shared, and msgpack frames collapse to a control byte and a delta. This is the lane Codec was built for &mdash; the headline 1,404&times; lives here.
-- **Streaming long outputs at scale.** The wire bytes are roughly content-length divided by 4 uncompressed; with dict-zstd the marginal cost per extra token is two compressed bytes. Codec's win compounds with payload size.
-- **Server-side tool dispatch.** Watching token IDs for control markers is essentially free &mdash; a single 32-bit compare per token. Watching text for `<tool_call>` requires detokenizing every chunk: 0.61 ms vs 60.4 ms on a 1 M-token stream.
-- **Heterogeneous model meshes.** `Translator` lets a Llama-vocab agent emit a stream that a Qwen-vocab agent consumes without going through English on the wire. The actual measurement at 2 K tokens: bridge produces target-vocab IDs **~30% sooner** (10.9 ms &rarr; 7.6 ms) and ingests **15.1&times;** fewer wire bytes &mdash; the response-time win is the irreducible part because it bounds how fast agent B can issue its first new token after A's done. Source: [`packages/bench/results/2026-05-08T01-15-02Z/translator/`](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-08T01-15-02Z/translator).
+- **Inference gateways.** Token IDs at the wire and at the dispatch layer. ToolWatcher signals fire on raw IDs in real time; the gateway's text-touching code (JSON-RPC dispatch to MCP servers, human-display sinks) runs once at the seam. The [MetaMCP gateway](/docs/codec-metamcp/) ships this pattern as a docker image; the same primitive is reusable in any proxy, agent runtime, or middleware.
+- **Heterogeneous model meshes.** `Translator` carries one model's stream into another's vocabulary without UTF-8 ever crossing the wire. Measured Llama-3 &rarr; Qwen-2 handoff: **~30% less bridge CPU** and **15.1&times; smaller wire**, byte-identical Qwen-2 output. Source: [`packages/bench/results/2026-05-08T01-15-02Z/translator/`](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-08T01-15-02Z/translator).
+- **Agent-to-agent traffic.** No human is reading these tokens. Vocab fixed at handshake, dict pre-shared, msgpack frames collapse to a control byte plus a delta. The headline **1,404&times;** at 2 K tokens lives here.
+- **Streaming long outputs at scale.** Wire bytes &asymp; content-length / 4 uncompressed; with dict-zstd the marginal cost per extra token is two compressed bytes. The win compounds with payload size.
+- **Human-facing chat UIs.** ~67&times; smaller wire on a short reply, ~1,400&times; on long ones, TTFB within 1&nbsp;ms of JSON-SSE. The client decodes once into a string at the edge before render; mobile, edge, and chat-platform-scale traffic all benefit. Bandwidth drops without users seeing anything except faster paint on flaky networks.
+- **Observable inference.** Routing, sampling decisions, anomaly detection, SLO checks &mdash; everything you'd want a service mesh to do &mdash; reduces to integer comparisons on token streams. No log-scraping a JSON envelope; no detokenize-every-chunk pipeline.
 
-The one constraint: **Codec is a wire format, not a transformation gateway.** Both client and server need to speak it. If you're calling a third-party JSON-only API you don't control, that's outside Codec's scope &mdash; the protocol can't reduce bytes a service refuses to emit. Stand up your own and you control both ends.
+The one constraint: **Codec is a wire-and-dispatch primitive, not a JSON-to-Codec transformation gateway.** Both client and server need to speak it. If you're calling a third-party JSON-only API you don't control, that's outside Codec's scope &mdash; we can't compress bytes a service refuses to emit. Stand up your own and you control both ends.
 
 ### Stand up a Codec-speaking server in 30 seconds
 
@@ -49,5 +49,9 @@ If you'd rather build from source against vanilla upstream, see [sglang &mdash; 
 ## Source-available, BSL 1.1
 
 The protocol and the six reference implementations are published under [BSL 1.1](https://github.com/wdunn001/Codec/blob/main/LICENSE) by Quasarke LLC. Free for non-production use and for production use under US&nbsp;$5M annual revenue. Each release auto-converts to Apache-2.0 four years after publication. For commercial licensing, [licensing@quasarke.com](mailto:licensing@quasarke.com).
+
+## Patent posture
+
+Quasarke is pursuing patent protection on certain Codec mechanisms. The wire format, handshake, and content-addressed map distribution described in the spec are intended to be made available on royalty-free or FRAND terms to implementers of the Codec specification when patents issue. Adjacent improvements (ToolWatcher, Translator, the dictionary system, Codec-Zstd-Dict negotiation) may be commercially licensed separately &mdash; a Codec-compliant implementation does not require those modules. Full text in [`PATENTS.md`](https://github.com/wdunn001/Codec/blob/main/PATENTS.md).
 
 Next: pick a runtime in the sidebar, or jump to the [quickstart](/docs/quickstart/).

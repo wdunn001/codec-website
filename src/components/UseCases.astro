@@ -10,72 +10,77 @@
 
 <section id="use-cases" class="section usecases">
   <div class="container">
-    <p class="eyebrow">where Codec wins</p>
-    <h2>One wire format. Three traffic classes. <span class="usecases__title-mute">Different math each time.</span></h2>
+    <p class="eyebrow">control-plane primitives</p>
+    <h2>Three operations. <span class="usecases__title-mute">All on raw token IDs.</span></h2>
     <p class="usecases__lede">
-      Codec moves token IDs, not text. Whoever's on either end &mdash; user,
-      model, agent, tool &mdash; the bytes are the same shape. But the
-      <em>amount</em> of byte savings depends on who's talking to whom.
+      Codec gives the inference layer the same primitives a service mesh gives
+      a microservice fleet: <em>route</em>, <em>dispatch</em>, <em>translate</em>.
+      Run them on raw <code>uint32</code> tokens, never on text. The
+      compression you see in the receipts below is what falls out for free
+      when you stop reserializing every hop.
     </p>
 
     <div class="usecases__grid">
       <article class="uc">
         <header class="uc__head">
-          <span class="uc__tag">human &rarr; model</span>
-          <h3>The chat path</h3>
+          <span class="uc__tag">route</span>
+          <h3>Wire-native streaming</h3>
         </header>
         <p class="uc__body">
-          Someone types a question. The user's prompt and the model's reply
-          are both wire-native &mdash; no UTF-8 round-trips on either end.
-          The reply stream is where the bytes actually flow on a chat UI: a
-          short chat-length reply shrinks <strong>~67&times;</strong> on the
-          wire (15.2 KB JSON-SSE &rarr; 226 B Codec+gzip on sglang at 64
-          tokens), and longer answers scale up to <strong>1,404&times;</strong>
-          at 2&nbsp;K tokens. TTFB stays within 1&nbsp;ms of plain JSON-SSE
-          on the same server &mdash; faster paint on flaky networks, no
-          latency tax.
+          Token IDs flow as length-prefixed binary frames &mdash; no JSON
+          envelope per token, no UTF-8 round-trip at every hop. Compression
+          is a layer on the same wire (gzip / brotli / dict-zstd). Same
+          framing on every engine in the matrix; clients in six languages
+          producing byte-identical output. Receipts: a short chat reply
+          shrinks <strong>~67&times;</strong> (15.2&nbsp;KB JSON-SSE &rarr;
+          226&nbsp;B Codec+gzip), a 2&nbsp;K-token agent stream
+          <strong>1,404&times;</strong>. TTFB unchanged.
         </p>
         <ul class="uc__metrics">
-          <li><span class="uc__num">67&times;</span><span>short chat reply</span></li>
-          <li><span class="uc__num">0</span><span>UTF-8 round-trips</span></li>
+          <li><span class="uc__num">1,404&times;</span><span>peak wire reduction</span></li>
+          <li><span class="uc__num">3</span><span>engines, one wire</span></li>
         </ul>
       </article>
 
       <article class="uc uc--m2m">
         <header class="uc__head">
-          <span class="uc__tag uc__tag--accent">model &rarr; model</span>
-          <h3>The agent backbone</h3>
+          <span class="uc__tag uc__tag--accent">dispatch</span>
+          <h3>Tool calls without detokenize</h3>
         </header>
         <p class="uc__body">
-          One model hands off context to another. No human eyes on the wire,
-          no JSON for human readers to parse. The vocabulary is fixed at
-          handshake, the dict is pre-shared, and msgpack frames collapse to
-          a control byte plus a delta. <strong>1,404&times;</strong> at 2&nbsp;K
-          tokens on sglang &mdash; <strong>237 B/token down to 0.17 B/token</strong>.
-          This is the lane Codec was built for.
+          ToolWatcher matches reserved control IDs in the raw token stream
+          with a single 32-bit compare per token &mdash; no detokenize, no
+          regex, no per-chunk text scan. The
+          <a href="/docs/codec-metamcp/">MetaMCP gateway</a> is where the
+          primitive lives in production, but the same hook works in any
+          inference proxy, agent runtime, or middleware. Detokenize runs
+          once at the JSON-RPC seam; everything upstream stays
+          token-native. Microbench: <strong>0.61&nbsp;ms vs 60.4&nbsp;ms</strong>
+          on a 1&nbsp;M-token stream.
         </p>
         <ul class="uc__metrics">
-          <li><span class="uc__num">1,404&times;</span><span>at 2 K tokens</span></li>
-          <li><span class="uc__num">354 B</span><span>per 2 K-token reply</span></li>
+          <li><span class="uc__num">100&times;</span><span>vs detokenize+regex</span></li>
+          <li><span class="uc__num">0</span><span>text on the hot path</span></li>
         </ul>
       </article>
 
       <article class="uc">
         <header class="uc__head">
-          <span class="uc__tag">model &rarr; tool</span>
-          <h3>The tool-call boundary</h3>
+          <span class="uc__tag">translate</span>
+          <h3>Cross-vocab agent handoff</h3>
         </header>
         <p class="uc__body">
-          The model emits a reserved control ID; the runtime sees it as a
-          single 32-bit compare per token instead of detokenizing back to
-          UTF-8 and regex-matching <code>&lt;tool_call&gt;</code>.
-          <strong>100&times; faster</strong> at 1&nbsp;M tokens on the
-          ToolWatcher microbench &mdash; sub-millisecond turnaround on every
-          single tool boundary, in-band with the stream.
+          A Llama-3 agent's stream feeds a Qwen-2 agent through one
+          in-process detokenize / retokenize step. UTF-8 never crosses
+          the wire. At 2&nbsp;K tokens the bridge produces target-vocab
+          IDs <strong>~30% sooner</strong> (10.9&nbsp;ms &rarr;
+          7.7&nbsp;ms of bridge CPU) on <strong>15.1&times;</strong>
+          fewer wire bytes. Both paths emit byte-identical Qwen-2 output;
+          the bench asserts strict equality.
         </p>
         <ul class="uc__metrics">
-          <li><span class="uc__num">100&times;</span><span>vs detokenize+regex</span></li>
-          <li><span class="uc__num">0.61 ms</span><span>per 1 M tokens</span></li>
+          <li><span class="uc__num">30%</span><span>faster bridge</span></li>
+          <li><span class="uc__num">15.1&times;</span><span>smaller wire</span></li>
         </ul>
       </article>
     </div>
