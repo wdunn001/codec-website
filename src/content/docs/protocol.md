@@ -98,7 +98,7 @@ A *dialect map* is a JSON document that fully describes a tokenizer:
 
 Maps are addressed by **sha256 of the canonical JSON bytes**. `loadMap({url, hash})` is `fetch + verify + cache`. A given `(url, hash)` pair always resolves to byte-identical bytes &mdash; or `loadMap` raises.
 
-The community-curated set of pre-built maps for major model families (Llama, Qwen, Mistral, GPT-OSS, etc.) lives at [github.com/wdunn001/codec-maps](https://github.com/wdunn001/codec-maps).
+[`github.com/wdunn001/codec-maps`](https://github.com/wdunn001/codec-maps) hosts a starter set of pre-generated maps &mdash; Llama, Qwen, Mistral, Phi, Gemma, DeepSeek, Falcon, SmolLM2, Codestral, and more &mdash; but the registry isn't a closed list. Any model with a Hugging Face `tokenizer.json` can have a map: install [`@codecai/maps-cli`](https://www.npmjs.com/package/@codecai/maps-cli) and run `codec-maps generate <tokenizer.json>` to produce a deterministic, sha256-addressable map for your fine-tune, your private model, or anything else &mdash; same format, same `loadMap` call, same wire bytes. The codec-maps repo accepts PRs for new models too, but you don't need to wait on one to use Codec.
 
 ### Discovery
 

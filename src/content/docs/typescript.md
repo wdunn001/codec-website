@@ -41,7 +41,7 @@ const map = await loadMap({
 - Verifies the bytes against the supplied `hash` (mismatch throws &mdash; this is your supply-chain check).
 - Caches the parsed map by hash so subsequent loads are free.
 
-Maps for the major model families are pre-built in [codec-maps](https://github.com/wdunn001/codec-maps); their hashes are pinned in that repo's README.
+[codec-maps](https://github.com/wdunn001/codec-maps) ships pre-generated maps for a starter set (Llama, Qwen, Mistral, Phi, Gemma, DeepSeek, etc.) with hashes pinned in its README. For anything not in that list &mdash; a fine-tune, a private model, a brand-new release &mdash; install [`@codecai/maps-cli`](https://www.npmjs.com/package/@codecai/maps-cli) and run `codec-maps generate <tokenizer.json>` to produce your own map locally. Same format, same `loadMap` call.
 
 If the vendor publishes their own map under [`/.well-known/codec/`](/docs/discovery/), you can skip the URL/hash entirely and resolve from `(origin, id)`:
 

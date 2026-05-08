@@ -13,8 +13,10 @@
         <h3>Handshake the vocab.</h3>
         <p>
           Client and server agree on which tokenizer to speak before any token
-          ID crosses the wire. Vocabularies are versioned and content-addressed
-          via <a href="https://github.com/wdunn001/codec-maps" rel="noopener">codec-maps</a>.
+          ID crosses the wire. Maps are sha256-addressed JSON: pull a
+          pre-generated one from <a href="https://github.com/wdunn001/codec-maps" rel="noopener">codec-maps</a>,
+          or generate one for any model with a <code>tokenizer.json</code>
+          via the <a href="https://www.npmjs.com/package/@codecai/maps-cli" rel="noopener">maps CLI</a>.
         </p>
       </li>
       <li>
