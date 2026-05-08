@@ -19,6 +19,10 @@ type Series = {
 // All numbers below are from MATRIX.md §3 (Python row, sglang). Other
 // 5 client languages (TS/.NET/C/Rust/Java) agree byte-identically on
 // every Codec cell — see the cross-stack panel further down.
+//
+// X coordinates: data points at 90 / 380 / 600 (was 680). The shift
+// inward gives ~110 px of right margin for the end-of-line value
+// labels — earlier "485.2 KB" overflowed the 720-unit viewBox.
 const series: Series[] = [
   {
     label: "JSON-SSE",
@@ -26,7 +30,7 @@ const series: Series[] = [
     values: [
       { x: 90,  bytes: 15200,  display: "15.2 KB" },
       { x: 380, bytes: 121600, display: "121.6 KB" },
-      { x: 680, bytes: 485200, display: "485.2 KB" },
+      { x: 600, bytes: 485200, display: "485.2 KB" },
     ],
   },
   {
@@ -35,7 +39,7 @@ const series: Series[] = [
     values: [
       { x: 90,  bytes: 975,   display: "975 B" },
       { x: 380, bytes: 7616,  display: "7.6 KB" },
-      { x: 680, bytes: 30000, display: "30.0 KB" },
+      { x: 600, bytes: 30000, display: "30.0 KB" },
     ],
   },
   {
@@ -44,9 +48,18 @@ const series: Series[] = [
     values: [
       { x: 90,  bytes: 226,  display: "226 B" },
       { x: 380, bytes: 730,  display: "730 B" },
-      { x: 680, bytes: 354,  display: "354 B" },
+      { x: 600, bytes: 354,  display: "354 B" },
     ],
   },
+];
+
+// TTFB at 2 K tokens for the same sglang server, msgpack + gzip path,
+// from MATRIX.md §4 body-byte cohort. Pinned next to the rightmost
+// data points so the chart never reads as "smaller wire, hidden
+// latency cost" — it's the same ~45 ms either way on sglang.
+const ttfbAnnotations = [
+  { x: 600, label: "JSON-SSE: ~46 ms TTFB", className: "ttfb-pin ttfb-pin--json" },
+  { x: 600, label: "Codec gzip: 45.6 ms TTFB", className: "ttfb-pin ttfb-pin--codec" },
 ];
 
 // Map a byte count onto the plot's Y coordinate (log10).
@@ -206,7 +219,7 @@ const toolBars = [
             { y: 310, label: "100 B" },
           ].map((g) => (
             <g class="grid">
-              <line x1="80" x2="690" y1={g.y} y2={g.y} />
+              <line x1="80" x2="610" y1={g.y} y2={g.y} />
               <text x="72" y={g.y + 4} text-anchor="end" class="axis-label">{g.label}</text>
             </g>
           ))}
@@ -215,7 +228,7 @@ const toolBars = [
           {[
             { x: 90,  label: "64 tokens" },
             { x: 380, label: "512 tokens" },
-            { x: 680, label: "2,048 tokens" },
+            { x: 600, label: "2,048 tokens" },
           ].map((t) => (
             <text x={t.x} y={335} text-anchor="middle" class="axis-label">{t.label}</text>
           ))}
@@ -230,6 +243,25 @@ const toolBars = [
               <text x={s.values[s.values.length - 1].x + 10} y={yFor(s.values[s.values.length - 1].bytes) + 4} class="line-end-label">{s.values[s.values.length - 1].display}</text>
             </g>
           ))}
+
+          <!-- TTFB pin block: same TTFB on both wire paths, so the
+               chart never reads as "smaller wire, hidden latency
+               cost". Bytes shrink 1,404x; first-body-byte stays the
+               same. Placed in the empty band between the Codec
+               (identity) and Codec (+gzip) lines so it can't collide
+               with the JSON-SSE label at y~52 or the Codec id label
+               at y~141. -->
+          <g class="ttfb-pin-block">
+            <rect x="425" y="180" width="265" height="64" rx="6" class="ttfb-pin-bg" />
+            <text x="437" y="200" class="ttfb-pin-head">TTFB @ 2 K tokens · sglang · same wire</text>
+            <text x="437" y="219" class="ttfb-pin-line">
+              <tspan class="ttfb-pin-key">JSON-SSE</tspan>
+              <tspan class="ttfb-pin-val" dx="8">~46 ms</tspan>
+              <tspan class="ttfb-pin-key" dx="14">Codec + gzip</tspan>
+              <tspan class="ttfb-pin-val ttfb-pin-val--codec" dx="8">45.6 ms</tspan>
+            </text>
+            <text x="437" y="236" class="ttfb-pin-foot">first-body-byte median, body-byte cohort</text>
+          </g>
         </svg>
       </div>
 
@@ -245,9 +277,10 @@ const toolBars = [
       <footer class="bench-card__foot">
         At 2&nbsp;K tokens the JSON-SSE stream ships <strong>485&nbsp;KB</strong>;
         Codec msgpack with dict-zstd ships <strong>354&nbsp;bytes</strong>.
-        That's <strong>237&nbsp;B/token &rarr; 0.17&nbsp;B/token</strong>.
-        Wall-clock overhead is &lt;&nbsp;1% &mdash; the wire reduction is
-        essentially free in time.
+        That's <strong>237&nbsp;B/token &rarr; 0.17&nbsp;B/token</strong>
+        at the <strong>same TTFB</strong> &mdash; first-body-byte lands
+        at ~45&nbsp;ms either way on the same sglang server. The wire
+        reduction is essentially free in latency.
       </footer>
     </article>
 
@@ -724,6 +757,34 @@ const toolBars = [
   .swatch--codec-id .swatch__label { color: color-mix(in srgb, var(--data) 80%, var(--fg-muted)); }
   .swatch--codec-gz .swatch__label { color: color-mix(in srgb, var(--control) 80%, var(--fg-muted)); }
   .swatch__sub { color: var(--fg-faint); font-size: 0.85em; }
+
+  /* Chart 1 TTFB pin block — top-right of the chart, paired with the
+     line endpoints so a viewer doesn't mistake the wire collapse for
+     a latency tradeoff. */
+  .ttfb-pin-bg {
+    fill: color-mix(in srgb, var(--bg) 80%, transparent);
+    stroke: var(--border-strong);
+    stroke-width: 1;
+  }
+  .ttfb-pin-head {
+    fill: var(--fg-faint);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .ttfb-pin-line { font-family: var(--font-mono); font-size: 12px; }
+  .ttfb-pin-key { fill: #9CA3AF; }
+  .ttfb-pin-val { fill: var(--fg); font-weight: 600; }
+  .ttfb-pin-key--codec { fill: color-mix(in srgb, var(--control) 80%, var(--fg-muted)); }
+  .ttfb-pin-val--codec { fill: var(--control); font-weight: 700; }
+  .ttfb-pin-foot {
+    fill: var(--fg-faint);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
 
   /* Cross-stack engine rows (chart 2). The JSON-SSE bar fills most of the
      row width; the Codec line is a thin marker bar followed by its label
