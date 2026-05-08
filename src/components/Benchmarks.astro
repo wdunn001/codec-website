@@ -124,7 +124,35 @@ const ttfbMaxMs = 80;
 const ttfbPlotX0 = 140;
 const ttfbPlotW  = 380;
 
-// ============== CHART 4: tool-call detection ==
+// ============== CHART 4: cross-vocab handoff ==
+//
+// Numbers from packages/bench/results/2026-05-08T01-15-02Z/translator/python.json
+// Two paths timed against the SAME source ID stream (Llama-3 IDs):
+//   - Codec wire:   IDs cross the wire, bridge runs Translator(Llama->Qwen)
+//                   in-process (detok + retok stays in-memory)
+//   - JSON-SSE:     A.detokenize -> SSE chunks cross the wire,
+//                   bridge parses SSE + BPE-encodes for Qwen
+// Both paths produce identical Qwen-2 IDs (asserted by the bench).
+type XvocRow = {
+  size: number;
+  codecBytes: number;
+  jsonBytes: number;
+  ratio: string;
+  codecCpuMs: number;
+  jsonCpuMs: number;
+};
+const xvocRows: XvocRow[] = [
+  { size: 64,   codecBytes:  215, jsonBytes:    585, ratio: "2.7×",  codecCpuMs: 1.2, jsonCpuMs: 1.2 },
+  { size: 512,  codecBytes:  672, jsonBytes:   2923, ratio: "4.3×",  codecCpuMs: 3.9, jsonCpuMs: 4.8 },
+  { size: 2048, codecBytes:  709, jsonBytes:  10683, ratio: "15.1×", codecCpuMs: 7.7, jsonCpuMs: 10.9 },
+];
+// Format helpers
+const fmtBytes = (n: number) => n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`;
+const xvocMaxBytes = 11000;
+const xvocPlotX0 = 90;
+const xvocPlotW  = 380;
+
+// ============== CHART 5: tool-call detection ==
 //
 // `lines` is an array of label rows so wide labels wrap into multiple
 // tspans within a single SVG <text> — SVG doesn't auto-wrap and a
@@ -315,7 +343,69 @@ const toolBars = [
       </footer>
     </article>
 
-    <!-- ============== CHART 4: tool-call detection ============== -->
+    <!-- ============== CHART 4: cross-vocab handoff (Llama-3 → Qwen-2) ============== -->
+    <article class="bench-card">
+      <header class="bench-card__head">
+        <div>
+          <h3 class="bench-card__title">Cross-vocab handoff &mdash; Llama-3 &rarr; Qwen-2</h3>
+          <p class="bench-card__sub">Same source IDs, two wire paths &middot; gzip on both &middot; bridge produces byte-identical Qwen-2 output</p>
+        </div>
+        <div class="bench-card__hero">
+          <span class="bench-card__hero-num">15.1&times;</span>
+          <span class="bench-card__hero-cap">smaller wire @ 2&nbsp;K, gzip both paths</span>
+        </div>
+      </header>
+
+      <div class="bench-chart">
+        <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart: cross-vocab handoff from Llama-3 to Qwen-2 at 64, 512, and 2048 tokens. JSON-SSE wire bytes are 585, 2923, and 10683; Codec msgpack wire bytes are 215, 672, and 709. Codec is 2.7x, 4.3x, and 15.1x smaller respectively.">
+          {xvocRows.map((r, i) => {
+            const yGroup = 30 + i * 90;
+            const codecW = Math.max(2, (r.codecBytes / xvocMaxBytes) * xvocPlotW);
+            const jsonW  = Math.max(2, (r.jsonBytes  / xvocMaxBytes) * xvocPlotW);
+            return (
+              <g class="xvoc-group">
+                {/* size label on the left */}
+                <text x={xvocPlotX0 - 14} y={yGroup + 32} text-anchor="end" class="bar-label">
+                  <tspan x={xvocPlotX0 - 14} dy="-0.6em">{r.size}</tspan>
+                  <tspan x={xvocPlotX0 - 14} dy="1.2em">tokens</tspan>
+                </text>
+
+                {/* JSON-SSE bar (top) */}
+                <g class="xvoc-bar xvoc-bar--json">
+                  <rect x={xvocPlotX0} y={yGroup} width={jsonW} height="26" rx="3" />
+                  <text x={xvocPlotX0 + 8} y={yGroup + 17} class="xvoc-inline-label">JSON-SSE</text>
+                  <text x={xvocPlotX0 + jsonW + 10} y={yGroup + 17} class="bar-value">{fmtBytes(r.jsonBytes)}</text>
+                </g>
+
+                {/* Codec msgpack bar (bottom) */}
+                <g class="xvoc-bar xvoc-bar--codec">
+                  <rect x={xvocPlotX0} y={yGroup + 32} width={codecW} height="26" rx="3" />
+                  <text x={xvocPlotX0 + 8} y={yGroup + 49} class="xvoc-inline-label">Codec msgpack</text>
+                  <text x={xvocPlotX0 + codecW + 10} y={yGroup + 49} class="bar-value">{fmtBytes(r.codecBytes)}</text>
+                </g>
+
+                {/* ratio on the right */}
+                <text x={690} y={yGroup + 35} text-anchor="end" class="xvoc-ratio">{r.ratio}</text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      <footer class="bench-card__foot">
+        The bridge takes Llama-3 IDs over the wire, runs the in-process
+        <code>Translator(Llama&nbsp;3&nbsp;&rarr;&nbsp;Qwen&nbsp;2)</code>, and
+        hands Qwen-2 IDs to the next agent. UTF-8 never crosses the wire.
+        At 2&nbsp;K tokens that's <strong>10.7&nbsp;KB &rarr; 709&nbsp;B</strong>
+        on the wire and <strong>10.9&nbsp;ms &rarr; 7.6&nbsp;ms</strong> of
+        bridge CPU &mdash; <strong>~30%</strong> less work to translate
+        because the bridge skips JSON-SSE parse and re-tokenize-from-scratch.
+        Both paths emit the same Qwen-2 token stream byte-for-byte; the
+        bench asserts strict equality before reporting numbers.
+      </footer>
+    </article>
+
+    <!-- ============== CHART 5: tool-call detection ============== -->
     <article class="bench-card bench-card--solo">
       <header class="bench-card__head">
         <div>
@@ -675,6 +765,39 @@ const toolBars = [
   .ttfb-bar--llama  rect { fill: color-mix(in srgb, var(--control) 80%, transparent); animation-delay: 0.05s; }
   .ttfb-bar--sglang rect { fill: color-mix(in srgb, var(--control) 60%, transparent); animation-delay: 0.20s; }
   .ttfb-bar--vllm   rect { fill: color-mix(in srgb, var(--data) 75%, transparent); animation-delay: 0.35s; }
+
+  /* Cross-vocab handoff bars (chart 4) */
+  .xvoc-bar rect {
+    transform-origin: left center;
+    animation: barIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform: scaleX(0);
+  }
+  .xvoc-bar--json rect  { fill: color-mix(in srgb, #6B7280 60%, transparent); animation-delay: 0.10s; }
+  .xvoc-bar--codec rect { fill: color-mix(in srgb, var(--control) 70%, transparent); animation-delay: 0.30s; }
+  .xvoc-inline-label {
+    fill: var(--bg);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .xvoc-bar--json .xvoc-inline-label  { fill: #1F2937; }
+  .xvoc-bar--codec .xvoc-inline-label { fill: #032018; }
+  .xvoc-bar .bar-value {
+    fill: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .xvoc-bar--json  .bar-value { fill: #9CA3AF; }
+  .xvoc-bar--codec .bar-value { fill: var(--control); }
+  .xvoc-ratio {
+    fill: var(--data);
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
 
   /* Tool-call bars (chart 4) */
   .tool-bar rect {
