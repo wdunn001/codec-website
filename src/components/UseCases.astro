@@ -22,18 +22,21 @@
       <article class="uc">
         <header class="uc__head">
           <span class="uc__tag">human &rarr; model</span>
-          <h3>The prompt path</h3>
+          <h3>The chat path</h3>
         </header>
         <p class="uc__body">
-          Someone types a question. The string round-trips into tokens on the
-          server &mdash; the same tokens the client could have produced
-          locally. Codec sends them directly: <strong>4&times; smaller</strong>
-          on a typical short prompt and <strong>0 detokenize hops</strong> per
-          message. The win is small per request and huge in aggregate at
-          chat-platform scale.
+          Someone types a question. The user's prompt and the model's reply
+          are both wire-native &mdash; no UTF-8 round-trips on either end.
+          The reply stream is where the bytes actually flow on a chat UI: a
+          short chat-length reply shrinks <strong>~67&times;</strong> on the
+          wire (15.2 KB JSON-SSE &rarr; 226 B Codec+gzip on sglang at 64
+          tokens), and longer answers scale up to <strong>1,404&times;</strong>
+          at 2&nbsp;K tokens. TTFB stays within 1&nbsp;ms of plain JSON-SSE
+          on the same server &mdash; faster paint on flaky networks, no
+          latency tax.
         </p>
         <ul class="uc__metrics">
-          <li><span class="uc__num">4&times;</span><span>typical prompt</span></li>
+          <li><span class="uc__num">67&times;</span><span>short chat reply</span></li>
           <li><span class="uc__num">0</span><span>UTF-8 round-trips</span></li>
         </ul>
       </article>
