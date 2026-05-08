@@ -1,0 +1,182 @@
+---
+// UseCases — three columns showing where Codec wins, framed by who's
+// at each end of the wire. Pulled from the cross-stack matrix in
+// packages/bench/results/2026-05-08T01-15-02Z/MATRIX.md.
+//
+// The dict-zstd numbers (354 B at 2 K tokens on sglang) are model-to-model
+// territory — humans never see the bytes, the dict is pre-shared once,
+// and msgpack frames compress to a control byte and a delta.
+---
+
+<section id="use-cases" class="section usecases">
+  <div class="container">
+    <p class="eyebrow">where Codec wins</p>
+    <h2>One wire format. Three traffic classes. <span class="usecases__title-mute">Different math each time.</span></h2>
+    <p class="usecases__lede">
+      Codec moves token IDs, not text. Whoever's on either end &mdash; user,
+      model, agent, tool &mdash; the bytes are the same shape. But the
+      <em>amount</em> of byte savings depends on who's talking to whom.
+    </p>
+
+    <div class="usecases__grid">
+      <article class="uc">
+        <header class="uc__head">
+          <span class="uc__tag">human &rarr; model</span>
+          <h3>The prompt path</h3>
+        </header>
+        <p class="uc__body">
+          Someone types a question. The string round-trips into tokens on the
+          server &mdash; the same tokens the client could have produced
+          locally. Codec sends them directly: <strong>4&times; smaller</strong>
+          on a typical short prompt and <strong>0 detokenize hops</strong> per
+          message. The win is small per request and huge in aggregate at
+          chat-platform scale.
+        </p>
+        <ul class="uc__metrics">
+          <li><span class="uc__num">4&times;</span><span>typical prompt</span></li>
+          <li><span class="uc__num">0</span><span>UTF-8 round-trips</span></li>
+        </ul>
+      </article>
+
+      <article class="uc uc--m2m">
+        <header class="uc__head">
+          <span class="uc__tag uc__tag--accent">model &rarr; model</span>
+          <h3>The agent backbone</h3>
+        </header>
+        <p class="uc__body">
+          One model hands off context to another. No human eyes on the wire,
+          no JSON for human readers to parse. The vocabulary is fixed at
+          handshake, the dict is pre-shared, and msgpack frames collapse to
+          a control byte plus a delta. <strong>1,404&times;</strong> at 2&nbsp;K
+          tokens on sglang &mdash; <strong>237 B/token down to 0.17 B/token</strong>.
+          This is the lane Codec was built for.
+        </p>
+        <ul class="uc__metrics">
+          <li><span class="uc__num">1,404&times;</span><span>at 2 K tokens</span></li>
+          <li><span class="uc__num">354 B</span><span>per 2 K-token reply</span></li>
+        </ul>
+      </article>
+
+      <article class="uc">
+        <header class="uc__head">
+          <span class="uc__tag">model &rarr; tool</span>
+          <h3>The tool-call boundary</h3>
+        </header>
+        <p class="uc__body">
+          The model emits a reserved control ID; the runtime sees it as a
+          single 32-bit compare per token instead of detokenizing back to
+          UTF-8 and regex-matching <code>&lt;tool_call&gt;</code>.
+          <strong>100&times; faster</strong> at 1&nbsp;M tokens on the
+          ToolWatcher microbench &mdash; sub-millisecond turnaround on every
+          single tool boundary, in-band with the stream.
+        </p>
+        <ul class="uc__metrics">
+          <li><span class="uc__num">100&times;</span><span>vs detokenize+regex</span></li>
+          <li><span class="uc__num">0.61 ms</span><span>per 1 M tokens</span></li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .usecases__title-mute { color: var(--fg-faint); font-weight: 500; }
+  .usecases__lede { max-width: 64ch; margin-bottom: 2.5rem; }
+  .usecases__lede em { color: var(--fg); font-style: normal; font-weight: 600; }
+
+  .usecases__grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 880px) {
+    .usecases__grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .uc {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .uc--m2m {
+    /* model-to-model is the headline use case — give it the accent border */
+    border-color: color-mix(in srgb, var(--data) 50%, var(--border));
+    background:
+      radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--data) 8%, transparent), transparent 65%),
+      var(--bg-elev);
+  }
+
+  .uc__head { display: flex; flex-direction: column; gap: 0.5rem; }
+  .uc__tag {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    color: var(--fg-faint);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .uc__tag--accent {
+    background: var(--data-soft);
+    border-color: color-mix(in srgb, var(--data) 60%, transparent);
+    color: var(--data);
+  }
+  .uc h3 {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .uc__body {
+    margin: 0;
+    color: var(--fg-muted);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+  .uc__body strong { color: var(--fg); font-weight: 600; }
+  .uc__body code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--fg);
+  }
+
+  .uc__metrics {
+    list-style: none;
+    padding: 0;
+    margin: auto 0 0;
+    display: flex;
+    gap: 1.25rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+  .uc__metrics li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--fg-faint);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .uc__num {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--data);
+    letter-spacing: -0.02em;
+    text-transform: none;
+  }
+  .uc--m2m .uc__num { color: var(--control); }
+</style>

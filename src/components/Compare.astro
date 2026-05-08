@@ -33,7 +33,8 @@ content-type: application/codec`;
       An LLM doesn't read words &mdash; it reads token IDs. The JSON envelope,
       the UTF-8 string, the per-character escaping: that's all shipping bytes
       the model immediately throws away. Codec ships what the model actually
-      speaks.
+      speaks &mdash; whether the sender is a human typing a prompt or
+      another model handing off a context.
     </p>
 
     <div class="compare__grid">
@@ -71,19 +72,19 @@ content-type: application/codec`;
 
     <ul class="compare__bullets">
       <li>
-        <span class="bullet-num">4&times;</span>
-        <span class="bullet-body">Smaller on the wire for typical short
-        prompts. The win compounds for streaming and tool-call traffic.</span>
+        <span class="bullet-num">1,404&times;</span>
+        <span class="bullet-body">Smaller on the wire at 2&nbsp;K tokens
+        with the full Codec stack on sglang. <a href="#benchmarks">Receipts &rarr;</a></span>
       </li>
       <li>
-        <span class="bullet-num">0</span>
-        <span class="bullet-body">Re-tokenization round-trips. Server speaks
-        the same vocab as the client, by handshake.</span>
+        <span class="bullet-num">3</span>
+        <span class="bullet-body">Engines tested end-to-end: sglang, vllm,
+        and llama.cpp &mdash; same wire bytes on every one.</span>
       </li>
       <li>
-        <span class="bullet-num">1</span>
-        <span class="bullet-body">Spec, six implementations: TypeScript, Python,
-        .NET, C, Rust, Java &mdash; bit-identical encoder output.</span>
+        <span class="bullet-num">6</span>
+        <span class="bullet-body">Client implementations &mdash; TypeScript,
+        Python, .NET, C, Rust, Java &mdash; producing byte-identical Codec frames per cell.</span>
       </li>
     </ul>
   </div>
