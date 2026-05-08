@@ -34,7 +34,17 @@ Codec is opt-in per request (`stream_format: "msgpack" | "protobuf"`, default `"
 - **Server-side tool dispatch.** Watching token IDs for control markers is essentially free &mdash; a single 32-bit compare per token. Watching text for `<tool_call>` requires detokenizing every chunk: 0.61 ms vs 60.4 ms on a 1 M-token stream.
 - **Heterogeneous model meshes.** `Translator` lets a Llama-vocab agent emit a stream that a Qwen-vocab agent consumes without going through English in between &mdash; token IDs cross the vocabulary boundary directly.
 
-The one constraint: **Codec is a wire format, not a transformation gateway.** Both client and server need to speak it. If you're calling a third-party JSON-only API you don't control, that's outside Codec's scope &mdash; the protocol can't reduce bytes a service refuses to emit. Stand up your own [`codec-sglang`](/docs/codec-sglang/), [`codec-vllm`](/docs/codec-vllm/), or [`codec-llamacpp`](/docs/codec-llamacpp/) and you control both ends.
+The one constraint: **Codec is a wire format, not a transformation gateway.** Both client and server need to speak it. If you're calling a third-party JSON-only API you don't control, that's outside Codec's scope &mdash; the protocol can't reduce bytes a service refuses to emit. Stand up your own and you control both ends.
+
+### Stand up a Codec-speaking server in 30 seconds
+
+Three pre-built Docker images, each `docker run`-ready and OpenAI-compatible. Pick the engine that fits your model + GPU stack:
+
+- **[`codec-sglang`](/docs/codec-sglang/)** &mdash; full Codec stack (msgpack/protobuf, gzip + brotli + dict-zstd). The **1,404&times;** headline lane.
+- **[`codec-vllm`](/docs/codec-vllm/)** &mdash; Codec PR over upstream vllm with dicts pre-baked. **126&times;** today via gzip; ~1,400&times; once the lifespan dict-loader hook lands on the wdunn001/vllm fork.
+- **[`codec-llamacpp`](/docs/codec-llamacpp/)** &mdash; llama.cpp built from the fork with the Codec PR + streaming gzip middleware. **33&times;** at zero protocol cost; ideal for CPU/edge boxes.
+
+If you'd rather build from source against vanilla upstream, see [sglang &mdash; vanilla setup](/docs/sglang/) for the DIY path. The wire is bit-identical between the bundled and DIY paths.
 
 ## Source-available, BSL 1.1
 
