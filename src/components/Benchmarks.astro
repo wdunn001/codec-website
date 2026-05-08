@@ -72,6 +72,10 @@ type EngineRow = {
   bestDisplay: string;
   bestKind: string;
   ratio: string;
+  // ttftMs is paired with each engine's reduction so the chart never reads
+  // as "tiny payload, but at what latency cost?" — it's the same Codec
+  // msgpack + gzip first-body-byte median used in chart 3 below.
+  ttftMs: string;
 };
 const engineRows: EngineRow[] = [
   {
@@ -81,6 +85,7 @@ const engineRows: EngineRow[] = [
     bestDisplay: "354 B",
     bestKind: "Codec msgpack + dict-zstd",
     ratio: "1,404×",
+    ttftMs: "45.6 ms",
   },
   {
     name: "vllm",
@@ -89,6 +94,7 @@ const engineRows: EngineRow[] = [
     bestDisplay: "3.9 KB",
     bestKind: "Codec msgpack + gzip",
     ratio: "126×",
+    ttftMs: "67.3 ms",
   },
   {
     name: "llama.cpp",
@@ -97,6 +103,7 @@ const engineRows: EngineRow[] = [
     bestDisplay: "16 KB",
     bestKind: "Codec msgpack + gzip",
     ratio: "33×",
+    ttftMs: "40.7 ms",
   },
 ];
 
@@ -118,12 +125,17 @@ const ttfbPlotX0 = 140;
 const ttfbPlotW  = 380;
 
 // ============== CHART 4: tool-call detection ==
+//
+// `lines` is an array of label rows so wide labels wrap into multiple
+// tspans within a single SVG <text> — SVG doesn't auto-wrap and a
+// long label like "Detokenize + regex" overflowed the 128-unit label
+// column on its own line.
 const toolMaxMs = 60.4;
 const toolPlotX0 = 140;
 const toolPlotW  = 380;
 const toolBars = [
-  { label: "Detokenize + regex", ms: 60.4, klass: "tool-bar tool-bar--text" },
-  { label: "Codec ToolWatcher",  ms: 0.61, klass: "tool-bar tool-bar--codec" },
+  { lines: ["Detokenize", "+ regex"], ms: 60.4, klass: "tool-bar tool-bar--text" },
+  { lines: ["Codec ToolWatcher"],     ms: 0.61, klass: "tool-bar tool-bar--codec" },
 ];
 ---
 
@@ -245,7 +257,10 @@ const toolBars = [
                   </span>
                 </div>
               </div>
-              <div class="engine-row__ratio">{e.ratio}</div>
+              <div class="engine-row__ratio">
+                <span class="engine-row__ratio-num">{e.ratio}</span>
+                <span class="engine-row__ratio-ttft">@ {e.ttftMs}</span>
+              </div>
             </div>
           );
         })}
@@ -318,9 +333,22 @@ const toolBars = [
           {toolBars.map((b, i) => {
             const y = 30 + i * 90;
             const w = Math.max(2, (b.ms / toolMaxMs) * toolPlotW);
+            // Vertically center the label stack on the bar (bar height
+            // 50, anchor y+32). For 2-line labels the first tspan lifts
+            // up by 0.6em and the second drops 1.2em below it, so the
+            // pair straddles the bar center.
+            const isMultiline = b.lines.length > 1;
+            const labelX = toolPlotX0 - 12;
             return (
               <g class={b.klass}>
-                <text x={toolPlotX0 - 12} y={y + 32} text-anchor="end" class="bar-label">{b.label}</text>
+                {isMultiline ? (
+                  <text x={labelX} y={y + 32} text-anchor="end" class="bar-label">
+                    <tspan x={labelX} dy="-0.6em">{b.lines[0]}</tspan>
+                    <tspan x={labelX} dy="1.2em">{b.lines[1]}</tspan>
+                  </text>
+                ) : (
+                  <text x={labelX} y={y + 32} text-anchor="end" class="bar-label">{b.lines[0]}</text>
+                )}
                 <rect x={toolPlotX0} y={y} width={w} height="50" rx="3" />
                 <text x={toolPlotX0 + w + 12} y={y + 32} class="bar-value">{b.ms} ms</text>
               </g>
@@ -524,13 +552,13 @@ const toolBars = [
   }
   .engine-row {
     display: grid;
-    grid-template-columns: 7rem 1fr 5rem;
+    grid-template-columns: 7rem 1fr 6rem;
     gap: 1rem;
     align-items: center;
   }
   @media (max-width: 720px) {
     .engine-row {
-      grid-template-columns: 5rem 1fr 4rem;
+      grid-template-columns: 5rem 1fr 5rem;
       gap: 0.625rem;
     }
   }
@@ -615,12 +643,27 @@ const toolBars = [
   }
 
   .engine-row__ratio {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.125rem;
+    text-align: right;
+  }
+  .engine-row__ratio-num {
     font-family: var(--font-mono);
     font-size: 1.125rem;
     font-weight: 700;
     color: var(--data);
-    text-align: right;
     letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .engine-row__ratio-ttft {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--fg-faint);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    line-height: 1;
   }
 
   /* TTFB bars (chart 3) */
