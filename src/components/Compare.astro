@@ -187,7 +187,11 @@ content-type: application/codec`;
     font-weight: 700;
     color: var(--data);
     letter-spacing: -0.02em;
-    min-width: 2.5rem;
+    /* "1,404×" is the widest stat we ship — give every number column
+       enough room for it so it never bleeds into the body copy. */
+    flex: 0 0 auto;
+    min-width: 5.5rem;
+    white-space: nowrap;
   }
   .bullet-body {
     color: var(--fg-muted);
