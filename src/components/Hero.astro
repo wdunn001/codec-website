@@ -79,18 +79,28 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
     <figure class="wire" aria-label="Diagram: a 142-byte JSON wire stream collapses through a funnel into a 32-byte Codec stream — about 4× shorter on the wire.">
       <svg viewBox="0 0 1080 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
         <defs>
-          <linearGradient id="fade" x1="0" x2="1" y1="0" y2="0">
-            <!-- Symmetric gentle fade on both sides: bytes ease in on the
-                 left at the JSON label and ease out on the right at the
-                 142-bytes label. -->
+          <!-- Symmetric gentle fade on both sides: bytes ease in on the
+               left at the JSON label and ease out on the right at the
+               142-bytes label. The masked group contains TWO copies of
+               the byte row (for the drift loop), so its objectBoundingBox
+               is twice the visible width — pin the gradient + mask to
+               userSpaceOnUse so 0–100 % maps to the visible row and the
+               right fade actually lands on the visible right edge instead
+               of being clipped off the side. -->
+          <linearGradient id="fade"
+                          gradientUnits="userSpaceOnUse"
+                          x1={jsonRowX} y1="0"
+                          x2={jsonRowX + jsonRowWidth} y2="0">
             <stop offset="0%"   stop-color="#0A0A0A" stop-opacity="1" />
             <stop offset="11%"  stop-color="#0A0A0A" stop-opacity="0" />
             <stop offset="89%"  stop-color="#0A0A0A" stop-opacity="0" />
             <stop offset="100%" stop-color="#0A0A0A" stop-opacity="1" />
           </linearGradient>
-          <mask id="fadeMask">
-            <rect x="0" y="0" width="1080" height="270" fill="white" />
-            <rect x="0" y="0" width="1080" height="270" fill="url(#fade)" />
+          <mask id="fadeMask" maskUnits="userSpaceOnUse"
+                x={jsonRowX} y={jsonRowY - 6}
+                width={jsonRowWidth} height={jsonRowHeight + 12}>
+            <rect x={jsonRowX} y={jsonRowY - 6} width={jsonRowWidth} height={jsonRowHeight + 12} fill="white" />
+            <rect x={jsonRowX} y={jsonRowY - 6} width={jsonRowWidth} height={jsonRowHeight + 12} fill="url(#fade)" />
           </mask>
 
           <linearGradient id="funnelGrad" x1="0" x2="0" y1="0" y2="1">
@@ -116,10 +126,14 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
         <text x={jsonRowX + jsonRowWidth} y={jsonRowY - 12} text-anchor="end" class="row-count">142 bytes</text>
 
         <!-- JSON byte stream: clipped hard to row bounds so no spill past
-             the labels, with a gentle fade mask INSIDE the clip for soft
-             edges that mirror each other on both sides. -->
-        <g clip-path="url(#jsonRowClip)">
-          <g transform={`translate(${jsonRowX}, ${jsonRowY})`} mask="url(#fadeMask)">
+             the labels, with a gentle fade mask alongside the clip for
+             soft edges that mirror each other on both sides. Both clip
+             and mask sit on the SAME outer group so they see the SVG
+             user-space directly — putting the mask on the inner
+             translated group would have the mask's userSpaceOnUse
+             coordinates clash with the translate. -->
+        <g clip-path="url(#jsonRowClip)" mask="url(#fadeMask)">
+          <g transform={`translate(${jsonRowX}, ${jsonRowY})`}>
           <g class="json-stream">
             {jsonBytes.map((b) => (
               <rect
