@@ -1,15 +1,19 @@
 ---
 import Base from "../layouts/Base.astro";
 import Hero from "../components/Hero.astro";
-import Compare from "../components/Compare.astro";
 import UseCases from "../components/UseCases.astro";
 import Benchmarks from "../components/Benchmarks.astro";
 import HowItWorks from "../components/HowItWorks.astro";
 import Cta from "../components/Cta.astro";
+// Compare (side-by-side JSON vs Codec hex) was previously between
+// Hero and UseCases. It earned the explanation but ate ~half a
+// viewport on the landing because the per-token decomposition stacks
+// vertically. Moved that visual to /docs/protocol/ where readers
+// already want the wire-format breakdown; the landing now goes
+// directly Hero → UseCases → Benchmarks for a tighter scroll.
 ---
 <Base>
   <Hero />
-  <Compare />
   <UseCases />
   <Benchmarks />
   <HowItWorks />

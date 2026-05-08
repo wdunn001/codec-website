@@ -49,6 +49,43 @@ message CodecFrame {
 
 Both bind to identical semantics. Pick msgpack if you want zero schema dependencies; pick protobuf if you want stricter typing or already have a `protoc` toolchain.
 
+## Same payload, different planet
+
+The seven-token request `"What is the capital of France?"` on the wire, both ways:
+
+**JSON** &mdash; ~142 bytes, text:
+
+```http
+POST /v1/chat/completions HTTP/2
+content-type: application/json
+
+{
+  "model": "gpt-4",
+  "messages": [
+    { "role": "user",
+      "content": "What is the capital of France?" }
+  ]
+}
+```
+
+**Codec** &mdash; 32 bytes, binary:
+
+```http
+POST /v1/chat HTTP/2
+content-type: application/codec
+
+01 00 00 04   // control: vocab=gpt-4 / role=user
+00 00 0F A1   // "What"
+00 00 09 BE   //  " is"
+00 00 04 21   //  " the"
+00 00 1C 33   //  " capital"
+00 00 02 5A   //  " of"
+00 00 1F 90   //  " France"
+00 00 02 30   //  "?"
+```
+
+JSON pays the tokenizer twice &mdash; once when the client serializes, once when the server retokenizes the UTF-8. Codec ships the IDs the model already speaks, with one control word at the head naming the vocab and message role. That's the only framing.
+
 ## Vocab handshake
 
 A *dialect map* is a JSON document that fully describes a tokenizer:
