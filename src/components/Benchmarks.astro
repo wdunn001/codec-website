@@ -142,9 +142,12 @@ type XvocRow = {
   jsonCpuMs: number;
 };
 const xvocRows: XvocRow[] = [
-  { size: 64,   codecBytes:  215, jsonBytes:    585, ratio: "2.7×",  codecCpuMs: 1.2, jsonCpuMs: 1.2 },
-  { size: 512,  codecBytes:  672, jsonBytes:   2923, ratio: "4.3×",  codecCpuMs: 3.9, jsonCpuMs: 4.8 },
-  { size: 2048, codecBytes:  709, jsonBytes:  10683, ratio: "15.1×", codecCpuMs: 7.7, jsonCpuMs: 10.9 },
+  // codecCpuMs/jsonCpuMs pulled with one extra decimal so the
+  // computed savings rounds to the same number quoted in the footer
+  // and overview.md (29.6 % -> 30 %, not 7.7/10.9 -> 29 %).
+  { size: 64,   codecBytes:  215, jsonBytes:    585, ratio: "2.7×",  codecCpuMs: 1.16, jsonCpuMs: 1.21 },
+  { size: 512,  codecBytes:  672, jsonBytes:   2923, ratio: "4.3×",  codecCpuMs: 3.88, jsonCpuMs: 4.79 },
+  { size: 2048, codecBytes:  709, jsonBytes:  10683, ratio: "15.1×", codecCpuMs: 7.67, jsonCpuMs: 10.90 },
 ];
 // Format helpers
 const fmtBytes = (n: number) => n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`;
@@ -350,41 +353,83 @@ const toolBars = [
           <h3 class="bench-card__title">Cross-vocab handoff &mdash; Llama-3 &rarr; Qwen-2</h3>
           <p class="bench-card__sub">Same source IDs, two wire paths &middot; gzip on both &middot; bridge produces byte-identical Qwen-2 output</p>
         </div>
-        <div class="bench-card__hero">
-          <span class="bench-card__hero-num">15.1&times;</span>
-          <span class="bench-card__hero-cap">smaller wire @ 2&nbsp;K, gzip both paths</span>
+        <div class="bench-card__hero bench-card__hero--dual">
+          <span class="bench-card__hero-num">30%</span>
+          <span class="bench-card__hero-cap">faster bridge response @ 2&nbsp;K</span>
+          <span class="bench-card__hero-sep">·</span>
+          <span class="bench-card__hero-num bench-card__hero-num--alt">15.1&times;</span>
+          <span class="bench-card__hero-cap">smaller wire @ 2&nbsp;K</span>
         </div>
       </header>
 
+      <h4 class="bench-subhead">Bridge response time &mdash; the latency the next agent waits on</h4>
+      <p class="bench-subhead-note">CPU cost to turn the inbound stream into Qwen-2 IDs ready for agent B. Lower is better &mdash; this is the wall-clock the handoff blocks on, before agent B's first new token.</p>
+
       <div class="bench-chart">
-        <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart: cross-vocab handoff from Llama-3 to Qwen-2 at 64, 512, and 2048 tokens. JSON-SSE wire bytes are 585, 2923, and 10683; Codec msgpack wire bytes are 215, 672, and 709. Codec is 2.7x, 4.3x, and 15.1x smaller respectively.">
+        <svg viewBox="0 0 720 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart: bridge CPU at 64, 512, and 2048 tokens. JSON-SSE 1.2, 4.8, 10.9 ms; Codec msgpack 1.2, 3.9, 7.6 ms.">
           {xvocRows.map((r, i) => {
-            const yGroup = 30 + i * 90;
+            const yGroup = 30 + i * 75;
+            // Linear ms scale; max ~12 ms gives headroom past the 10.9 ms top.
+            const xvocMaxMs = 12;
+            const xvocCpuPlotX0 = 90;
+            const xvocCpuPlotW  = 380;
+            const codecW = Math.max(2, (r.codecCpuMs / xvocMaxMs) * xvocCpuPlotW);
+            const jsonW  = Math.max(2, (r.jsonCpuMs  / xvocMaxMs) * xvocCpuPlotW);
+            const cpuRatio = r.jsonCpuMs > 0 ? Math.round((1 - r.codecCpuMs / r.jsonCpuMs) * 100) : 0;
+            // Astro's JSX-in-expression parser treats `<=` as the start
+            // of a fragment tag, so invert: ratio > 5 means a savings
+            // visible above the rep-to-rep noise on a microbench at
+            // this CPU duration. Below that, both paths read "tied" —
+            // matches what you'd see in a profiler trace.
+            const cpuRatioStr = cpuRatio > 5 ? `−${cpuRatio}%` : "tied";
+            return (
+              <g class="xvoc-group">
+                <text x={xvocCpuPlotX0 - 14} y={yGroup + 32} text-anchor="end" class="bar-label">
+                  <tspan x={xvocCpuPlotX0 - 14} dy="-0.6em">{r.size}</tspan>
+                  <tspan x={xvocCpuPlotX0 - 14} dy="1.2em">tokens</tspan>
+                </text>
+                <g class="xvoc-bar xvoc-bar--json">
+                  <rect x={xvocCpuPlotX0} y={yGroup} width={jsonW} height="26" rx="3" />
+                  <text x={xvocCpuPlotX0 + 8} y={yGroup + 17} class="xvoc-inline-label">JSON-SSE</text>
+                  <text x={xvocCpuPlotX0 + jsonW + 10} y={yGroup + 17} class="bar-value">{r.jsonCpuMs}&thinsp;ms</text>
+                </g>
+                <g class="xvoc-bar xvoc-bar--codec">
+                  <rect x={xvocCpuPlotX0} y={yGroup + 32} width={codecW} height="26" rx="3" />
+                  <text x={xvocCpuPlotX0 + 8} y={yGroup + 49} class="xvoc-inline-label">Codec msgpack</text>
+                  <text x={xvocCpuPlotX0 + codecW + 10} y={yGroup + 49} class="bar-value">{r.codecCpuMs}&thinsp;ms</text>
+                </g>
+                <text x={690} y={yGroup + 35} text-anchor="end" class="xvoc-ratio">{cpuRatioStr}</text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      <h4 class="bench-subhead bench-subhead--secondary">Wire bytes &mdash; the bandwidth the bridge has to ingest</h4>
+      <p class="bench-subhead-note">What the bridge has to receive before any translation can run. Network-bound: the slower the link, the more this dominates response time on top of the bridge CPU above.</p>
+
+      <div class="bench-chart">
+        <svg viewBox="0 0 720 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart: cross-vocab handoff wire bytes from Llama-3 to Qwen-2 at 64, 512, and 2048 tokens. JSON-SSE 585, 2923, 10683 bytes; Codec msgpack 215, 672, 709 bytes.">
+          {xvocRows.map((r, i) => {
+            const yGroup = 30 + i * 75;
             const codecW = Math.max(2, (r.codecBytes / xvocMaxBytes) * xvocPlotW);
             const jsonW  = Math.max(2, (r.jsonBytes  / xvocMaxBytes) * xvocPlotW);
             return (
               <g class="xvoc-group">
-                {/* size label on the left */}
                 <text x={xvocPlotX0 - 14} y={yGroup + 32} text-anchor="end" class="bar-label">
                   <tspan x={xvocPlotX0 - 14} dy="-0.6em">{r.size}</tspan>
                   <tspan x={xvocPlotX0 - 14} dy="1.2em">tokens</tspan>
                 </text>
-
-                {/* JSON-SSE bar (top) */}
                 <g class="xvoc-bar xvoc-bar--json">
                   <rect x={xvocPlotX0} y={yGroup} width={jsonW} height="26" rx="3" />
                   <text x={xvocPlotX0 + 8} y={yGroup + 17} class="xvoc-inline-label">JSON-SSE</text>
                   <text x={xvocPlotX0 + jsonW + 10} y={yGroup + 17} class="bar-value">{fmtBytes(r.jsonBytes)}</text>
                 </g>
-
-                {/* Codec msgpack bar (bottom) */}
                 <g class="xvoc-bar xvoc-bar--codec">
                   <rect x={xvocPlotX0} y={yGroup + 32} width={codecW} height="26" rx="3" />
                   <text x={xvocPlotX0 + 8} y={yGroup + 49} class="xvoc-inline-label">Codec msgpack</text>
                   <text x={xvocPlotX0 + codecW + 10} y={yGroup + 49} class="bar-value">{fmtBytes(r.codecBytes)}</text>
                 </g>
-
-                {/* ratio on the right */}
                 <text x={690} y={yGroup + 35} text-anchor="end" class="xvoc-ratio">{r.ratio}</text>
               </g>
             );
@@ -393,15 +438,19 @@ const toolBars = [
       </div>
 
       <footer class="bench-card__foot">
-        The bridge takes Llama-3 IDs over the wire, runs the in-process
-        <code>Translator(Llama&nbsp;3&nbsp;&rarr;&nbsp;Qwen&nbsp;2)</code>, and
-        hands Qwen-2 IDs to the next agent. UTF-8 never crosses the wire.
-        At 2&nbsp;K tokens that's <strong>10.7&nbsp;KB &rarr; 709&nbsp;B</strong>
-        on the wire and <strong>10.9&nbsp;ms &rarr; 7.6&nbsp;ms</strong> of
-        bridge CPU &mdash; <strong>~30%</strong> less work to translate
-        because the bridge skips JSON-SSE parse and re-tokenize-from-scratch.
-        Both paths emit the same Qwen-2 token stream byte-for-byte; the
-        bench asserts strict equality before reporting numbers.
+        At a 2&nbsp;K-token agent A&rarr;B handoff, the Codec bridge produces
+        Qwen-2 IDs <strong>3.2&nbsp;ms sooner</strong>
+        (<strong>10.9&nbsp;ms &rarr; 7.7&nbsp;ms</strong>, ~30% less CPU)
+        and ingests <strong>15&times;</strong> fewer wire bytes
+        (<strong>10.4&nbsp;KB &rarr; 709&nbsp;B</strong>) along the way.
+        The CPU win is the irreducible cost &mdash; the bridge skips
+        JSON-SSE parsing and BPE-from-scratch, and runs Translator's
+        word-boundary-buffered re-tokenize instead. The wire win
+        compounds it on slow links: on a 10&nbsp;Mbps mobile uplink
+        that's another <strong>~8&nbsp;ms saved</strong> on top of the
+        CPU savings, every handoff. Both paths emit the same Qwen-2
+        token stream byte-for-byte; the bench asserts strict equality
+        before reporting numbers.
       </footer>
     </article>
 
@@ -530,6 +579,53 @@ const toolBars = [
     font-family: var(--font-mono);
     font-size: 0.75rem;
     letter-spacing: 0.04em;
+  }
+
+  /* Dual-stat hero (chart 4): two stacked metrics separated by a thin
+     center rule. The CPU/response-time number sits on top because for
+     an agent handoff that's the latency the next agent waits on; the
+     wire ratio is the secondary metric. */
+  .bench-card__hero--dual {
+    align-items: flex-end;
+    text-align: right;
+    line-height: 1.05;
+    gap: 0.25rem;
+  }
+  .bench-card__hero--dual .bench-card__hero-num--alt {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: var(--control);
+  }
+  .bench-card__hero-sep {
+    display: block;
+    width: 1.5rem;
+    margin: 0.375rem 0 0.125rem auto;
+    border-top: 1px solid var(--border-strong);
+    height: 0;
+    color: transparent;
+    overflow: hidden;
+  }
+
+  /* Sub-headings inside a chart card (chart 4 has two stacked sub-charts). */
+  .bench-subhead {
+    margin: 0.25rem 0 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--fg);
+    letter-spacing: -0.005em;
+  }
+  .bench-subhead--secondary {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--fg-muted);
+  }
+  .bench-subhead-note {
+    margin: 0 0 0.75rem;
+    color: var(--fg-faint);
+    font-size: 0.8125rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.01em;
+    line-height: 1.4;
   }
 
   .bench-chart {
