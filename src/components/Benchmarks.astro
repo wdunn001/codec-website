@@ -103,22 +103,27 @@ const engineRows: EngineRow[] = [
 // ============== CHART 3: TTFB ==
 // Median first-body-byte latency at 2 K tokens, msgpack + gzip path,
 // from MATRIX.md §4 body-byte cohort (Python httpx aiter_raw definition).
+//
+// Plot layout coordinates (shared with chart 4 below): label column
+// 0–128, bar column 140–520, value column 532+. SVG viewBox is 720
+// wide so a "60.4 ms" right-edge value fits comfortably without
+// overflowing.
 const ttfbBars = [
   { engine: "llama.cpp", ms: 40.7, klass: "ttfb-bar ttfb-bar--llama" },
   { engine: "sglang",    ms: 45.6, klass: "ttfb-bar ttfb-bar--sglang" },
   { engine: "vllm",      ms: 67.3, klass: "ttfb-bar ttfb-bar--vllm" },
 ];
-const ttfbMaxMs = 70;
-const ttfbPlotX0 = 200;
-const ttfbPlotW  = 480;
+const ttfbMaxMs = 80;
+const ttfbPlotX0 = 140;
+const ttfbPlotW  = 380;
 
-// ============== CHART 4: tool-call detection (existing, unchanged) ==
+// ============== CHART 4: tool-call detection ==
 const toolMaxMs = 60.4;
-const toolPlotX0 = 200;
-const toolPlotW  = 480;
+const toolPlotX0 = 140;
+const toolPlotW  = 380;
 const toolBars = [
-  { label: "Detokenize + regex",          ms: 60.4, klass: "tool-bar tool-bar--text" },
-  { label: "Codec ToolWatcher (uint32)",  ms: 0.61, klass: "tool-bar tool-bar--codec" },
+  { label: "Detokenize + regex", ms: 60.4, klass: "tool-bar tool-bar--text" },
+  { label: "Codec ToolWatcher",  ms: 0.61, klass: "tool-bar tool-bar--codec" },
 ];
 ---
 
@@ -217,22 +222,33 @@ const toolBars = [
       </header>
 
       <div class="bench-engines">
-        {engineRows.map((e) => (
-          <div class="engine-row">
-            <div class="engine-row__name">{e.name}</div>
-            <div class="engine-row__bars">
-              <div class="engine-bar engine-bar--json" style={`--w:${(e.jsonKB / 540) * 100}%`}>
-                <span class="engine-bar__label">JSON-SSE</span>
-                <span class="engine-bar__value">{e.jsonKB} KB</span>
+        {engineRows.map((e) => {
+          const codecKB = e.bestBytes / 1024;
+          const codecPct = (codecKB / 540) * 100; // share-of-baseline scale
+          return (
+            <div class="engine-row">
+              <div class="engine-row__name">{e.name}</div>
+              <div class="engine-row__bars">
+                <div class="engine-bar engine-bar--json" style={`--w:${(e.jsonKB / 540) * 100}%`}>
+                  <span class="engine-bar__label">JSON-SSE</span>
+                  <span class="engine-bar__value">{e.jsonKB} KB</span>
+                </div>
+                <div class="engine-codec-row">
+                  <div
+                    class="engine-bar engine-bar--codec"
+                    style={`--w:max(0.4%, ${codecPct}%)`}
+                    aria-hidden="true"
+                  ></div>
+                  <span class="engine-codec-label">
+                    <span class="engine-codec-kind">{e.bestKind}</span>
+                    <span class="engine-codec-value">{e.bestDisplay}</span>
+                  </span>
+                </div>
               </div>
-              <div class="engine-bar engine-bar--codec" style={`--w:max(0.6%, ${(e.bestBytes / 1024 / 540) * 100}%)`}>
-                <span class="engine-bar__label">{e.bestKind}</span>
-                <span class="engine-bar__value">{e.bestDisplay}</span>
-              </div>
+              <div class="engine-row__ratio">{e.ratio}</div>
             </div>
-            <div class="engine-row__ratio">{e.ratio}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <footer class="bench-card__foot">
@@ -495,11 +511,15 @@ const toolBars = [
   .swatch--codec-gz .swatch__label { color: color-mix(in srgb, var(--control) 80%, var(--fg-muted)); }
   .swatch__sub { color: var(--fg-faint); font-size: 0.85em; }
 
-  /* Cross-stack engine rows (chart 2) */
+  /* Cross-stack engine rows (chart 2). The JSON-SSE bar fills most of the
+     row width; the Codec line is a thin marker bar followed by its label
+     OUTSIDE the bar, because at 1,404× the Codec sliver is too tiny to
+     hold any text inline. The empty space to the right of the marker bar
+     IS the visualization — that's what 1,404× looks like. */
   .bench-engines {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.25rem;
     margin: 0.5rem 0 0.25rem;
   }
   .engine-row {
@@ -510,7 +530,7 @@ const toolBars = [
   }
   @media (max-width: 720px) {
     .engine-row {
-      grid-template-columns: 6rem 1fr 4rem;
+      grid-template-columns: 5rem 1fr 4rem;
       gap: 0.625rem;
     }
   }
@@ -523,11 +543,12 @@ const toolBars = [
   .engine-row__bars {
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
+    gap: 0.5rem;
+    min-width: 0;
   }
+
   .engine-bar {
     width: var(--w);
-    min-width: 1.5rem;
     height: 1.65rem;
     border-radius: 4px;
     padding: 0 0.625rem;
@@ -542,6 +563,7 @@ const toolBars = [
     transform-origin: left center;
     animation: barIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     transform: scaleX(0);
+    flex-shrink: 0;
   }
   .engine-bar--json {
     background: color-mix(in srgb, #6B7280 30%, var(--bg));
@@ -549,9 +571,11 @@ const toolBars = [
     border: 1px solid color-mix(in srgb, #6B7280 50%, var(--border));
   }
   .engine-bar--codec {
-    background: color-mix(in srgb, var(--control) 30%, var(--bg));
-    color: var(--control);
-    border: 1px solid color-mix(in srgb, var(--control) 60%, var(--border));
+    /* Marker bar — no text inside, label sits to the right */
+    background: var(--control);
+    border: 1px solid var(--control);
+    height: 1.5rem;
+    padding: 0;
     animation-delay: 0.2s;
   }
   .engine-bar__label {
@@ -564,6 +588,32 @@ const toolBars = [
     font-weight: 700;
     flex-shrink: 0;
   }
+
+  /* Codec sub-row: marker bar + outside text */
+  .engine-codec-row {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+  }
+  .engine-codec-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .engine-codec-kind {
+    color: color-mix(in srgb, var(--control) 70%, var(--fg-muted));
+  }
+  .engine-codec-value {
+    font-weight: 700;
+    color: var(--control);
+  }
+
   .engine-row__ratio {
     font-family: var(--font-mono);
     font-size: 1.125rem;
