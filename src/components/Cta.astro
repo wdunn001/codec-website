@@ -12,6 +12,16 @@
       <a class="btn btn--primary" href="https://github.com/wdunn001/Codec" rel="noopener">Read the spec</a>
       <a class="btn" href="mailto:licensing@quasarke.com">Commercial licensing</a>
     </div>
+
+    <p class="cta__patents">
+      <strong>Patent posture:</strong> Quasarke is pursuing patent protection
+      on certain Codec mechanisms. The wire format, handshake, and
+      content-addressed map distribution described in the spec are intended
+      to be made available on royalty-free or FRAND terms to implementers of
+      the Codec specification when patents issue. See
+      <a href="https://github.com/wdunn001/Codec/blob/main/PATENTS.md" rel="noopener"><code>PATENTS.md</code></a>
+      for details.
+    </p>
   </div>
 </section>
 
@@ -29,4 +39,24 @@
   .cta__title { max-width: 24ch; }
   .cta__lede { max-width: 60ch; margin-bottom: 1.5rem; }
   .cta__buttons { display: inline-flex; flex-wrap: wrap; gap: 0.625rem; }
+
+  .cta__patents {
+    max-width: 70ch;
+    margin: 1.75rem 0 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+    color: var(--fg-faint);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+  }
+  .cta__patents strong { color: var(--fg-muted); font-weight: 600; }
+  .cta__patents code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+  .cta__patents a { color: var(--fg-muted); border-bottom: 1px dotted var(--border-strong); }
+  .cta__patents a:hover { color: var(--data); border-bottom-color: var(--data); }
 </style>
