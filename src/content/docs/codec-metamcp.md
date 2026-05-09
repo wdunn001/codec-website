@@ -43,9 +43,21 @@ For tool-heavy sessions &mdash; long file reads, web fetches, RAG context, model
 - **Length-prefixed msgpack/protobuf framing** instead of newline-delimited JSON-RPC envelopes
 - **Streaming gzip** on top via standard `Accept-Encoding` negotiation
 - **TTFB unchanged** &mdash; first-body-byte stays within 1&nbsp;ms of the JSON-RPC path on the same server
+- **MCP-shaped zstd dictionary negotiation** &mdash; the gateway loads a pre-trained 16&nbsp;KB dict at startup and emits a `Codec-Zstd-Dict: sha256:…` header so a Codec-aware client can fetch the matching dict and decompress every frame against it. **+78.8&nbsp;% wire-byte reduction over no-dict zstd; ~4.7× over JSON+gzip** on real MCP traffic ([2026-05-08T22-24-23Z bench](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-08T22-24-23Z/mcp)).
+- **Leaf-mode bypass for Codec-aware tools** &mdash; tools that wrap their results with `_codec_meta` blocks (see [`@codecai/mcp-leaf`](https://www.npmjs.com/package/@codecai/mcp-leaf) and the [`codec-time-leaf`](https://hub.docker.com/r/wdunn001/codec-time-leaf) reference image) tell the gateway "the IDs are already here, don't re-tokenize." `[Codec][leaf]` log fires on bypass; `[Codec][shim]` log fires on legacy fallback.
 - **Frame shape compatible with [`@codecai/web`](https://www.npmjs.com/package/@codecai/web), [`codecai`](https://pypi.org/project/codecai/), and the four other client libraries** &mdash; same `decodeStream` decoders that work end-to-end against codec-sglang / codec-vllm / codec-llamacpp work here too.
 
-A follow-up release adds per-token Codec encoding for `text` content blocks (the headline 1,400&times; wire reduction lives there) plus a [`Translator`](/docs/translator/) middleware for cross-vocab tool handoff. This release ships the framing foundation those land on.
+The follow-up release adds per-token Codec encoding for `text` content blocks beyond the leaf-mode path (the headline wire reduction lives there) plus a [`Translator`](/docs/translator/) middleware for cross-vocab tool handoff. The framing foundation for both is live today.
+
+## Codec-aware tools (leaf mode)
+
+The fast path on a Codec-aware gateway isn't the gateway tokenizing tool results &mdash; it's the **tool itself** doing the tokenization once, against a pinned tokenizer map, and shipping IDs alongside the original text. The gateway recognizes the pre-tokenized output and bypasses its back-compat shim entirely. Three pieces:
+
+- [**`@codecai/mcp-leaf`**](https://www.npmjs.com/package/@codecai/mcp-leaf) &mdash; tool-author-side helper. `wrapToolCall(result, meta)` walks every text content block and adds a sibling `_codec_meta` block carrying the token IDs. Idempotent; non-Codec-aware clients in the same namespace ignore the meta sibling.
+- [**`codec-time-leaf`**](https://hub.docker.com/r/wdunn001/codec-time-leaf) &mdash; reference Codec-aware MCP server (the canonical demo of leaf mode). Two trivial tools (`get_current_time`, `convert_time`) chosen for predictability. Drop it in any metamcp namespace; gateway logs flip from `[Codec][shim]` warns to `[Codec][leaf]` info.
+- **Reader-side helper** &mdash; `readCodecMeta(result)` / `takeIds(result)` in `@codecai/mcp-leaf` for clients that want to lift the IDs back out symmetrically (no re-tokenization on the receive side).
+
+The contract is additive &mdash; the leaf-mode path is invisible to legacy clients in the same namespace, no MCP version bump.
 
 ## Running with the upstream compose
 

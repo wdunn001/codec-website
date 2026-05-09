@@ -1,0 +1,139 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+
+// Sort newest-first by frontmatter `date` (ISO YYYY-MM-DD).
+const entries = (await getCollection("changelog")).sort((a, b) =>
+  b.data.date.localeCompare(a.data.date),
+);
+
+const kindLabel: Record<"feature" | "improvement" | "fix", string> = {
+  feature: "feature",
+  improvement: "improvement",
+  fix: "fix",
+};
+---
+<Base
+  title="What's new — Codec"
+  description="Customer-facing release notes for the Codec binary transport protocol. Each entry links to the corresponding GitHub Release for the engineering-grade changelog."
+>
+  <section class="container changelog">
+    <header class="changelog__header">
+      <h1>What's new</h1>
+      <p class="changelog__lead">
+        Customer-facing release notes for the Codec stack. The deeper engineering
+        changelog (commit lists, fork SHAs, image digests) lives in
+        <a href="https://github.com/wdunn001/Codec/releases" rel="noopener">GitHub Releases</a>;
+        this page is the one-line-per-change summary.
+      </p>
+      <p class="changelog__feeds">
+        <a href="/rss.xml">RSS feed</a> &middot;
+        <a href="https://github.com/wdunn001/Codec/releases" rel="noopener">GitHub Releases (deep changelog)</a>
+      </p>
+    </header>
+
+    <ol class="changelog__list" reversed>
+      {entries.map((entry) => (
+        <li class="changelog__entry">
+          <header class="changelog__entry-head">
+            <time datetime={entry.data.date} class="changelog__date">{entry.data.date}</time>
+            <span class={`changelog__chip changelog__chip--${entry.data.kind}`}>
+              {kindLabel[entry.data.kind]}
+            </span>
+            {entry.data.version && (
+              <span class="changelog__version">{entry.data.version}</span>
+            )}
+          </header>
+          <h2 class="changelog__title">
+            <a href={`/changelog/${entry.id.replace(/\.md$/, "")}/`}>{entry.data.title}</a>
+          </h2>
+          <p class="changelog__summary">{entry.data.summary}</p>
+          {entry.data.links.length > 0 && (
+            <ul class="changelog__links">
+              {entry.data.links.map((l) => (
+                <li><a href={l.url} rel="noopener">{l.label}</a></li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ol>
+  </section>
+</Base>
+
+<style>
+  .changelog { padding: 3rem 0 5rem; }
+  .changelog__header { margin-bottom: 2.5rem; }
+  .changelog__header h1 {
+    font-family: var(--font-mono);
+    font-size: 2rem;
+    margin: 0 0 0.5rem;
+  }
+  .changelog__lead {
+    color: var(--fg-muted);
+    max-width: 60ch;
+    margin: 0 0 0.5rem;
+  }
+  .changelog__feeds {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--fg-faint);
+  }
+  .changelog__list { list-style: none; padding: 0; margin: 0; }
+  .changelog__entry {
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .changelog__entry-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--fg-faint);
+    margin-bottom: 0.5rem;
+  }
+  .changelog__chip {
+    padding: 0.125rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.6875rem;
+  }
+  .changelog__chip--feature {
+    background: color-mix(in srgb, var(--data) 18%, transparent);
+    color: var(--data);
+  }
+  .changelog__chip--improvement {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent);
+  }
+  .changelog__chip--fix {
+    background: color-mix(in srgb, var(--fg-muted) 22%, transparent);
+    color: var(--fg);
+  }
+  .changelog__version { color: var(--fg-muted); }
+  .changelog__title {
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem;
+  }
+  .changelog__title a { color: var(--fg); }
+  .changelog__title a:hover { color: var(--data); }
+  .changelog__summary {
+    color: var(--fg-muted);
+    margin: 0 0 0.5rem;
+  }
+  .changelog__links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+  .changelog__links a { color: var(--fg-muted); }
+  .changelog__links a:hover { color: var(--fg); }
+</style>
