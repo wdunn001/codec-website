@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  Codec protocol map — three negotiation pathways side-by-side.
+  Source of truth: spec/PROTOCOL.md § "Negotiation pathways at a glance"
+  (the same diagram in Mermaid form). When updating either, update both.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 760" role="img"
+     aria-label="Codec protocol map showing three negotiation pathways: text-tokens, MCP tool-calls with leaf-mode bypass, and v0.3 latents.">
+  <title>Codec protocol map</title>
+  <desc>
+    Three negotiation pathways. Each pathway shows client → gateway → engine
+    with the wire-level headers and frame types annotated on the arrows.
+  </desc>
+
+  <defs>
+    <style>
+      .bg     { fill: #0a0d12; }
+      .row    { fill: none; stroke: #1f2730; stroke-width: 1; }
+      .label  { font: 600 14px ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace; fill: #e7eef5; }
+      .lane   { font: 700 18px ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace; fill: #f0f4f8; }
+      .annot  { font: 500 11px ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace; fill: #a3acb8; }
+      .header { font: 500 11px ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace; fill: #6ec6ff; }
+      .frame  { font: 500 11px ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace; fill: #ffd479; }
+      .legend { font: 500 12px ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace; fill: #a3acb8; }
+      .node   { fill: #11161d; stroke: #2a3340; stroke-width: 1.5; rx: 8; ry: 8; }
+      .node-text { font: 600 13px ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace; fill: #f0f4f8; text-anchor: middle; }
+      .node-sub  { font: 500 10px ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace; fill: #a3acb8; text-anchor: middle; }
+      .arrow  { stroke: #4a5663; stroke-width: 1.5; fill: none; }
+      .arrow-bypass { stroke: #5cd9a3; stroke-width: 2; fill: none; }
+      .arrow-shim   { stroke: #c97a7a; stroke-width: 1.5; fill: none; stroke-dasharray: 4 3; }
+      .pathway-title { font: 700 16px ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace; fill: #f0f4f8; }
+      .pathway-sub   { font: 500 11px ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace; fill: #a3acb8; }
+    </style>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#4a5663" />
+    </marker>
+    <marker id="arrowhead-bypass" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#5cd9a3" />
+    </marker>
+    <marker id="arrowhead-shim" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#c97a7a" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect class="bg" width="1280" height="760" />
+
+  <!-- Title -->
+  <text class="lane" x="640" y="40" text-anchor="middle">Codec — three negotiation pathways</text>
+  <text class="legend" x="640" y="62" text-anchor="middle">
+    Same client/gateway/engine triangle. Wire frames + response headers differ per pathway.
+  </text>
+
+  <!-- ─── Pathway 1: text-tokens (v0.2) ───────────────────────────── -->
+  <g transform="translate(0, 100)">
+    <text class="pathway-title" x="640" y="20" text-anchor="middle">Text-tokens (v0.2)</text>
+    <text class="pathway-sub"   x="640" y="38" text-anchor="middle">
+      uint32 token IDs · CodecFrame stream · Codec-Tokenizer-Map header
+    </text>
+
+    <!-- Client -->
+    <rect class="node" x="80"  y="60" width="220" height="64" />
+    <text class="node-text" x="190" y="86">Codec client</text>
+    <text class="node-sub"  x="190" y="104">@codecai/web · codecai · 5 polyglot</text>
+
+    <!-- Gateway -->
+    <rect class="node" x="530" y="60" width="220" height="64" />
+    <text class="node-text" x="640" y="86">Inference gateway</text>
+    <text class="node-sub"  x="640" y="104">metamcp · supervisor</text>
+
+    <!-- Engine -->
+    <rect class="node" x="980" y="60" width="220" height="64" />
+    <text class="node-text" x="1090" y="86">Engine fork</text>
+    <text class="node-sub"  x="1090" y="104">sglang · vLLM · llama.cpp</text>
+
+    <!-- Request: client → gateway -->
+    <path class="arrow" d="M300 84 L530 84" marker-end="url(#arrowhead)" />
+    <text class="header" x="415" y="76" text-anchor="middle">X-Codec-Map: sha256:…</text>
+
+    <!-- Forward: gateway → engine -->
+    <path class="arrow" d="M750 84 L980 84" marker-end="url(#arrowhead)" />
+    <text class="annot" x="865" y="76" text-anchor="middle">stream_format=msgpack</text>
+
+    <!-- Response: engine → gateway → client -->
+    <path class="arrow" d="M980 110 L750 110" marker-end="url(#arrowhead)" />
+    <text class="frame" x="865" y="128" text-anchor="middle">CodecFrame</text>
+
+    <path class="arrow" d="M530 110 L300 110" marker-end="url(#arrowhead)" />
+    <text class="header" x="415" y="128" text-anchor="middle">Codec-Tokenizer-Map · Codec-Zstd-Dict</text>
+  </g>
+
+  <!-- ─── Pathway 2: MCP tool-calls (leaf-mode) ───────────────────── -->
+  <g transform="translate(0, 290)">
+    <text class="pathway-title" x="640" y="20" text-anchor="middle">MCP tool-calls (leaf-mode bypass)</text>
+    <text class="pathway-sub"   x="640" y="38" text-anchor="middle">
+      Codec-aware tool wraps with _codec_meta · gateway forwards IDs verbatim · ~4.7× wire-byte reduction
+    </text>
+
+    <!-- Client -->
+    <rect class="node" x="80"  y="60" width="220" height="64" />
+    <text class="node-text" x="190" y="86">Codec client</text>
+    <text class="node-sub"  x="190" y="104">readCodecMeta() reader</text>
+
+    <!-- Gateway -->
+    <rect class="node" x="530" y="60" width="220" height="64" />
+    <text class="node-text" x="640" y="86">codec-metamcp</text>
+    <text class="node-sub"  x="640" y="104">leaf bypass · MCP zstd dict</text>
+
+    <!-- Two downstream tools -->
+    <rect class="node" x="980" y="20" width="220" height="64" />
+    <text class="node-text" x="1090" y="46">Codec-aware tool</text>
+    <text class="node-sub"  x="1090" y="64">wrapToolCall(result, meta)</text>
+
+    <rect class="node" x="980" y="100" width="220" height="64" />
+    <text class="node-text" x="1090" y="126">Legacy MCP tool</text>
+    <text class="node-sub"  x="1090" y="144">plain text result</text>
+
+    <!-- Request -->
+    <path class="arrow" d="M300 84 L530 84" marker-end="url(#arrowhead)" />
+    <text class="annot" x="415" y="76" text-anchor="middle">tools/call (JSON-RPC over msgpack)</text>
+
+    <!-- Forward to both downstream tools -->
+    <path class="arrow" d="M750 78 L980 52" marker-end="url(#arrowhead)" />
+    <path class="arrow" d="M750 92 L980 132" marker-end="url(#arrowhead)" />
+
+    <!-- Codec-aware response (bypass path) -->
+    <path class="arrow-bypass" d="M980 64 L750 78" marker-end="url(#arrowhead-bypass)" />
+    <text class="frame" x="865" y="40" text-anchor="middle">{ _codec_meta: { ids: […] } }</text>
+
+    <!-- Legacy response (shim path) -->
+    <path class="arrow-shim" d="M980 144 L750 116" marker-end="url(#arrowhead-shim)" />
+
+    <!-- Bypass: gateway → client -->
+    <path class="arrow-bypass" d="M530 102 L300 102" marker-end="url(#arrowhead-bypass)" />
+    <text class="annot" x="415" y="120" text-anchor="middle">leaf bypass · IDs verbatim · [Codec][leaf]</text>
+  </g>
+
+  <!-- ─── Pathway 3: latents (v0.3) ───────────────────────────────── -->
+  <g transform="translate(0, 510)">
+    <text class="pathway-title" x="640" y="20" text-anchor="middle">Latents (v0.3)</text>
+    <text class="pathway-sub"   x="640" y="38" text-anchor="middle">
+      VAE latents · LatentStreamHeader + LatentFrame · 7-pipeline registry · vae_decode at the leaf
+    </text>
+
+    <!-- Client -->
+    <rect class="node" x="80"  y="60" width="220" height="64" />
+    <text class="node-text" x="190" y="86">Codec client</text>
+    <text class="node-sub"  x="190" y="104">LatentStreamDecoder</text>
+
+    <!-- Gateway -->
+    <rect class="node" x="530" y="60" width="220" height="64" />
+    <text class="node-text" x="640" y="86">Inference gateway</text>
+    <text class="node-sub"  x="640" y="104">latent-space dict pool</text>
+
+    <!-- Engine -->
+    <rect class="node" x="980" y="60" width="220" height="64" />
+    <text class="node-text" x="1090" y="86">Latent engine fork</text>
+    <text class="node-sub"  x="1090" y="104">codec-comfyui · codec-diffusers</text>
+
+    <!-- Request -->
+    <path class="arrow" d="M300 84 L530 84" marker-end="url(#arrowhead)" />
+    <text class="header" x="415" y="76" text-anchor="middle">X-Codec-Map: sha256:… (latent-space-map)</text>
+
+    <!-- Forward -->
+    <path class="arrow" d="M750 84 L980 84" marker-end="url(#arrowhead)" />
+    <text class="annot" x="865" y="76" text-anchor="middle">pipeline=int8 (or 1 of 7)</text>
+
+    <!-- Response back -->
+    <path class="arrow" d="M980 110 L750 110" marker-end="url(#arrowhead)" />
+    <text class="frame" x="865" y="128" text-anchor="middle">LatentStreamHeader + LatentFrame</text>
+
+    <path class="arrow" d="M530 110 L300 110" marker-end="url(#arrowhead)" />
+    <text class="header" x="415" y="128" text-anchor="middle">Codec-Latent-Map · Codec-Zstd-Dict</text>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(80, 720)">
+    <rect width="14" height="3" y="6" fill="#4a5663" />
+    <text class="legend" x="22" y="12">wire</text>
+
+    <rect width="14" height="3" y="6" x="80" fill="#5cd9a3" />
+    <text class="legend" x="102" y="12">leaf bypass</text>
+
+    <rect width="14" height="3" y="6" x="200" fill="#c97a7a" />
+    <text class="legend" x="222" y="12">shim fallback</text>
+
+    <text class="header" x="340" y="12">headers</text>
+    <text class="frame"  x="440" y="12">frame types</text>
+  </g>
+</svg>

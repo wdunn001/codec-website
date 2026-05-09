@@ -1,0 +1,156 @@
+---
+import Base from "../layouts/Base.astro";
+---
+<Base
+  title="Protocol map — Codec"
+  description="The Codec protocol at a glance: three negotiation pathways (text-tokens, MCP tool-calls with leaf-mode bypass, v0.3 latents) on the same client/gateway/engine triangle."
+>
+  <section class="container protocol-map">
+    <header class="protocol-map__head">
+      <h1>Protocol map</h1>
+      <p class="protocol-map__lead">
+        Codec runs on one client/gateway/engine triangle. The wire frame, the
+        per-modality map, and the response headers shift per pathway — the
+        triangle does not. The diagram below is the at-a-glance view; the
+        normative spec is in
+        <a href="https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md" rel="noopener">PROTOCOL.md</a>
+        and pipeline math is in
+        <a href="https://github.com/wdunn001/Codec/blob/main/spec/PIPELINES.md" rel="noopener">PIPELINES.md</a>.
+      </p>
+    </header>
+
+    <figure class="protocol-map__figure">
+      <img
+        src="/diagrams/protocol-map.svg"
+        alt="Codec protocol map showing three pathways: text-tokens (v0.2), MCP tool-calls with leaf-mode bypass, and v0.3 latents. Each pathway shows the client → gateway → engine flow with the wire-level headers and frame types annotated."
+      />
+      <figcaption>
+        Source diagram lives in
+        <a href="https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md#negotiation-pathways-at-a-glance" rel="noopener">PROTOCOL.md</a>
+        as Mermaid blocks; the polished SVG above is a manual mirror that gets
+        updated alongside the spec.
+      </figcaption>
+    </figure>
+
+    <section class="protocol-map__pathways">
+      <article>
+        <h2>Text-tokens (v0.2)</h2>
+        <p>
+          The original wire shape. Engines emit <code>CodecFrame</code>s of
+          uint32 token IDs; the gateway forwards them; the client detokenizes
+          locally. The <code>Codec-Tokenizer-Map</code> response header carries
+          the sha256 of the active tokenizer map so the client can fail fast on
+          mismatch.
+        </p>
+        <p class="protocol-map__where">
+          See <a href="/docs/codec-sglang/">codec-sglang</a>,
+          <a href="/docs/codec-vllm/">codec-vllm</a>,
+          <a href="/docs/codec-llamacpp/">codec-llamacpp</a>.
+        </p>
+      </article>
+
+      <article>
+        <h2>MCP tool-calls (leaf-mode bypass)</h2>
+        <p>
+          The fast path on a Codec-aware gateway: the tool itself tokenizes its
+          result once, against a pinned tokenizer map, and ships the IDs in a
+          sibling <code>_codec_meta</code> block. The gateway recognizes the
+          pre-tokenized output and bypasses its back-compat shim — the
+          <code>[Codec][leaf]</code> log fires; <code>[Codec][shim]</code>
+          warnings disappear. Non-Codec-aware tools in the same namespace still
+          work via the shim path.
+        </p>
+        <p class="protocol-map__where">
+          See <a href="/docs/codec-metamcp/">codec-metamcp</a>,
+          <a href="https://www.npmjs.com/package/@codecai/mcp-leaf" rel="noopener">@codecai/mcp-leaf</a>,
+          <a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a> reference image.
+        </p>
+      </article>
+
+      <article>
+        <h2>Latents (v0.3)</h2>
+        <p>
+          Image and video diffusion models stream VAE latents instead of decoded
+          pixels. Wire shape: one <code>LatentStreamHeader</code> followed by
+          one or N <code>LatentFrame</code>s per the negotiated pipeline (one
+          of seven: <code>raw</code>, <code>int8</code>, <code>int4</code>,
+          <code>int8-adaptive</code>, <code>int4-adaptive</code>,
+          <code>delta+int8</code>, <code>delta+int4</code>). The client runs
+          <code>vae_decode</code> locally; pixels never touch the wire.
+        </p>
+        <p class="protocol-map__where">
+          See <a href="/docs/codec-comfyui/">codec-comfyui</a>,
+          <a href="/docs/codec-diffusers/">codec-diffusers</a>,
+          <a href="https://github.com/wdunn001/Codec/blob/main/spec/PIPELINES.md" rel="noopener">PIPELINES.md</a>.
+        </p>
+      </article>
+    </section>
+  </section>
+</Base>
+
+<style>
+  .protocol-map { padding: 3rem 0 5rem; }
+  .protocol-map__head { margin-bottom: 2rem; }
+  .protocol-map__head h1 {
+    font-family: var(--font-mono);
+    font-size: 2rem;
+    margin: 0 0 0.5rem;
+  }
+  .protocol-map__lead {
+    color: var(--fg-muted);
+    max-width: 70ch;
+    margin: 0;
+  }
+  .protocol-map__figure {
+    margin: 0 0 3rem;
+    background: #0a0d12;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .protocol-map__figure img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .protocol-map__figure figcaption {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--fg-faint);
+    margin-top: 0.75rem;
+    text-align: center;
+  }
+  .protocol-map__pathways {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  .protocol-map__pathways article {
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .protocol-map__pathways h2 {
+    font-family: var(--font-mono);
+    font-size: 1.125rem;
+    margin: 0 0 0.5rem;
+  }
+  .protocol-map__pathways p {
+    color: var(--fg-muted);
+    line-height: 1.6;
+    margin: 0 0 0.75rem;
+  }
+  .protocol-map__pathways code {
+    background: color-mix(in srgb, var(--data) 15%, transparent);
+    color: var(--data);
+    padding: 0.0625rem 0.25rem;
+    border-radius: 3px;
+    font-size: 0.875em;
+  }
+  .protocol-map__where {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+  .protocol-map__where a { color: var(--fg-muted); }
+  .protocol-map__where a:hover { color: var(--fg); }
+</style>
