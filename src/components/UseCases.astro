@@ -45,22 +45,24 @@
       <article class="uc uc--m2m">
         <header class="uc__head">
           <span class="uc__tag uc__tag--accent">dispatch</span>
-          <h3>Tool calls without detokenize</h3>
+          <h3>MCP tool calls, leaf-mode bypass</h3>
         </header>
         <p class="uc__body">
-          ToolWatcher matches reserved control IDs in the raw token stream
-          with a single 32-bit compare per token &mdash; no detokenize, no
-          regex, no per-chunk text scan. The
-          <a href="/docs/codec-metamcp/">MetaMCP gateway</a> is where the
-          primitive lives in production, but the same hook works in any
-          inference proxy, agent runtime, or middleware. Detokenize runs
-          once at the JSON-RPC seam; everything upstream stays
-          token-native. Microbench: <strong>0.61&nbsp;ms vs 60.4&nbsp;ms</strong>
-          on a 1&nbsp;M-token stream.
+          v0.3 ships the leaf-mode contract end-to-end: a Codec-aware MCP
+          server (<a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a>)
+          attaches token IDs to its result via
+          <code>_meta['ai.codec/leaf-tokenization']</code>; the
+          <a href="/docs/codec-metamcp/">codec-metamcp gateway</a> recognizes
+          the payload and forwards IDs verbatim &mdash; <code>[Codec][leaf]</code>
+          fires, the gateway becomes a transparent ID pipe.
+          <strong>tools/list</strong> across a 40-tool namespace:
+          <strong>21.4&nbsp;KB &rarr; 5.9&nbsp;KB (3.6&times;)</strong> on the
+          measured lab run. ToolWatcher CPU on the hot path:
+          <strong>~100&times;</strong> faster than detokenize+regex.
         </p>
         <ul class="uc__metrics">
+          <li><span class="uc__num">3.6&times;</span><span>tools/list (40 tools)</span></li>
           <li><span class="uc__num">100&times;</span><span>vs detokenize+regex</span></li>
-          <li><span class="uc__num">0</span><span>text on the hot path</span></li>
         </ul>
       </article>
 
@@ -81,6 +83,31 @@
         <ul class="uc__metrics">
           <li><span class="uc__num">30%</span><span>faster bridge</span></li>
           <li><span class="uc__num">15.1&times;</span><span>smaller wire</span></li>
+        </ul>
+      </article>
+    </div>
+
+    <!-- v0.3 latent modality — VAE latents on the wire. -->
+    <div class="usecases__latent">
+      <article class="uc uc--latent">
+        <header class="uc__head">
+          <span class="uc__tag uc__tag--latent">v0.3 &middot; latents</span>
+          <h3>Image &amp; video diffusion on the wire</h3>
+        </header>
+        <p class="uc__body">
+          The same wire format extends to <a href="/docs/codec-diffusers/">diffusion
+          models</a>: VAE latents stream in length-prefixed binary frames
+          instead of decoded pixels. The client runs <code>vae_decode</code>
+          locally; pixels never touch the wire. Measured on the lab against
+          codec-diffusers running SD-1.5: a 512&times;512 latent at int8 packs
+          to <strong>16.4&nbsp;KB</strong> (~5&ndash;10&times; smaller than
+          JPEG, ~90&times; smaller than raw fp16 pixels). The int4 pipeline
+          halves it again. Pipeline math validates byte-for-byte against
+          <a href="https://github.com/wdunn001/Codec/blob/main/spec/PIPELINES.md" rel="noopener">spec/PIPELINES.md</a>.
+        </p>
+        <ul class="uc__metrics">
+          <li><span class="uc__num">3.9&times;</span><span>int4 vs raw latent</span></li>
+          <li><span class="uc__num">~90&times;</span><span>vs raw fp16 pixels</span></li>
         </ul>
       </article>
     </div>
@@ -187,4 +214,22 @@
     text-transform: none;
   }
   .uc--m2m .uc__num { color: var(--control); }
+
+  /* v0.3 latent modality block — sits below the three-column grid as a
+     full-width call-out, since the latent pathway is the v0.3 headline
+     story and deserves its own visual weight rather than being squeezed
+     into a 4th column. */
+  .usecases__latent { margin-top: 1rem; }
+  .uc--latent {
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+    background:
+      radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 65%),
+      var(--bg-elev);
+  }
+  .uc--latent .uc__num { color: var(--accent); }
+  .uc__tag--latent {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+    color: var(--accent);
+  }
 </style>
