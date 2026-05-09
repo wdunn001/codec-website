@@ -53,11 +53,15 @@ The follow-up release adds per-token Codec encoding for `text` content blocks be
 
 The fast path on a Codec-aware gateway isn't the gateway tokenizing tool results &mdash; it's the **tool itself** doing the tokenization once, against a pinned tokenizer map, and shipping IDs alongside the original text. The gateway recognizes the pre-tokenized output and bypasses its back-compat shim entirely. Three pieces:
 
-- [**`@codecai/mcp-leaf`**](https://www.npmjs.com/package/@codecai/mcp-leaf) &mdash; tool-author-side helper. `wrapToolCall(result, meta)` walks every text content block and adds a sibling `_codec_meta` block carrying the token IDs. Idempotent; non-Codec-aware clients in the same namespace ignore the meta sibling.
+- [**`@codecai/mcp-leaf`**](https://www.npmjs.com/package/@codecai/mcp-leaf) &mdash; tool-author-side helper. `wrapToolCall(result, meta)` annotates every text content block with a per-block `_meta['ai.codec/leaf-tokenization']` payload carrying the token IDs. Idempotent; non-Codec-aware clients in the same namespace ignore the `_meta` field per the MCP spec.
 - [**`codec-time-leaf`**](https://hub.docker.com/r/wdunn001/codec-time-leaf) &mdash; reference Codec-aware MCP server (the canonical demo of leaf mode). Two trivial tools (`get_current_time`, `convert_time`) chosen for predictability. Drop it in any metamcp namespace; gateway logs flip from `[Codec][shim]` warns to `[Codec][leaf]` info.
-- **Reader-side helper** &mdash; `readCodecMeta(result)` / `takeIds(result)` in `@codecai/mcp-leaf` for clients that want to lift the IDs back out symmetrically (no re-tokenization on the receive side).
+- **Reader-side helper** &mdash; `readCodecMeta(result)` / `takeIds(result)` in `@codecai/mcp-leaf` for clients that want to lift the IDs back out symmetrically (no re-tokenization on the receive side). Accepts both the v0.3.2+ per-block `_meta` shape and the v0.3.0/v0.3.1 legacy sibling-block shape (back-compat).
 
 The contract is additive &mdash; the leaf-mode path is invisible to legacy clients in the same namespace, no MCP version bump.
+
+> **Live as of v0.3.2** &mdash; the `[Codec][leaf]` log fires end-to-end on real lab traffic. See the
+> [2026-05-09 mcp-live results](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-09T12-17-48Z/mcp)
+> for the bench numbers. Tools/list (40 tools): **3.6×** wire reduction (msgpack-both+gzip vs JSON-RPC).
 
 ## Running with the upstream compose
 

@@ -55,6 +55,17 @@ Response carries the same headers as codec-comfyui: `Codec-Latent-Map`, `Codec-Z
 
 The wire format is **identical** between the two — a Codec client can switch upstream without code changes.
 
+## Measured wire numbers (2026-05-09 lab run)
+
+First end-to-end latent run against `codec-diffusers:v0.3.4` running SD-1.5 on an RTX 3090. Pipeline math validates byte-for-byte against [`spec/PIPELINES.md`](https://github.com/wdunn001/Codec/blob/main/spec/PIPELINES.md):
+
+| Fixture            | raw     | int8    | int4    | int8 vs raw | int4 vs raw |
+|--------------------|--------:|--------:|--------:|------------:|------------:|
+| 256×256 (4×32×32)  |  8.4 KB |  4.4 KB |  2.4 KB |    **1.9×** |    **3.5×** |
+| 512×512 (4×64×64)  | 32.4 KB | 16.4 KB |  8.4 KB |    **2.0×** |    **3.9×** |
+
+The 512 latent at int8 (16.4 KB) is **~5–10× smaller than JPEG** (web quality 85) and **~90× smaller than raw fp16 pixels** (1.5 MB). Per-pipeline zstd dicts aren't loaded yet — that adds another ~25–40% on top once trained; tracked as the next concrete step. See the [full results](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-09T13-01-55Z/latent) for the methodology.
+
 ## Bench / golden role
 
 When the [Codec bench harness](https://github.com/wdunn001/Codec/tree/main/packages/bench) computes perceptual quality (SSIM / PSNR / LPIPS) for a given `(latent_space_id, pipeline)` cell, the reference pixels come from this image, executed against a pinned image digest (the `decoder.canonical_image` field in the [latent-space-map schema](https://github.com/wdunn001/Codec/blob/main/spec/latent-space-map.schema.json)).
