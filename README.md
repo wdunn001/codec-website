@@ -10,6 +10,19 @@ container behind the host's existing
 [letsencrypt-nginx-proxy-companion](https://github.com/nginx-proxy/acme-companion)
 for automatic TLS.
 
+## Site map
+
+| Route | What it is | Source |
+|---|---|---|
+| `/` | Landing (Hero · UseCases · Benchmarks · HowItWorks · Cta) | `src/pages/index.astro` |
+| `/protocol-map/` | Visual map of the three negotiation pathways (text-tokens · MCP leaf-mode · v0.3 latents) | `src/pages/protocol-map.astro` + `public/diagrams/protocol-map.svg` |
+| `/docs/<slug>/` | Engine + client docs (codec-sglang / codec-vllm / codec-llamacpp / codec-metamcp / codec-comfyui / codec-diffusers / TS / Python / Rust / Java / .NET / C / Translator / etc.) | `src/content/docs/<slug>.md` via `[...slug].astro` |
+| `/changelog/` | Customer-facing What's New feed | `src/pages/changelog/index.astro` reading `src/content/changelog/*.md` |
+| `/changelog/<slug>/` | Per-entry changelog detail | `src/pages/changelog/[...slug].astro` |
+| `/rss.xml` | RSS 2.0 feed of the changelog | `src/pages/rss.xml.ts` (uses `@astrojs/rss`) |
+
+The deeper engineering changelog (commit lists, fork SHAs, image digests) lives in [GitHub Releases](https://github.com/wdunn001/Codec/releases); each `/changelog/` entry links out to the corresponding release.
+
 ## Local development
 
 ```bash
