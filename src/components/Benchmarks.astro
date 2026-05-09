@@ -197,6 +197,65 @@ const toolBars = [
       <a href="https://github.com/wdunn001/Codec/tree/main/packages/bench/results" rel="noopener"><code>packages/bench/results/</code></a>.
     </p>
 
+    <!-- ============== v0.3 CARD: lab measurements, all three pathways ============== -->
+    <article class="bench-card bench-card--v03">
+      <header class="bench-card__head">
+        <div>
+          <h3 class="bench-card__title">v0.3 lab run &mdash; all three pathways measured</h3>
+          <p class="bench-card__sub">vinez@192.168.1.88 &middot; 2&times; RTX 3090 &middot; 2026-05-09</p>
+        </div>
+        <div class="bench-card__hero">
+          <span class="bench-card__hero-num">3.9&times;</span>
+          <span class="bench-card__hero-cap">int4 latent vs raw</span>
+        </div>
+      </header>
+
+      <div class="v03-grid">
+        <div class="v03-cell v03-cell--mcp">
+          <div class="v03-cell__tag">MCP gateway</div>
+          <div class="v03-cell__title">tools/list across 40 tools</div>
+          <table class="v03-table">
+            <thead><tr><th></th><th>wire</th><th>vs JSON</th></tr></thead>
+            <tbody>
+              <tr><td>JSON-RPC</td><td>21.4 KB</td><td>1.0&times;</td></tr>
+              <tr class="v03-row--win"><td>msgpack&nbsp;+&nbsp;gzip</td><td>5.9 KB</td><td><strong>3.6&times;</strong></td></tr>
+            </tbody>
+          </table>
+          <p class="v03-cell__foot">
+            <code>[Codec][leaf]</code> log fires end-to-end on
+            <a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a>
+            tool calls &mdash; gateway becomes a transparent ID pipe.
+          </p>
+        </div>
+
+        <div class="v03-cell v03-cell--latent">
+          <div class="v03-cell__tag">Latents (v0.3)</div>
+          <div class="v03-cell__title">512&times;512 SD-1.5 latent on the wire</div>
+          <table class="v03-table">
+            <thead><tr><th>pipeline</th><th>wire</th><th>vs raw</th></tr></thead>
+            <tbody>
+              <tr><td>raw fp16</td><td>32.4 KB</td><td>1.0&times;</td></tr>
+              <tr><td>int8</td><td>16.4 KB</td><td>2.0&times;</td></tr>
+              <tr class="v03-row--win"><td>int4</td><td>8.4 KB</td><td><strong>3.9&times;</strong></td></tr>
+            </tbody>
+          </table>
+          <p class="v03-cell__foot">
+            For comparison: same image as a JPEG ~80&ndash;150&nbsp;KB; raw fp16 pixels 1.5&nbsp;MB.
+            int4 = <strong>~10&times; smaller than JPEG</strong>, ~180&times; vs raw pixels.
+          </p>
+        </div>
+      </div>
+
+      <footer class="bench-card__foot">
+        Numbers from <a href="https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-09T12-17-48Z/mcp" rel="noopener">2026-05-09T12-17-48Z (mcp)</a>
+        and <a href="https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-09T13-01-55Z/latent" rel="noopener">2026-05-09T13-01-55Z (latent)</a>.
+        Pipeline math validates byte-for-byte against
+        <a href="https://github.com/wdunn001/Codec/blob/main/spec/PIPELINES.md" rel="noopener">spec/PIPELINES.md</a>;
+        the leaf-mode bypass story is in the
+        <a href="/changelog/">What's new</a> feed (v0.3.2 entry).
+      </footer>
+    </article>
+
     <!-- ============== CHART 1: streaming wire bytes ============== -->
     <article class="bench-card">
       <header class="bench-card__head">
@@ -984,6 +1043,102 @@ const toolBars = [
   .ttfb-bar--llama  .bar-value { fill: var(--control); }
   .ttfb-bar--sglang .bar-value { fill: color-mix(in srgb, var(--control) 80%, var(--fg-muted)); }
   .ttfb-bar--vllm   .bar-value { fill: var(--data); }
+
+  /* v0.3 lab-run card: two-column grid (MCP + latents) inside one card.
+     Stacks on narrow viewports. The cell tag chips reuse the
+     accent / data palette so the MCP and latent stories read as
+     distinct lanes. */
+  .bench-card--v03 {
+    background:
+      radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--data) 8%, transparent), transparent 65%),
+      var(--bg-elev);
+    border-color: color-mix(in srgb, var(--data) 30%, var(--border));
+  }
+  .v03-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 760px) {
+    .v03-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .v03-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--bg) 60%, transparent);
+    border: 1px solid var(--border);
+  }
+  .v03-cell__tag {
+    align-self: flex-start;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid var(--border-strong);
+    color: var(--fg-faint);
+  }
+  .v03-cell--mcp .v03-cell__tag {
+    background: color-mix(in srgb, var(--data) 18%, transparent);
+    border-color: color-mix(in srgb, var(--data) 60%, transparent);
+    color: var(--data);
+  }
+  .v03-cell--latent .v03-cell__tag {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+    color: var(--accent);
+  }
+  .v03-cell__title {
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--fg);
+  }
+  .v03-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+  .v03-table th,
+  .v03-table td {
+    padding: 0.375rem 0.5rem;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  .v03-table th:first-child,
+  .v03-table td:first-child { text-align: left; color: var(--fg-muted); }
+  .v03-table thead th {
+    color: var(--fg-faint);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+  }
+  .v03-table tbody td { color: var(--fg); }
+  .v03-row--win td { color: var(--fg); }
+  .v03-cell--mcp .v03-row--win td:last-child strong { color: var(--data); }
+  .v03-cell--latent .v03-row--win td:last-child strong { color: var(--accent); }
+  .v03-cell__foot {
+    color: var(--fg-muted);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .v03-cell__foot code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--fg);
+  }
+  .v03-cell__foot strong { color: var(--fg); font-weight: 600; }
 
   .bench-card__foot {
     margin-top: 1rem;
