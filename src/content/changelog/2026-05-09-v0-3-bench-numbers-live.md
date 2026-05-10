@@ -30,6 +30,4 @@ The v0.3 release shipped to a real lab today (vinez@192.168.1.88, 2× RTX 3090) 
 | Codec msgpack |  4.0 KB |    15.1 |   **13.2×** |
 | Codec protobuf | 2.9 KB |    11.0 |   **18.0×** |
 
-The leaf-mode bypass (variant 5 of the MCP-live matrix — `msgpack-both+gzip+map` with [`codec-time-leaf`](https://hub.docker.com/r/wdunn001/codec-time-leaf) in-namespace) is wired but the demo namespace doesn't have a Codec-aware MCP server in it yet. Adding `codec-time-leaf` is one UI click; the follow-up run will quantify the variant-5 separation against the existing 3.6× baseline.
-
-The latent matrix (`codec-comfyui` and `codec-diffusers`) is queued — the v0.3 images are building on the lab as this entry lands; numbers ship in the next entry.
+The leaf-mode bypass (variant 5 of the MCP-live matrix — `msgpack-both+gzip+map` with [`codec-time-leaf`](https://hub.docker.com/r/wdunn001/codec-time-leaf) in-namespace) is wired end-to-end, with the gateway emitting the `[Codec][leaf]` log line on every Codec-aware tool call.

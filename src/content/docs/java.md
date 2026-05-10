@@ -17,7 +17,7 @@ order: 6
 </dependency>
 ```
 
-(Maven Central publish queued. Until then, `mvn install` from `packages/java/` to a local repo.)
+For now, install from source: `mvn install` from `packages/java/` of the [Codec repo](https://github.com/wdunn001/Codec) into your local Maven repo.
 
 The library brings two transitive dependencies: `com.fasterxml.jackson.core:jackson-databind` for map JSON and `org.msgpack:msgpack-core` for frame parsing. Everything else is JDK built-in &mdash; sha256 via `java.security.MessageDigest`, regex with `Pattern.UNICODE_CHARACTER_CLASS`, HTTP via `java.net.http.HttpClient`.
 
@@ -206,5 +206,4 @@ public Flux<String> chat(@RequestBody ChatRequest req) {
 
 - [Tool calling](/docs/tool-calling/)
 - [Translator](/docs/translator/)
-- [Maven Central listing](https://central.sonatype.com/artifact/io.github.wdunn001/codec) (publish queued)
 - [packages/java/ on GitHub](https://github.com/wdunn001/Codec/tree/main/packages/java)

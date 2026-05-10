@@ -38,4 +38,4 @@ Wire bytes between variant 4 (gzip with shim) and variant 5 (gzip with leaf-bypa
 
 `tools/list` holds at **3.6×** wire reduction across the 40-tool namespace.
 
-Status of the v0.3 release: spec, polyglot clients, MCP integration, website + RSS, bench methodology, and now the leaf-mode end-to-end demo all live. Latent matrix (`codec-comfyui` + `codec-diffusers`) is queued — the v0.3 latent images are building on the lab as this entry lands; numbers ship in the next entry.
+Status of the v0.3 release: spec, polyglot clients, MCP integration, website + RSS, bench methodology, and now the leaf-mode end-to-end demo all live.

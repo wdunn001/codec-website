@@ -32,12 +32,12 @@
           is a layer on the same wire (gzip / brotli / dict-zstd). Same
           framing on every engine in the matrix; clients in six languages
           producing byte-identical output. Receipts: a short chat reply
-          shrinks <strong>~67&times;</strong> (15.2&nbsp;KB JSON-SSE &rarr;
-          226&nbsp;B Codec+gzip), a 2&nbsp;K-token agent stream
-          <strong>1,404&times;</strong>. TTFB unchanged.
+          shrinks <strong>~71&times;</strong> (15.2&nbsp;KB JSON-SSE &rarr;
+          213&nbsp;B Codec+dict-zstd), a 2&nbsp;K-token agent stream
+          <strong>1,707&times;</strong>. TTFB unchanged.
         </p>
         <ul class="uc__metrics">
-          <li><span class="uc__num">1,404&times;</span><span>peak wire reduction</span></li>
+          <li><span class="uc__num">1,707&times;</span><span>peak wire reduction</span></li>
           <li><span class="uc__num">3</span><span>engines, one wire</span></li>
         </ul>
       </article>

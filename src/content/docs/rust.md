@@ -201,5 +201,4 @@ See [Translator](/docs/translator/).
 
 - [Tool calling](/docs/tool-calling/)
 - [Translator](/docs/translator/)
-- [`codec-rs` on crates.io](https://crates.io/crates/codec-rs) (publish queued)
 - [packages/rust/ on GitHub](https://github.com/wdunn001/Codec/tree/main/packages/rust)

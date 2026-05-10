@@ -44,12 +44,12 @@ const series: Series[] = [
     ],
   },
   {
-    label: "Codec + gzip",
+    label: "Codec + dict-zstd",
     className: "line line--codec-gz",
     values: [
-      { x: 90,  bytes: 226,  display: "226 B" },
-      { x: 380, bytes: 730,  display: "730 B" },
-      { x: 600, bytes: 354,  display: "354 B" },
+      { x: 90,  bytes: 213,  display: "213 B" },
+      { x: 380, bytes: 781,  display: "781 B" },
+      { x: 600, bytes: 291,  display: "291 B" },
     ],
   },
 ];
@@ -95,11 +95,11 @@ const engineRows: EngineRow[] = [
   {
     name: "sglang",
     jsonKB: 485,
-    bestBytes: 354,
-    bestDisplay: "354 B",
+    bestBytes: 291,
+    bestDisplay: "291 B",
     bestKind: "Codec msgpack + dict-zstd",
-    ratio: "1,404×",
-    ttftMs: "45.6 ms",
+    ratio: "1,707×",
+    ttftMs: "44.7 ms",
   },
   {
     name: "vllm",
@@ -265,13 +265,13 @@ const toolBars = [
           <p class="bench-card__sub">sglang &middot; lower is better &middot; Y axis is log scale (each gridline is 10&times;)</p>
         </div>
         <div class="bench-card__hero">
-          <span class="bench-card__hero-num">1,404&times;</span>
+          <span class="bench-card__hero-num">1,707&times;</span>
           <span class="bench-card__hero-cap">smaller at 2,048 tokens</span>
         </div>
       </header>
 
       <div class="bench-chart">
-        <svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Line chart: streaming wire bytes by payload size on sglang. JSON-SSE grows from 15.2 KB at 64 tokens to 485.2 KB at 2,048 tokens. Codec with dict-zstd lands at 226 bytes, 730 bytes, and 354 bytes for the same three sizes.">
+        <svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Line chart: streaming wire bytes by payload size on sglang. JSON-SSE grows from 15.2 KB at 64 tokens to 485.2 KB at 2,048 tokens. Codec with dict-zstd lands at 213 bytes, 781 bytes, and 291 bytes for the same three sizes.">
           <!-- Y gridlines + labels -->
           {[
             { y: 30,  label: "1 MB" },
@@ -308,19 +308,19 @@ const toolBars = [
 
           <!-- TTFB pin block: same TTFB on both wire paths, so the
                chart never reads as "smaller wire, hidden latency
-               cost". Bytes shrink 1,404x; first-body-byte stays the
+               cost". Bytes shrink 1,707x; first-body-byte stays the
                same. Placed in the empty band between the Codec
-               (identity) and Codec (+gzip) lines so it can't collide
-               with the JSON-SSE label at y~52 or the Codec id label
-               at y~141. -->
+               (identity) and Codec (+ dict-zstd) lines so it can't
+               collide with the JSON-SSE label at y~52 or the Codec
+               id label at y~141. -->
           <g class="ttfb-pin-block">
             <rect x="425" y="180" width="265" height="64" rx="6" class="ttfb-pin-bg" />
             <text x="437" y="200" class="ttfb-pin-head">TTFB @ 2 K tokens · sglang · same wire</text>
             <text x="437" y="219" class="ttfb-pin-line">
               <tspan class="ttfb-pin-key">JSON-SSE</tspan>
-              <tspan class="ttfb-pin-val" dx="8">~46 ms</tspan>
+              <tspan class="ttfb-pin-val" dx="8">~45 ms</tspan>
               <tspan class="ttfb-pin-key" dx="14">Codec + gzip</tspan>
-              <tspan class="ttfb-pin-val ttfb-pin-val--codec" dx="8">45.6 ms</tspan>
+              <tspan class="ttfb-pin-val ttfb-pin-val--codec" dx="8">44.7 ms</tspan>
             </text>
             <text x="437" y="236" class="ttfb-pin-foot">first-body-byte median, body-byte cohort</text>
           </g>
@@ -331,15 +331,15 @@ const toolBars = [
         {series.map((s) => (
           <li class={s.className.replaceAll("line", "swatch")}>
             <span class="swatch__line" aria-hidden="true"></span>
-            <span class="swatch__label">{s.label} <span class="swatch__sub">{s.label === "Codec + gzip" ? "(dict-zstd at 2 K)" : ""}</span></span>
+            <span class="swatch__label">{s.label}</span>
           </li>
         ))}
       </ul>
 
       <footer class="bench-card__foot">
         At 2&nbsp;K tokens the JSON-SSE stream ships <strong>485&nbsp;KB</strong>;
-        Codec msgpack with dict-zstd ships <strong>354&nbsp;bytes</strong>.
-        That's <strong>237&nbsp;B/token &rarr; 0.17&nbsp;B/token</strong>
+        Codec msgpack with dict-zstd ships <strong>291&nbsp;bytes</strong>.
+        That's <strong>237&nbsp;B/token &rarr; 0.14&nbsp;B/token</strong>
         at the <strong>same TTFB</strong> &mdash; first-body-byte lands
         at ~45&nbsp;ms either way on the same sglang server. The wire
         reduction is essentially free in latency.
@@ -393,12 +393,11 @@ const toolBars = [
       </div>
 
       <footer class="bench-card__foot">
-        sglang reaches <strong>1,404&times;</strong> because it has the full
+        sglang reaches <strong>1,707&times;</strong> on msgpack&nbsp;+&nbsp;dict-zstd because it has the full
         compression stack (gzip + brotli + dict-zstd) wired into the Codec
-        chunker. vllm hits <strong>126&times;</strong> with gzip alone &mdash;
-        the dict-loader hook to engage zstd is in flight on the
-        <code>wdunn001/vllm</code> fork. llama.cpp's HTTP layer ships gzip
-        only; <strong>33&times;</strong> at zero protocol cost.
+        chunker. vllm hits <strong>137&times;</strong> with gzip alone.
+        llama.cpp ships gzip only too; <strong>33&times;</strong> at zero
+        protocol cost.
       </footer>
     </article>
 
@@ -602,8 +601,10 @@ const toolBars = [
     </article>
 
     <p class="bench-source">
-      Source: <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-08T01-15-02Z/MATRIX.md" rel="noopener">cross-stack MATRIX.md</a>
-      &middot; sglang nightly, vllm nightly + <a href="https://github.com/vllm-project/vllm/pull/41765" rel="noopener">PR #41765</a>, llama.cpp + <a href="https://github.com/ggml-org/llama.cpp/pull/22757" rel="noopener">PR #22757</a>
+      Source: <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-09T17-09-35Z/MATRIX.md" rel="noopener">cross-stack MATRIX.md</a>
+      &middot; <a href="https://hub.docker.com/r/wdunn001/codec-sglang" rel="noopener">codec-sglang</a>,
+      <a href="https://hub.docker.com/r/wdunn001/codec-vllm" rel="noopener">codec-vllm</a>,
+      <a href="https://hub.docker.com/r/wdunn001/codec-llamacpp" rel="noopener">codec-llamacpp</a> (all v0.3.0)
       &middot; Qwen-2.5 0.5B &middot; RTX&nbsp;3090 &middot; temp 0.0
       &middot; reproducible from <code>packages/bench/scripts/run-all-langs.sh</code>.
     </p>
@@ -850,9 +851,9 @@ const toolBars = [
 
   /* Cross-stack engine rows (chart 2). The JSON-SSE bar fills most of the
      row width; the Codec line is a thin marker bar followed by its label
-     OUTSIDE the bar, because at 1,404× the Codec sliver is too tiny to
+     OUTSIDE the bar, because at 1,707× the Codec sliver is too tiny to
      hold any text inline. The empty space to the right of the marker bar
-     IS the visualization — that's what 1,404× looks like. */
+     IS the visualization — that's what 1,707× looks like. */
   .bench-engines {
     display: flex;
     flex-direction: column;

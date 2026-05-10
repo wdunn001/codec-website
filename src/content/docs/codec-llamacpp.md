@@ -7,7 +7,7 @@ order: 3
 
 `codec-llamacpp` is the easy way to stand up a Codec-speaking inference server on top of llama.cpp. It's a pre-built Docker image bundling:
 
-- **`llama-server`** &mdash; statically-linked CUDA binary built from the Codec fork ([ggml-org/llama.cpp#22757](https://github.com/ggml-org/llama.cpp/pull/22757) for token-native binary transport on the OpenAI-compatible server, plus the stacked `feat/codec-compression` follow-ups: server-side ToolWatcher, streaming gzip, zstd-dict-header docs).
+- **`llama-server`** &mdash; statically-linked CUDA binary built from the Codec fork (token-native binary transport on the OpenAI-compatible server, plus the stacked `feat/codec-compression` follow-ups: server-side ToolWatcher, streaming gzip, zstd-dict-header docs).
 - **codec-supervisor** &mdash; the same FastAPI admin sidecar as [codec-sglang](/docs/codec-sglang/), handling model uploads, Hugging Face pulls, hot-swaps, and reverse-proxying the llama-server backend.
 - **Static linking** (`GGML_BACKEND_DL=OFF`, `BUILD_SHARED_LIBS=OFF`) &mdash; the CUDA backend is compiled into the binary, no `.so` plugins to load at runtime, no `LD_LIBRARY_PATH` config.
 
@@ -96,7 +96,6 @@ Identical to [codec-sglang](/docs/codec-sglang/#admin-endpoints).
 
 - Image: [`wdunn001/codec-llamacpp:latest`](https://hub.docker.com/r/wdunn001/codec-llamacpp) on Docker Hub.
 - Source: [github.com/wdunn001/codec-supervisor](https://github.com/wdunn001/codec-supervisor) (see `Dockerfile.llamacpp`).
-- Upstream PR: [ggml-org/llama.cpp#22757](https://github.com/ggml-org/llama.cpp/pull/22757).
 
 ## See also
 

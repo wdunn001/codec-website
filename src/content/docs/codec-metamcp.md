@@ -7,7 +7,7 @@ order: 4
 
 `codec-metamcp` is a pre-built Docker image of [MetaMCP](https://github.com/metatool-ai/metamcp) &mdash; the MCP aggregator/orchestrator/gateway &mdash; with the Codec binary transport patch applied. Stand it up like the upstream image, point any MCP client at it, and tool-heavy sessions ship dramatically smaller wire bytes when the client opts into Codec.
 
-Unlike [codec-sglang](/docs/codec-sglang/) / [codec-vllm](/docs/codec-vllm/) / [codec-llamacpp](/docs/codec-llamacpp/), this image **doesn't bundle a Python control plane**. MetaMCP already ships an admin UI as its frontend (Next.js) for namespace + server management, so there's nothing for `codec-supervisor` to add. The image is just MetaMCP, built from the [`wdunn001/metamcp` fork](https://github.com/wdunn001/metamcp/tree/feat/codec-binary-transport) at the open PR ([metatool-ai/metamcp#287](https://github.com/metatool-ai/metamcp/pull/287)).
+Unlike [codec-sglang](/docs/codec-sglang/) / [codec-vllm](/docs/codec-vllm/) / [codec-llamacpp](/docs/codec-llamacpp/), this image **doesn't bundle a Python control plane**. MetaMCP already ships an admin UI as its frontend (Next.js) for namespace + server management, so there's nothing for `codec-supervisor` to add. The image is just MetaMCP, built from the [`wdunn001/metamcp` fork](https://github.com/wdunn001/metamcp/tree/feat/codec-binary-transport).
 
 ## Quick start
 
@@ -138,7 +138,6 @@ The Codec patch is published under [BSL 1.1](https://github.com/wdunn001/Codec/b
 
 - Image: [`wdunn001/codec-metamcp:latest`](https://hub.docker.com/r/wdunn001/codec-metamcp) on Docker Hub.
 - Codec patch source: [github.com/wdunn001/metamcp](https://github.com/wdunn001/metamcp/tree/feat/codec-binary-transport).
-- Upstream PR: [metatool-ai/metamcp#287](https://github.com/metatool-ai/metamcp/pull/287).
 - Image build recipe: [github.com/wdunn001/codec-supervisor/blob/main/Dockerfile.metamcp](https://github.com/wdunn001/codec-supervisor/blob/main/Dockerfile.metamcp).
 
 ## See also

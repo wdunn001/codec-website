@@ -72,7 +72,7 @@ Python looks the same with `watcher.feed(frame.ids)` returning a list of events;
 
 ## When the server pre-segments
 
-If your server has [sglang PR #24557](/docs/sglang/) merged, the server emits Codec frames where tool-call regions are already marked with reserved control IDs. Client-side `ToolWatcher.feed()` still works the same way &mdash; it picks up the server's markers instead of doing the matching itself. Strictly faster, but you don't write different client code.
+If your server runs the [in-server ToolWatcher](/docs/sglang/#server-side-toolwatcher), the server emits Codec frames where tool-call regions are already marked with reserved control IDs. Client-side `ToolWatcher.feed()` still works the same way &mdash; it picks up the server's markers instead of doing the matching itself. Strictly faster, but you don't write different client code.
 
 ## Performance
 

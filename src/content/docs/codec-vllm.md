@@ -7,11 +7,11 @@ order: 2
 
 `codec-vllm` is the easy way to stand up a Codec-speaking inference server on top of vLLM. It's a pre-built Docker image bundling:
 
-- **vLLM nightly** with the Codec patches already applied ([vllm-project/vllm#41765](https://github.com/vllm-project/vllm/pull/41765) for token-native binary transport on `/v1/completions` and `/v1/chat/completions`).
+- **vLLM** with the Codec patches already applied &mdash; token-native binary transport on `/v1/completions` and `/v1/chat/completions`.
 - **codec-supervisor** &mdash; the same FastAPI admin sidecar as [codec-sglang](/docs/codec-sglang/), handling model uploads, Hugging Face pulls, hot-swaps, and reverse-proxying the vLLM backend.
 - All upstream vLLM kernels (compiled `_C.abi3.so`, `_flashmla_C.abi3.so`, `_moe_C.abi3.so`, etc.) intact &mdash; the codec patches are a surgical file overlay (9 changed `.py` files), not a recompile.
 
-> **Why nightly, not `:latest`?** The Codec PR sits on the upstream dev branch *after* the route refactor that splits `/v1/completions` and `/v1/chat/completions` out of `api_server.py` into per-endpoint modules. The v0.10.x release in `vllm/vllm-openai:latest` still has the monolithic structure, so the codec routes wouldn't fire there. The image therefore builds on top of `vllm/vllm-openai:nightly`.
+> **Why this base image?** The codec routes need vLLM's per-endpoint module split (the post-refactor layout where `/v1/completions` and `/v1/chat/completions` are their own modules). The image is built on top of a vLLM build that has it.
 
 ## Quick start
 
@@ -45,7 +45,7 @@ curl http://localhost:8080/v1/completions \
 
 Unlike sglang, vLLM **strictly validates the `model` field** &mdash; pass the loaded model id, not a placeholder. Use `/admin/status` to check the current model.
 
-The codec PR on vLLM also auto-applies **gzip compression** on the binary path (the response starts with the gzip magic `1f 8b 08 ...`). The Codec clients in [`@codecai/web`](https://www.npmjs.com/package/@codecai/web) and the Python/Rust/.NET equivalents handle decompression transparently.
+The codec patches on vLLM also auto-apply **gzip compression** on the binary path (the response starts with the gzip magic `1f 8b 08 ...`). The Codec clients in [`@codecai/web`](https://www.npmjs.com/package/@codecai/web) and the Python/Rust/.NET equivalents handle decompression transparently.
 
 ## Run your own model
 
@@ -99,7 +99,6 @@ Identical to [codec-sglang](/docs/codec-sglang/#admin-endpoints) &mdash; the sup
 
 - Image: [`wdunn001/codec-vllm:latest`](https://hub.docker.com/r/wdunn001/codec-vllm) on Docker Hub.
 - Source: [github.com/wdunn001/codec-supervisor](https://github.com/wdunn001/codec-supervisor) (see `Dockerfile.vllm`).
-- Upstream PR: [vllm-project/vllm#41765](https://github.com/vllm-project/vllm/pull/41765).
 
 ## See also
 

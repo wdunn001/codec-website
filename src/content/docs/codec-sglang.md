@@ -7,11 +7,11 @@ order: 1
 
 `codec-sglang` is the easy way to stand up a Codec-speaking inference server. It's a pre-built Docker image bundling:
 
-- **SGLang** with the Codec patches already applied (sglang [PR #24483](https://github.com/sgl-project/sglang/pull/24483) for token-native binary transport, [PR #24557](https://github.com/sgl-project/sglang/pull/24557) for server-side ToolWatcher).
+- **SGLang** with the Codec patches already applied &mdash; token-native binary transport on `/v1/completions` and a server-side ToolWatcher that emits tool-call boundaries on the ID stream.
 - **codec-supervisor** &mdash; a FastAPI admin sidecar that handles model uploads, Hugging Face pulls, hot-swaps, and reverse-proxies the inference backend.
 - All upstream sglang kernels (flash-attn, sgl_kernel, triton) intact &mdash; the patches are applied as an editable overlay.
 
-If you'd rather build sglang yourself from the upstream source with the PRs cherry-picked, see [sglang &mdash; vanilla setup](/docs/sglang/).
+If you'd rather build sglang yourself from upstream and apply the Codec patches by hand, see [sglang &mdash; vanilla setup](/docs/sglang/).
 
 ## Quick start
 
@@ -227,8 +227,8 @@ The same code works against vanilla sglang too &mdash; codec-sglang's wire forma
 
 ## When to use this vs vanilla sglang
 
-- **Use `codec-sglang`** when you want the protocol working in 30 seconds with no toolchain to babysit. The image bakes the right CUDA, the right sglang nightly, and the supervisor.
-- **Use [vanilla sglang](/docs/sglang/)** when you have a bespoke build (custom kernels, weird CUDA version, internal mirror) or a deploy story that already pulls upstream sglang directly. Apply the two PRs and you're equivalent.
+- **Use `codec-sglang`** when you want the protocol working in 30 seconds with no toolchain to babysit. The image bakes the right CUDA, the right sglang build, and the supervisor.
+- **Use [vanilla sglang](/docs/sglang/)** when you have a bespoke build (custom kernels, weird CUDA version, internal mirror) or a deploy story that already pulls upstream sglang directly. Apply the Codec patches and you're equivalent.
 
 ## License
 
@@ -240,10 +240,9 @@ The bundled SGLang itself is unchanged from upstream and remains under Apache-2.
 
 - Image: [`wdunn001/codec-sglang:latest`](https://hub.docker.com/r/wdunn001/codec-sglang) on Docker Hub.
 - Source: [github.com/wdunn001/codec-supervisor](https://github.com/wdunn001/codec-supervisor).
-- Upstream PRs: [sglang #24483](https://github.com/sgl-project/sglang/pull/24483), [sglang #24557](https://github.com/sgl-project/sglang/pull/24557).
 
 ## See also
 
 - [sglang &mdash; vanilla setup](/docs/sglang/) for the DIY path.
 - [TypeScript](/docs/typescript/), [Python](/docs/python/), [.NET](/docs/dotnet/), [C](/docs/c/), [Rust](/docs/rust/), [Java](/docs/java/) walkthroughs &mdash; client-side patterns.
-- [Tool calling](/docs/tool-calling/) &mdash; ToolWatcher events from the server-side detector that PR #24557 enables.
+- [Tool calling](/docs/tool-calling/) &mdash; ToolWatcher events from the server-side detector.
