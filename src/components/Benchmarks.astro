@@ -1,13 +1,14 @@
 ---
 // Benchmarks section: real measurements from the live cross-stack matrix.
-// Source: github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-08T01-15-02Z/MATRIX.md
+// Source: github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-09T17-09-35Z/MATRIX.md
 //
 // All numbers are measured this session — no projections, no theoreticals.
 // Hardware: NVIDIA RTX 3090 / Qwen2.5-0.5B-Instruct.
 // Engines: sglang nightly, vllm nightly (PR #41765), llama.cpp PR #22757.
-// Six client languages produced byte-identical Codec frames per cell on
-// sglang and llama.cpp; vllm shows 5–10 % chunker drift, frames decode
-// to the same token stream.
+// Six client languages (C, .NET, Java, Python, Rust, TS/Node) report
+// byte-identical Codec frames on every cell across all three engines
+// (24/24 unanimous per engine — see MATRIX.md §2). Earlier vllm drift
+// resolved by REPS=2 + token-decode fallback patches.
 
 // ============== CHART 1: streaming wire bytes (sglang, the headline) ==
 type Series = {
@@ -58,8 +59,8 @@ const series: Series[] = [
 // data points so the chart never reads as "smaller wire, hidden
 // latency cost" — it's the same ~45 ms either way on sglang.
 const ttfbAnnotations = [
-  { x: 600, label: "JSON-SSE: ~46 ms TTFB", className: "ttfb-pin ttfb-pin--json" },
-  { x: 600, label: "Codec gzip: 45.6 ms TTFB", className: "ttfb-pin ttfb-pin--codec" },
+  { x: 600, label: "JSON-SSE: ~45 ms TTFB", className: "ttfb-pin ttfb-pin--json" },
+  { x: 600, label: "Codec gzip: 44.7 ms TTFB", className: "ttfb-pin ttfb-pin--codec" },
 ];
 
 // Map a byte count onto the plot's Y coordinate (log10).
@@ -102,12 +103,12 @@ const engineRows: EngineRow[] = [
   },
   {
     name: "vllm",
-    jsonKB: 479,
-    bestBytes: 3903,
+    jsonKB: 518,
+    bestBytes: 3874,
     bestDisplay: "3.9 KB",
     bestKind: "Codec msgpack + gzip",
-    ratio: "126×",
-    ttftMs: "67.3 ms",
+    ratio: "137×",
+    ttftMs: "59.0 ms",
   },
   {
     name: "llama.cpp",
@@ -116,7 +117,7 @@ const engineRows: EngineRow[] = [
     bestDisplay: "16 KB",
     bestKind: "Codec msgpack + gzip",
     ratio: "33×",
-    ttftMs: "40.7 ms",
+    ttftMs: "40.8 ms",
   },
 ];
 
@@ -129,9 +130,9 @@ const engineRows: EngineRow[] = [
 // wide so a "60.4 ms" right-edge value fits comfortably without
 // overflowing.
 const ttfbBars = [
-  { engine: "llama.cpp", ms: 40.7, klass: "ttfb-bar ttfb-bar--llama" },
-  { engine: "sglang",    ms: 45.6, klass: "ttfb-bar ttfb-bar--sglang" },
-  { engine: "vllm",      ms: 67.3, klass: "ttfb-bar ttfb-bar--vllm" },
+  { engine: "llama.cpp", ms: 40.8, klass: "ttfb-bar ttfb-bar--llama" },
+  { engine: "sglang",    ms: 44.7, klass: "ttfb-bar ttfb-bar--sglang" },
+  { engine: "vllm",      ms: 59.0, klass: "ttfb-bar ttfb-bar--vllm" },
 ];
 const ttfbMaxMs = 80;
 const ttfbPlotX0 = 140;
