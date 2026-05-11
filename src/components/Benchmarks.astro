@@ -1,14 +1,17 @@
 ---
 // Benchmarks section: real measurements from the live cross-stack matrix.
-// Source: github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-09T17-09-35Z/MATRIX.md
+// Source: github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-11T00-12-00Z/MATRIX.md
 //
 // All numbers are measured this session — no projections, no theoreticals.
 // Hardware: NVIDIA RTX 3090 / Qwen2.5-0.5B-Instruct.
 // Engines: sglang nightly, vllm nightly (PR #41765), llama.cpp PR #22757.
 // Six client languages (C, .NET, Java, Python, Rust, TS/Node) report
 // byte-identical Codec frames on every cell across all three engines
-// (24/24 unanimous per engine — see MATRIX.md §2). Earlier vllm drift
-// resolved by REPS=2 + token-decode fallback patches.
+// (24/24 unanimous per engine — see MATRIX.md §2). v0.4 refresh kept
+// the same payload shape as v0.3.x, so the wire numbers are unchanged
+// from the prior cut — v0.4 is wire-additive (safety-policy negotiation
+// + per-language tokenize/detok timing) and doesn't alter the
+// in-frame bytes the wire bench measures.
 
 // ============== CHART 1: streaming wire bytes (sglang, the headline) ==
 type Series = {
@@ -198,12 +201,12 @@ const toolBars = [
       <a href="https://github.com/wdunn001/Codec/tree/main/packages/bench/results" rel="noopener"><code>packages/bench/results/</code></a>.
     </p>
 
-    <!-- ============== v0.3 CARD: lab measurements, all three pathways ============== -->
+    <!-- ============== LAB CARD: all three v0.3 pathways, re-validated for v0.4 ============== -->
     <article class="bench-card bench-card--v03">
       <header class="bench-card__head">
         <div>
-          <h3 class="bench-card__title">v0.3 lab run &mdash; all three pathways measured</h3>
-          <p class="bench-card__sub">vinez@192.168.1.88 &middot; 2&times; RTX 3090 &middot; 2026-05-09</p>
+          <h3 class="bench-card__title">Lab run &mdash; all three pathways measured</h3>
+          <p class="bench-card__sub">vinez@192.168.1.88 &middot; 2&times; RTX 3090 &middot; v0.4 cut, 2026-05-11 (wire numbers unchanged from v0.3.x &mdash; v0.4 is wire-additive)</p>
         </div>
         <div class="bench-card__hero">
           <span class="bench-card__hero-num">3.9&times;</span>
@@ -249,11 +252,14 @@ const toolBars = [
 
       <footer class="bench-card__foot">
         Numbers from <a href="https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-09T12-17-48Z/mcp" rel="noopener">2026-05-09T12-17-48Z (mcp)</a>
-        and <a href="https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-09T13-01-55Z/latent" rel="noopener">2026-05-09T13-01-55Z (latent)</a>.
+        and <a href="https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-09T13-01-55Z/latent" rel="noopener">2026-05-09T13-01-55Z (latent)</a>,
+        re-validated in the
+        <a href="https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-11T00-12-00Z" rel="noopener">2026-05-11T00-12-00Z</a>
+        v0.4 cross-stack run (24/24 unanimous on every engine).
         Pipeline math validates byte-for-byte against
         <a href="https://github.com/wdunn001/Codec/blob/main/spec/PIPELINES.md" rel="noopener">spec/PIPELINES.md</a>;
         the leaf-mode bypass story is in the
-        <a href="/changelog/">What's new</a> feed (v0.3.2 entry).
+        <a href="/changelog/">What's new</a> feed (v0.4 entry).
       </footer>
     </article>
 
@@ -601,12 +607,14 @@ const toolBars = [
     </article>
 
     <p class="bench-source">
-      Source: <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-09T17-09-35Z/MATRIX.md" rel="noopener">cross-stack MATRIX.md</a>
+      Source: <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-11T00-12-00Z/MATRIX.md" rel="noopener">cross-stack MATRIX.md</a>
       &middot; <a href="https://hub.docker.com/r/wdunn001/codec-sglang" rel="noopener">codec-sglang</a>,
       <a href="https://hub.docker.com/r/wdunn001/codec-vllm" rel="noopener">codec-vllm</a>,
-      <a href="https://hub.docker.com/r/wdunn001/codec-llamacpp" rel="noopener">codec-llamacpp</a> (all v0.3.0)
+      <a href="https://hub.docker.com/r/wdunn001/codec-llamacpp" rel="noopener">codec-llamacpp</a> (all v0.4)
       &middot; Qwen-2.5 0.5B &middot; RTX&nbsp;3090 &middot; temp 0.0
-      &middot; reproducible from <code>packages/bench/scripts/run-all-langs.sh</code>.
+      &middot; reproducible from <code>packages/bench/scripts/run-all-langs.sh</code>
+      and <code>packages/bench/scripts/run-all-token-benches.sh</code> (new for v0.4 &mdash;
+      cross-language tokenize/detok micro-bench).
     </p>
   </div>
 </section>

@@ -61,7 +61,7 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
 <section class="section section--hero hero">
   <div class="container">
     <p class="eyebrow">
-      v0.3 shipping &middot; source-available &middot;
+      v0.4 shipping &middot; source-available &middot;
       <a href="/changelog/" style="color: var(--data); text-decoration: none;">what's new &rarr;</a>
     </p>
     <h1 class="hero__title">
@@ -72,8 +72,11 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       Codec is the substrate that lets gateways, routers, agents, and tool
       dispatchers operate on raw token IDs end-to-end. Detokenize once, at
       the only edge that needs text &mdash; never per-token, never per-hop.
-      v0.3 extends the same wire format to <a href="/docs/codec-metamcp/">MCP tool calls</a>
-      (with leaf-mode bypass) and <a href="/docs/codec-diffusers/">image / video latents</a>.
+      v0.4 adds safety-policy negotiation as a TLS-style capability axis &mdash;
+      operator-side categories, sanitized published descriptors, hash-anchored
+      via <code>.well-known/codec/policies/</code>. v0.3 extended the same wire
+      format to <a href="/docs/codec-metamcp/">MCP tool calls</a> (with leaf-mode
+      bypass) and <a href="/docs/codec-diffusers/">image / video latents</a>.
       Compression and wire reduction are byproducts; what you actually buy is
       the ability to run the inference layer like infrastructure.
     </p>

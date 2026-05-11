@@ -3,7 +3,7 @@ import Base from "../layouts/Base.astro";
 ---
 <Base
   title="Protocol map — Codec"
-  description="The Codec protocol at a glance: three negotiation pathways (text-tokens, MCP tool-calls with leaf-mode bypass, v0.3 latents) on the same client/gateway/engine triangle."
+  description="The Codec protocol at a glance: three negotiation pathways (text-tokens, MCP tool-calls with leaf-mode bypass, v0.3 latents) on the same client/gateway/engine triangle, plus v0.4 safety-policy negotiation as a TLS-style capability axis."
 >
   <section class="container protocol-map">
     <header class="protocol-map__head">
@@ -82,6 +82,29 @@ import Base from "../layouts/Base.astro";
           See <a href="/docs/codec-comfyui/">codec-comfyui</a>,
           <a href="/docs/codec-diffusers/">codec-diffusers</a>,
           <a href="https://github.com/wdunn001/Codec/blob/main/spec/PIPELINES.md" rel="noopener">PIPELINES.md</a>.
+        </p>
+      </article>
+
+      <article>
+        <h2>Safety policies (v0.4)</h2>
+        <p>
+          A sixth HELLO/READY capability axis. Clients announce
+          <code>accept_safety_policies</code> on HELLO; servers respond on READY
+          with <code>safety_policy_id</code> + <code>safety_policy_hash</code>.
+          The hash anchors to a sanitized descriptor served at
+          <code>/.well-known/codec/policies/&lt;id&gt;.json</code> (and the
+          content-addressed <code>/sha256/&lt;hex&gt;.json</code> sibling), which
+          publishes the <em>shape</em> of enforcement (categories, action types,
+          classifier family) but never operator-internal banned-token lists,
+          regex patterns, or classifier thresholds. <code>finish_reason:
+          "policy_violation"</code> surfaces when a server-side action fires.
+          Non-breaking against v0.3 — older clients ignore the new optional
+          fields and continue working.
+        </p>
+        <p class="protocol-map__where">
+          See <a href="https://github.com/wdunn001/Codec/blob/main/spec/versions/v0.4.md#safety-policy-negotiation" rel="noopener">spec/versions/v0.4.md</a>,
+          <a href="https://github.com/wdunn001/Codec/tree/main/packages/web-safety" rel="noopener">@codecai/web-safety</a> (browser-side prefilter + classifier registry),
+          and <a href="https://github.com/wdunn001/codec-supervisor" rel="noopener">codec-supervisor</a> (server-side enforcement + admin app).
         </p>
       </article>
     </section>
