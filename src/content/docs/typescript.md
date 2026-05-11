@@ -186,6 +186,7 @@ Full reference: [Translator](/docs/translator/).
 
 ## See also
 
+- [Browser safety](/docs/web-safety/) &mdash; the optional `@codecai/web-safety` sibling. Catches secrets, PII, jailbreak templates, destructive commands, and host-blocked patterns before the prompt reaches the wire. New in v0.4.
 - [Tool calling](/docs/tool-calling/) &mdash; deeper dive on `ToolWatcher`.
 - [Translator](/docs/translator/) &mdash; cross-vocab handoff details.
 - [@codecai/web on npm](https://www.npmjs.com/package/@codecai/web) &mdash; the package readme has additional examples.
