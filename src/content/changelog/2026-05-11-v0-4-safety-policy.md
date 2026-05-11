@@ -1,7 +1,7 @@
 ---
 title: v0.4 — safety-policy negotiation as a TLS-style capability axis
 date: "2026-05-11"
-kind: release
+kind: feature
 version: v0.4
 summary: |
   Codec gains a sixth negotiation axis on the HELLO/READY handshake — a sanitized, hash-anchored `safety_policy` descriptor that lets servers advertise enforcement (categories, actions, classifier family) without leaking operator-internal banned-id lists or thresholds. Adds an optional `@codecai/web-safety` client package (prefilter + classifier registry), full operator-side enforcement in codec-supervisor (logits processor, multi-token matcher, classifier registry with three v1 implementations), and per-language tokenize/detok benchmarks across all six client libs. Wire numbers unchanged from v0.3.x — v0.4 is wire-additive.
