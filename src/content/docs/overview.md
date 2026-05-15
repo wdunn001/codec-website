@@ -50,8 +50,4 @@ If you'd rather build from source against vanilla upstream, see [sglang &mdash; 
 
 The protocol and the six reference implementations are published under [BSL 1.1](https://github.com/wdunn001/Codec/blob/main/LICENSE) by Quasarke LLC. Free for non-production use and for production use under US&nbsp;$5M annual revenue. Each release auto-converts to Apache-2.0 four years after publication. For commercial licensing, [licensing@quasarke.com](mailto:licensing@quasarke.com).
 
-## Patent posture
-
-Quasarke is pursuing patent protection on certain Codec mechanisms. The wire format, handshake, and content-addressed map distribution described in the spec are intended to be made available on royalty-free or FRAND terms to implementers of the Codec specification when patents issue. Adjacent improvements (ToolWatcher, Translator, the dictionary system, Codec-Zstd-Dict negotiation) may be commercially licensed separately &mdash; a Codec-compliant implementation does not require those modules. Full text in [`PATENTS.md`](https://github.com/wdunn001/Codec/blob/main/PATENTS.md).
-
 Next: pick a runtime in the sidebar, or jump to the [quickstart](/docs/quickstart/).
