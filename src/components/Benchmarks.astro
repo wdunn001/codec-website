@@ -767,7 +767,7 @@ const toolBars = [
             </tbody>
           </table>
           <p class="cost-cell__foot">
-            Per-response cost is tiny on a phone; fleet-scale meaningful. 1B chat replies/day across a mobile fleet: ~194&nbsp;GJ vs ~0.12&nbsp;GJ on radio links &mdash; <strong>~50&nbsp;MWh/day</strong> saved at the airlink alone, plus the per-user battery + data-cap relief.
+            Per-response cost is tiny on a phone; fleet-scale meaningful. 1B chat replies/day across a mobile fleet: ~194&nbsp;MJ vs ~0.12&nbsp;MJ on radio links &mdash; <strong>~54&nbsp;kWh/day</strong> saved at the airlink alone (about <strong>~1.8 average US households' daily electricity</strong> &mdash; EIA average is ~30&nbsp;kWh/household/day), plus the per-user battery + data-cap relief. The full non-GPU energy delta (radio + network + client CPU) is bigger &mdash; see the power+latency card below.
           </p>
         </section>
 
@@ -905,13 +905,18 @@ const toolBars = [
       </div>
 
       <p class="cost-cell__body" style="margin-top: 1rem;">
-        <strong>Fleet scale &mdash; the only place power numbers get big:</strong>
+        <strong>Fleet scale &mdash; what these numbers mean at AI-provider volume:</strong>
         for 100M chat replies/day on mobile, the non-GPU energy delta is
         ~82 MJ/day = <strong>~23&nbsp;kWh/day</strong> saved (radio +
-        network + client CPU). At 1B replies/day = <strong>~230&nbsp;kWh/day</strong>
-        = an electric car's daily range of energy not pumped through
-        carrier base stations, ISP switches, and consumer modems. GPU
-        compute keeps drawing the same wattage either way &mdash; if you're
+        network + client CPU) &mdash; <strong>~0.8 US households' daily electricity</strong>
+        (EIA average ~30&nbsp;kWh/household/day). At
+        <strong>~1B replies/day &mdash; the rough order of magnitude
+        public estimates place a major AI provider's 2026 fleet at
+        (Anthropic Claude across web + API + Code, OpenAI ChatGPT, etc.;
+        none publish exact numbers)</strong> &mdash; the delta is
+        <strong>~230&nbsp;kWh/day</strong> = <strong>~7-8 US households powered for a day</strong>,
+        or an electric car's worth of charging, every day. GPU compute
+        keeps drawing the same wattage either way &mdash; if you're
         trying to reduce inference power, that's a model + accelerator
         question, not a wire-protocol question.
       </p>
