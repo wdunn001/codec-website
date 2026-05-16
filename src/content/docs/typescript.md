@@ -151,7 +151,7 @@ for await (const frame of decodeStream(resp.body!, "msgpack")) {
 }
 ```
 
-ToolWatcher does its work with a single `uint32` compare per token. It does **not** detokenize. On a 1M-token stream, it runs in **0.61 ms** vs **60.4 ms** for the text path &mdash; about 100&times; faster (see [Benchmarks](/#benchmarks)).
+ToolWatcher does its work with a single `uint32` compare per token. It does **not** detokenize. On a 1&nbsp;M-token stream the v0.4.1 lab measurement on EPYC 8124P + gcc:13 is **2.08&nbsp;ms** (481&nbsp;Mtok/s) vs **55.42&nbsp;ms** (18&nbsp;Mtok/s) for detokenize+regex &mdash; **26.7&times; faster** on that host. The speedup ratio stays in ToolWatcher's favour by ~26&ndash;100&times; depending on host; see [Benchmarks](/#benchmarks).
 
 Full reference: [Tool calling](/docs/tool-calling/).
 

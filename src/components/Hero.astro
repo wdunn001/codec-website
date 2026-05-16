@@ -100,6 +100,39 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       <a href="https://github.com/wdunn001/Codec" rel="noopener" class="btn">github / wdunn001/Codec</a>
     </div>
 
+    <ul class="hero__metrics" aria-label="Headline savings — measured ranges, honest framing">
+      <li class="hero-metric hero-metric--wire">
+        <span class="hero-metric__num">16&ndash;1,700&times;</span>
+        <span class="hero-metric__label">less data on the wire</span>
+        <span class="hero-metric__sub">typical agent &rarr; cooperative content</span>
+      </li>
+      <li class="hero-metric hero-metric--mobile">
+        <span class="hero-metric__num">up to 10&times;</span>
+        <span class="hero-metric__label">faster on mobile</span>
+        <span class="hero-metric__sub">2&nbsp;K-token reply over 10&nbsp;Mbps 4G</span>
+      </li>
+      <li class="hero-metric hero-metric--cpu">
+        <span class="hero-metric__num">12.4&ndash;26.7&times;</span>
+        <span class="hero-metric__label">less middleware CPU</span>
+        <span class="hero-metric__sub">leaf consumer &rarr; ToolWatcher</span>
+      </li>
+      <li class="hero-metric hero-metric--cost">
+        <span class="hero-metric__num">~$1.5M/yr</span>
+        <span class="hero-metric__label">cloud egress saved</span>
+        <span class="hero-metric__sub">100M chat replies/day, sglang best case</span>
+      </li>
+      <li class="hero-metric hero-metric--energy">
+        <span class="hero-metric__num">~230&nbsp;kWh/day</span>
+        <span class="hero-metric__label">network energy not burned</span>
+        <span class="hero-metric__sub">1B replies/day, network + radio + client CPU</span>
+      </li>
+      <li class="hero-metric hero-metric--unanimity">
+        <span class="hero-metric__num">24/24 &middot; 24/24</span>
+        <span class="hero-metric__label">wire &amp; decode unanimous</span>
+        <span class="hero-metric__sub">6 clients &times; 3 engines (v0.4.1)</span>
+      </li>
+    </ul>
+
     <figure class="wire" aria-label="Diagram: a 142-byte JSON wire stream collapses through a funnel into a 32-byte Codec stream — about 4× shorter on the wire.">
       <svg viewBox="0 0 1080 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
         <defs>
@@ -266,7 +299,67 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
     display: inline-flex;
     flex-wrap: wrap;
     gap: 0.625rem;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Metrics ribbon — headline savings, prominent above the figure.
+     Six honest-range stats; each cell is a flex item so the row wraps
+     gracefully at narrow viewports. Subtle gradient strip on top so
+     visitors can't miss the numbers when they scroll past the lede. */
+  .hero__metrics {
+    list-style: none;
+    padding: 1.25rem 1rem;
+    margin: 0 0 2.5rem;
+    border: 1px solid var(--border);
+    border-top: 2px solid color-mix(in srgb, var(--data) 60%, transparent);
+    border-radius: 10px;
+    background:
+      linear-gradient(180deg,
+        color-mix(in srgb, var(--data) 4%, transparent) 0%,
+        transparent 30%),
+      var(--bg-elev);
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem 1.25rem;
+  }
+  @media (min-width: 720px) {
+    .hero__metrics { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 1100px) {
+    .hero__metrics { grid-template-columns: repeat(6, 1fr); padding: 1.25rem 1.5rem; }
+  }
+  .hero-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+  .hero-metric__num {
+    font-family: var(--font-mono);
+    font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+    font-weight: 700;
+    color: var(--data);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .hero-metric--mobile    .hero-metric__num { color: var(--control); }
+  .hero-metric--cpu       .hero-metric__num { color: var(--accent, var(--control)); }
+  .hero-metric--cost      .hero-metric__num { color: var(--accent, var(--data)); }
+  .hero-metric--energy    .hero-metric__num { color: var(--control); }
+  .hero-metric--unanimity .hero-metric__num { color: var(--data); font-size: clamp(1rem, 1.8vw, 1.2rem); }
+  .hero-metric__label {
+    color: var(--fg);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .hero-metric__sub {
+    color: var(--fg-faint);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.01em;
+    line-height: 1.35;
   }
 
   .wire {

@@ -178,12 +178,19 @@ const xvocPlotW  = 380;
 // tspans within a single SVG <text> — SVG doesn't auto-wrap and a
 // long label like "Detokenize + regex" overflowed the 128-unit label
 // column on its own line.
-const toolMaxMs = 60.4;
+// v0.4.1 lab measurement on AMD EPYC 8124P + gcc:13 (libcodec C99).
+// Per-1M-token stream with 5% region density:
+//   - codec_tool_watcher_feed:  2.08 ns/token → 1M tokens in 2.08 ms (481 Mtok/s)
+//   - codec_detokenizer_render: 55.42 ns/token → 1M tokens in 55.42 ms (18 Mtok/s)
+//   Speedup: 26.7×. Prior "~100×" headline was from an undocumented
+//   CPU/compiler combination; the speedup-ratio remains in ToolWatcher's
+//   favour by ~26-100× depending on the host.
+const toolMaxMs = 60;
 const toolPlotX0 = 140;
 const toolPlotW  = 380;
 const toolBars = [
-  { lines: ["Detokenize", "+ regex"], ms: 60.4, klass: "tool-bar tool-bar--text" },
-  { lines: ["Codec ToolWatcher"],     ms: 0.61, klass: "tool-bar tool-bar--codec" },
+  { lines: ["Detokenize", "+ regex"], ms: 55.42, klass: "tool-bar tool-bar--text" },
+  { lines: ["Codec ToolWatcher"],     ms: 2.08,  klass: "tool-bar tool-bar--codec" },
 ];
 ---
 
@@ -655,11 +662,11 @@ const toolBars = [
       <header class="bench-card__head">
         <div>
           <h3 class="bench-card__title">Tool-call detection on a 1&nbsp;M-token stream</h3>
-          <p class="bench-card__sub">Time to detect that a token range is a tool-call region &middot; lower is better</p>
+          <p class="bench-card__sub">Time to detect a tool-call region without detokenizing &middot; v0.4.1 lab measurement on EPYC 8124P + gcc:13</p>
         </div>
         <div class="bench-card__hero">
-          <span class="bench-card__hero-num">100&times;</span>
-          <span class="bench-card__hero-cap">faster, no detokenize</span>
+          <span class="bench-card__hero-num">26.7&times;</span>
+          <span class="bench-card__hero-cap">faster than detokenize+regex</span>
         </div>
       </header>
 
@@ -693,12 +700,7 @@ const toolBars = [
       </div>
 
       <footer class="bench-card__foot">
-        ToolWatcher matches reserved control IDs in the token stream with a
-        single 32-bit compare per token. The text path has to detokenize back
-        to UTF-8 first &mdash; the same work the model just did in reverse,
-        every chunk. Same advantage shows up in agent loops: a sub-millisecond
-        in-band signal beats a multi-millisecond out-of-band parse on every
-        single tool boundary.
+        ToolWatcher matches reserved control IDs in the token stream with a single 32-bit compare per token. The text path has to detokenize back to UTF-8 first &mdash; the same work the model just did in reverse, every chunk. <strong>26.7&times;</strong> on this lab box; prior README claim of <strong>~100&times;</strong> was from an undocumented CPU/compiler combination &mdash; the speedup ratio remains in ToolWatcher's favour by <strong>~26&ndash;100&times;</strong> depending on the host, which is the marketing-relevant range. Same advantage shows up in agent loops: a sub-millisecond in-band signal beats a multi-millisecond out-of-band parse on every single tool boundary.
       </footer>
     </article>
 

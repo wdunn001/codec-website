@@ -24,20 +24,13 @@
       <article class="uc">
         <header class="uc__head">
           <span class="uc__tag">route</span>
-          <h3>Wire-native streaming</h3>
+          <h3>Tokens all the way down</h3>
         </header>
         <p class="uc__body">
-          Token IDs flow as length-prefixed binary frames &mdash; no JSON
-          envelope per token, no UTF-8 round-trip at every hop. Compression
-          is a layer on the same wire (gzip / brotli / dict-zstd). Same
-          framing on every engine in the matrix; clients in six languages
-          producing byte-identical output. Receipts: a short chat reply
-          shrinks <strong>~71&times;</strong> (15.2&nbsp;KB JSON-SSE &rarr;
-          213&nbsp;B Codec+dict-zstd), a 2&nbsp;K-token agent stream
-          <strong>1,707&times;</strong>. TTFB unchanged.
+          Models think in tokens. Every middleware in your stack &mdash; gateway, router, log sink &mdash; speaks text, so it detokenizes, JSON-wraps, ships, parses, re-tokenizes &mdash; once per hop, burning CPU and risking KV-cache drift. Codec keeps token IDs as the wire format <em>end-to-end</em>; UTF-8 happens once, at the edge that actually displays text. Same compression options on top (gzip / brotli / dict-zstd). Same framing on every engine; six client languages decode byte-identically.
         </p>
         <ul class="uc__metrics">
-          <li><span class="uc__num">1,707&times;</span><span>peak wire reduction</span></li>
+          <li><span class="uc__num">16&ndash;1700&times;</span><span>less wire (workload-dep.)</span></li>
           <li><span class="uc__num">3</span><span>engines, one wire</span></li>
         </ul>
       </article>
@@ -48,23 +41,22 @@
           <h3>MCP tool calls, leaf-mode bypass</h3>
         </header>
         <p class="uc__body">
-          A Codec-aware MCP server
+          The MCP path normally tokenizes the tool result at the gateway, every call. A Codec-aware MCP server
           (<a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a>)
-          attaches token IDs to its tool result via
+          attaches token IDs to its result via
           <code>_meta['ai.codec/leaf-tokenization']</code>; the
-          <a href="/docs/codec-metamcp/">codec-metamcp gateway</a> recognizes
-          the payload and forwards IDs verbatim &mdash; <code>[Codec][leaf]</code>
-          fires, the gateway becomes a transparent ID pipe and the consumer
-          skips the BPE re-tokenize hop (12.4&times; faster on the tool-result
-          microbench). <strong>tools/list</strong> across a 40-tool namespace:
+          <a href="/docs/codec-metamcp/">codec-metamcp gateway</a> forwards them
+          verbatim &mdash; <code>[Codec][leaf]</code> fires, the gateway becomes
+          a transparent ID pipe, and the consumer skips its BPE re-tokenize.
+          <strong>tools/list</strong> across a 40-tool namespace:
           <strong>21.4&nbsp;KB &rarr; 5.9&nbsp;KB (3.6&times;)</strong>.
-          ToolWatcher CPU on the model-emission side:
-          <strong>~100&times;</strong> faster than detokenize+regex
-          (libcodec measures 26.7&times; on the lab's EPYC, 481&nbsp;Mtok/s).
+          ToolWatcher detects tool boundaries on the raw ID stream at
+          <strong>26.7&times;</strong> the speed of detokenize+regex
+          (lab EPYC, 481&nbsp;Mtok/s).
         </p>
         <ul class="uc__metrics">
-          <li><span class="uc__num">3.6&times;</span><span>tools/list (40 tools)</span></li>
-          <li><span class="uc__num">100&times;</span><span>vs detokenize+regex</span></li>
+          <li><span class="uc__num">12.4&times;</span><span>leaf consumer CPU</span></li>
+          <li><span class="uc__num">26.7&times;</span><span>ToolWatcher vs detok+regex</span></li>
         </ul>
       </article>
 
