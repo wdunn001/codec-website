@@ -205,6 +205,49 @@ Clients check the hash against a dict they have loaded. Hash mismatch is a fatal
 
 Reference dicts ship at [`dictionaries/`](https://github.com/wdunn001/Codec/tree/main/dictionaries) in the main repo; the training pipeline is [`packages/bench/scripts/train-zstd-dict.py`](https://github.com/wdunn001/Codec/blob/main/packages/bench/scripts/train-zstd-dict.py).
 
+## Headers — the full v0.4 / v0.4.1 floor
+
+Every Codec response carries a small set of HTTP response headers that name the wire-level capabilities the server is using. v0.4 normalised the floor; v0.4.1 closed the cross-client decode gap. The normative table lives in [`spec/versions/v0.4.md` § Graceful downgrade](https://github.com/wdunn001/Codec/blob/main/spec/versions/v0.4.md). The short version:
+
+| Header | Direction | Introduced | Purpose |
+|---|---|---|---|
+| `Codec-Tokenizer-Map: <id> sha256:<short>` | response | v0.2 | Identifies + hash-pins the vocab the IDs belong to. Receiver verifies before decoding (mismatch is fail-fast — stops KV-cache poisoning). |
+| `Codec-Zstd-Dict: sha256:<short>` | response | v0.3 | Identifies + hash-pins the pre-trained zstd dictionary used to compress the body. MUST be present when `Content-Encoding: zstd`. Multiple dict versions can coexist per tokenizer; the header lets a deployment rotate dicts without re-cutting the map. |
+| `Content-Encoding: zstd \| br \| gzip \| identity` | response | v0.2 (gzip), v0.3 (zstd), v0.4 (br) | The negotiator honours spec preference order `zstd > br > gzip > identity` and picks the smallest valid encoding for the response size. v0.4.1 fixed a brotli per-chunk-flush bug; brotli is now Pareto-front for 32–256-token msgpack streams. |
+| `Codec-Client-Version: <major.minor>` | request | v0.4 | Client advertises the maximum spec version it can correctly decode. Used by the server to pick a graceful downgrade path. |
+| `Codec-Min-Version: <major.minor>` | response (426) | v0.4 | Server's minimum supported spec version. Returned on the 426 Upgrade Required response when the client falls short. |
+| `Codec-Required-Features: <csv>` | response (426) | v0.4 | Comma-separated list of feature names the deployment requires (e.g. `safety-policy-enforcement, mandatory-classifier`). Returned with 426 alongside `Codec-Min-Version`. |
+| `Codec-Safety-Policy-Id: <id>` | response | v0.4 | Identifies the safety policy the server enforced on this response (operator-side categories, action types). Pairs with `Codec-Safety-Policy-Hash`. |
+| `Codec-Safety-Policy-Hash: sha256:<short>` | response | v0.4 | Hash of the sanitized descriptor served at `/.well-known/codec/policies/<id>.json`. The descriptor publishes the *shape* of enforcement but never operator-internal banned-token lists or thresholds. Hash mismatch → client refuses the stream. |
+| `finish_reason: "policy_violation"` (in-frame, not a header) | response | v0.4 | Surfaces when a server-side safety action fired mid-stream. Distinct from `length`, `stop`, `tool_call`. |
+
+### What v0.4.1 changed about the headers
+
+- **No new headers, no header bytes on the wire change.** v0.4.1 is wire-additive over v0.4.
+- **Brotli per-chunk-flush bug fixed** in both sglang + vllm forks — `Content-Encoding: br` now compresses correctly across chunk boundaries instead of inflating small streams (was 1,159 B on a 975 B identity stream pre-fix; now Pareto-front for 32–256-token msgpack).
+- **`Codec-Zstd-Dict` decode now works across all 6 clients** — pre-v0.4.1 only the Python client decoded the dict-zstd payload correctly; the other 5 either silently returned compressed bytes or threw "Dictionary mismatch". v0.4.1 ships real dict-zstd support in TS/Web, .NET, Rust, Java, and C, gated by a shared cross-client interop fixture. The header was always emitted correctly; the client side just couldn't act on it.
+- **llama.cpp gained brotli + zstd** — pre-v0.4.1 the llama.cpp fork only supported identity + gzip. v0.4.1 adds `codec_brotli_streamer` + `codec_zstd_streamer` + the `codec_zstd_dict_registry`, so the same `Content-Encoding` negotiation now works on all three engines. The `/codec/schema` endpoint also lands so the engine-acceptance pytest can probe llama.cpp the same way it probes sglang and vllm.
+
+### The 426 dance
+
+A v0.4 server that requires a feature the client can't satisfy returns:
+
+```
+HTTP/1.1 426 Upgrade Required
+Codec-Min-Version: 0.4
+Codec-Required-Features: safety-policy-enforcement, mandatory-classifier
+Content-Type: application/json
+
+{
+  "error": "codec_version_required",
+  "client_version": "0.3",
+  "required_features": ["safety-policy-enforcement", "mandatory-classifier"],
+  "deployment_id": "lab-vinez-prod"  // optional; operator may omit
+}
+```
+
+The client can upgrade and retry, or surface the requirement to the user. A v0.3 client that doesn't understand 426 just sees an HTTP error — graceful from the spec's perspective. The body's `client_version` echoes what the server saw, so a misconfigured `Codec-Client-Version` shows up at debug time.
+
 ## Polyglot bit-identical
 
 The six reference implementations (TypeScript, Python, .NET, C, Rust, Java) all produce **byte-identical** wire output for the same inputs. The CI matrix encodes the same prompt with each binding and asserts a SHA match. If your seventh implementation matches the bytes from any one of those, you're correct.
