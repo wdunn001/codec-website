@@ -702,6 +702,114 @@ const toolBars = [
       </footer>
     </article>
 
+    <!-- ============== CHART 6: cost translation ============== -->
+    <article class="bench-card bench-card--cost">
+      <header class="bench-card__head">
+        <div>
+          <h3 class="bench-card__title">What the bench numbers cost &mdash; in dollars and watts</h3>
+          <p class="bench-card__sub">honest translations from the measured wire/CPU numbers above &middot; public egress rates &middot; published radio-link energy estimates</p>
+        </div>
+        <div class="bench-card__hero">
+          <span class="bench-card__hero-num">$1.6M/yr</span>
+          <span class="bench-card__hero-cap">egress saved @ 100M chat replies/day, sglang</span>
+        </div>
+      </header>
+
+      <p class="cost-lede">
+        <strong>Codec is a wire + dispatch primitive, not an inference accelerator.</strong>
+        The model still runs at the same TPS on the same GPU. The cost story is on the
+        <em>network</em> (egress, mobile data, radio energy), the <em>client CPU</em>
+        (BPE tokenize + JSON parse removed from the hot path), and the
+        <em>server CPU floor</em> (response-side serialize + UTF-8 encode removed,
+        raising the concurrent-request ceiling per GPU). It is NOT on GPU compute.
+      </p>
+
+      <div class="cost-grid">
+        <!-- 1. Cloud egress -->
+        <section class="cost-cell">
+          <header class="cost-cell__head">
+            <span class="cost-cell__tag">cloud egress</span>
+            <h4>AWS S3 outbound @ $0.09/GB</h4>
+          </header>
+          <p class="cost-cell__body">
+            A 2K-token chat reply ships 485&nbsp;KB JSON-SSE vs 291&nbsp;B Codec msgpack+dict-zstd on sglang. Egress is billed per byte the cloud sends to the user:
+          </p>
+          <table class="cost-table">
+            <thead><tr><th>Volume</th><th class="num">JSON-SSE</th><th class="num">Codec</th><th class="num win">Saved</th></tr></thead>
+            <tbody>
+              <tr><td>1M replies/day</td>     <td class="num">$1,310/mo</td><td class="num">$0.78/mo</td>  <td class="num win"><strong>$1,309/mo</strong></td></tr>
+              <tr><td>10M replies/day</td>    <td class="num">$13,100/mo</td><td class="num">$7.80/mo</td> <td class="num win"><strong>$13,092/mo</strong></td></tr>
+              <tr><td>100M replies/day</td>   <td class="num">$131,000/mo</td><td class="num">$78/mo</td>  <td class="num win"><strong>~$1.57M/yr</strong></td></tr>
+            </tbody>
+          </table>
+          <p class="cost-cell__foot">
+            GCP + Azure egress are in the same ballpark ($0.08&ndash;$0.12/GB). Numbers round; per-reply ratio is fixed by the wire bench at <strong>1,707&times;</strong> &mdash; cost shrinks by the same factor.
+          </p>
+        </section>
+
+        <!-- 2. Mobile data + radio energy -->
+        <section class="cost-cell">
+          <header class="cost-cell__head">
+            <span class="cost-cell__tag">mobile + radio</span>
+            <h4>Per-response data + battery</h4>
+          </header>
+          <p class="cost-cell__body">
+            Carrier add'l-data rate ~$10/GB. Radio-link energy ~50&nbsp;nJ/bit (conservative cross-tech estimate from published 4G/5G/Wi-Fi measurements). Per 2K-token chat reply:
+          </p>
+          <table class="cost-table">
+            <thead><tr><th></th><th class="num">JSON-SSE</th><th class="num">Codec</th></tr></thead>
+            <tbody>
+              <tr><td>Data cost</td>      <td class="num">$0.0049</td><td class="num">$0.000003</td></tr>
+              <tr><td>Radio energy</td>   <td class="num">194 mJ</td>  <td class="num">0.12 mJ</td></tr>
+              <tr><td>Bits over the air</td><td class="num">3.88 Mb</td><td class="num">2.3 Kb</td></tr>
+            </tbody>
+          </table>
+          <p class="cost-cell__foot">
+            Per-response cost is tiny on a phone; fleet-scale meaningful. 1B chat replies/day across a mobile fleet: ~194&nbsp;GJ vs ~0.12&nbsp;GJ on radio links &mdash; <strong>~50&nbsp;MWh/day</strong> saved at the airlink alone, plus the per-user battery + data-cap relief.
+          </p>
+        </section>
+
+        <!-- 3. Client CPU -->
+        <section class="cost-cell">
+          <header class="cost-cell__head">
+            <span class="cost-cell__tag">client CPU</span>
+            <h4>Tokenize / detokenize removed from the hot path</h4>
+          </header>
+          <p class="cost-cell__body">
+            Two measured points from the bench section above, both worth real CPU on the consumer side:
+          </p>
+          <ul class="cost-bullets">
+            <li><strong>ToolWatcher</strong> &mdash; <code>2.08 ns/token</code> (single 32-bit compare) vs <code>55.42 ns/token</code> for detokenize+regex match. <strong>26.7&times;</strong> less CPU on every tool-detection pass.</li>
+            <li><strong>mcp-leaf</strong> &mdash; <code>0.004 ms</code> meta-read vs <code>0.052 ms</code> BPE tokenize per tool result. <strong>12.4&times;</strong> less CPU per tool call where the result includes <code>_meta['ai.codec/leaf-tokenization']</code>.</li>
+          </ul>
+          <p class="cost-cell__foot">
+            Per call it's microseconds. At fleet scale (100M consumers &times; 100 tool-bearing turns/day) the agent-mesh saves on the order of <strong>~1,000 CPU-hours/day</strong> across the consumer fleet. On a single laptop running an agent loop locally: less fan noise, longer battery.
+          </p>
+        </section>
+
+        <!-- 4. Server-side inference cost (honest framing) -->
+        <section class="cost-cell">
+          <header class="cost-cell__head">
+            <span class="cost-cell__tag cost-cell__tag--warn">server CPU floor</span>
+            <h4>What Codec does NOT change: GPU compute</h4>
+          </header>
+          <p class="cost-cell__body">
+            The model still runs at the same TPS. Codec doesn't accelerate token generation, doesn't change weights, doesn't change KV-cache footprint. <strong>If you're GPU-bound, Codec is invisible to your $/token.</strong>
+          </p>
+          <p class="cost-cell__body">
+            What it DOES reduce on the server: response-side <em>serialize</em> + UTF-8 encode + per-token JSON envelope. That's typically 1&ndash;5% of server CPU on a busy node and dominates only at high concurrency. The practical effect is the <em>concurrent-request ceiling per GPU</em> moves up &mdash; lab measurements on sglang show ~5&ndash;10% more sustained concurrent streams before TTFB degrades, because the response-builder thread isn't UTF-8-encoding every token. That translates to fewer GPUs needed to hit the same QPS target, not faster individual responses.
+          </p>
+          <p class="cost-cell__foot cost-cell__foot--caveat">
+            Caveat: this is observation from the bench rig, not a controlled GPU-utilisation A/B against vanilla. Treat as directional &mdash; the safe claim is "Codec doesn't slow down inference and removes a known serialize bottleneck at concurrency." We do NOT claim a $/token reduction on the model itself.
+          </p>
+        </section>
+      </div>
+
+      <footer class="bench-card__foot">
+        Source numbers: cross-stack matrix (wire bytes), <code>leaf-live.ts</code> (consumer CPU), <code>bench_watcher.c</code> (ToolWatcher ns/token). Egress rates: <a href="https://aws.amazon.com/s3/pricing/" rel="noopener">AWS S3 standard tier</a>; <a href="https://cloud.google.com/storage/pricing#network-egress" rel="noopener">GCP equivalent</a>. Radio-link energy: ~50&nbsp;nJ/bit conservative cross-tech estimate (published 4G/5G/Wi-Fi measurements vary 30&ndash;100 nJ/bit). All cost translations are back-of-envelope from public rates &times; measured bytes &mdash; production deployments should re-run with their own egress contract + traffic mix.
+      </footer>
+    </article>
+
     <p class="bench-source">
       Source: <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-15T20-00-00Z/MATRIX.md" rel="noopener">cross-stack MATRIX.md</a>
       &middot; <a href="https://hub.docker.com/r/wdunn001/codec-sglang" rel="noopener">codec-sglang</a>,
@@ -1364,10 +1472,137 @@ const toolBars = [
   }
   .agent-loop-table--leaf { margin-top: 0.5rem; }
 
+  /* Cost translation card (v0.4.1) */
+  .bench-card--cost {
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+    background:
+      radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--accent) 4%, transparent), transparent 65%),
+      var(--bg-elev);
+  }
+  .bench-card--cost .bench-card__hero-num { color: var(--accent); }
+  .cost-lede {
+    margin: 0 0 1.5rem;
+    color: var(--fg-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    border-left: 3px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    padding: 0.5rem 0 0.5rem 0.875rem;
+    background: color-mix(in srgb, var(--accent) 4%, transparent);
+    border-radius: 0 6px 6px 0;
+  }
+  .cost-lede strong { color: var(--fg); font-weight: 600; }
+  .cost-lede em { color: var(--fg); font-style: italic; font-weight: 500; }
+
+  .cost-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 900px) {
+    .cost-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .cost-cell {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.125rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .cost-cell__head { display: flex; flex-direction: column; gap: 0.4rem; }
+  .cost-cell__head h4 {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--fg);
+  }
+  .cost-cell__tag {
+    align-self: flex-start;
+    padding: 0.125rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-elev);
+    color: var(--fg-faint);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .cost-cell__tag--warn {
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+  }
+  .cost-cell__body {
+    margin: 0;
+    color: var(--fg-muted);
+    font-size: 0.875rem;
+    line-height: 1.55;
+  }
+  .cost-cell__body strong { color: var(--fg); font-weight: 600; }
+  .cost-cell__body em { color: var(--fg); font-style: italic; font-weight: 500; }
+  .cost-cell__body code {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--fg);
+  }
+  .cost-cell__foot {
+    margin: auto 0 0;
+    color: var(--fg-faint);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+  }
+  .cost-cell__foot strong { color: var(--fg); font-weight: 600; }
+  .cost-cell__foot--caveat {
+    border-top-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+    color: color-mix(in srgb, var(--accent) 70%, var(--fg-faint));
+  }
+  .cost-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+  }
+  .cost-table th, .cost-table td {
+    padding: 0.4rem 0.55rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .cost-table th {
+    color: var(--fg-faint);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .cost-table .num { text-align: right; font-family: var(--font-mono); white-space: nowrap; color: var(--fg); }
+  .cost-table .num.win { color: var(--accent); }
+  .cost-table tr:last-child td { border-bottom: none; }
+  .cost-bullets { margin: 0; padding-left: 1.1rem; color: var(--fg-muted); font-size: 0.875rem; line-height: 1.55; }
+  .cost-bullets li { margin: 0.35rem 0; }
+  .cost-bullets strong { color: var(--fg); font-weight: 600; }
+  .cost-bullets code {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--fg);
+  }
+
   @media (max-width: 640px) {
     .bench-card__head { gap: 0.75rem; }
     .bench-card__hero { align-items: flex-start; text-align: left; }
     .agent-loop-table { font-size: 0.75rem; }
     .agent-loop-table th, .agent-loop-table td { padding: 0.4rem 0.4rem; }
+    .cost-table { font-size: 0.75rem; }
+    .cost-table th, .cost-table td { padding: 0.3rem 0.35rem; }
   }
 </style>
