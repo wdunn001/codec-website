@@ -810,6 +810,115 @@ const toolBars = [
       </footer>
     </article>
 
+    <!-- ============== CHART 7: power + latency ============== -->
+    <article class="bench-card bench-card--power">
+      <header class="bench-card__head">
+        <div>
+          <h3 class="bench-card__title">Power consumption + response time &mdash; what the user feels</h3>
+          <p class="bench-card__sub">TTFB is unchanged &middot; wire-transfer time scales with link speed &middot; per-response energy &times; fleet scale</p>
+        </div>
+        <div class="bench-card__hero bench-card__hero--dual">
+          <span class="bench-card__hero-num">9.6&times;</span>
+          <span class="bench-card__hero-cap">wall-clock on 10&nbsp;Mbps mobile</span>
+          <span class="bench-card__hero-sep">·</span>
+          <span class="bench-card__hero-num bench-card__hero-num--alt">~1,700&times;</span>
+          <span class="bench-card__hero-cap">less network energy / response</span>
+        </div>
+      </header>
+
+      <p class="cost-lede">
+        <strong>TTFB on the same engine is the same on both wires</strong> (codec-sglang lands at ~45&nbsp;ms first body byte whether the response is JSON-SSE or Codec msgpack &mdash; the model still runs first). What changes is what comes <em>after</em> the first byte: 485&nbsp;KB of JSON has to physically arrive at the client, 291&nbsp;B of Codec doesn't. On a datacenter LAN that's invisible; on mobile / edge / satellite links it dominates wall-clock.
+      </p>
+
+      <h4 class="bench-subhead">Wall-clock for a 2&nbsp;K-token chat reply, by link speed</h4>
+      <p class="bench-subhead-note">Total = TTFB (~45&nbsp;ms, model-bound, identical on both wires) + payload transfer time at link rate. Numbers from cross-stack matrix wire bytes + arithmetic.</p>
+
+      <div class="power-grid">
+        <table class="cost-table">
+          <thead>
+            <tr>
+              <th>Link</th>
+              <th class="num">JSON-SSE total</th>
+              <th class="num">Codec total</th>
+              <th class="num">Speedup</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Datacenter LAN &mdash; 1&nbsp;Gbps</td>      <td class="num">49 ms</td>     <td class="num">45 ms</td>   <td class="num win">1.1&times;</td></tr>
+            <tr><td>Office Wi-Fi &mdash; 100&nbsp;Mbps</td>      <td class="num">84 ms</td>     <td class="num">45 ms</td>   <td class="num win">1.9&times;</td></tr>
+            <tr><td>Mobile 4G &mdash; 10&nbsp;Mbps</td>          <td class="num">433 ms</td>    <td class="num">45 ms</td>   <td class="num win"><strong>9.6&times;</strong></td></tr>
+            <tr><td>Edge / weak mobile &mdash; 1&nbsp;Mbps</td>  <td class="num">3,925 ms</td>  <td class="num">47 ms</td>   <td class="num win"><strong>83&times;</strong></td></tr>
+            <tr><td>Satellite / IoT &mdash; 256&nbsp;Kbps</td>   <td class="num">15.2 s</td>    <td class="num">54 ms</td>   <td class="num win"><strong>281&times;</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 class="bench-subhead bench-subhead--secondary">Agent loop end-to-end &mdash; measured, not extrapolated</h4>
+      <p class="bench-subhead-note">From the v0.4.1 agent-loop bench. Wall-clock includes the model emitting the tool call + dispatch + tool result + final answer.</p>
+
+      <div class="power-grid">
+        <table class="cost-table">
+          <thead>
+            <tr>
+              <th>Tool surface</th>
+              <th class="num">JSON-SSE total</th>
+              <th class="num">Codec total</th>
+              <th class="num">Speedup</th>
+              <th>What dominates</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>mock <code>get_weather</code> (in-process)</td>    <td class="num">1,662 ms</td><td class="num">189 ms</td><td class="num win"><strong>8.8&times;</strong></td><td>wire + serialize</td></tr>
+            <tr><td>SearXNG (live web tool)</td>                       <td class="num">2,078 ms</td><td class="num">1,257 ms</td><td class="num win">1.65&times;</td><td>tool latency</td></tr>
+            <tr><td>MetaMCP gateway (Time MCP)</td>                    <td class="num">210 ms</td><td class="num">216 ms</td><td class="num">~neutral</td><td>model + tool</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 class="bench-subhead bench-subhead--secondary">Energy budget per response</h4>
+      <p class="bench-subhead-note">Where the joules actually go. Conservative estimates from published per-bit + per-Mtok values multiplied through the v0.4.1 wire numbers.</p>
+
+      <div class="power-grid">
+        <table class="cost-table">
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th class="num">JSON-SSE</th>
+              <th class="num">Codec</th>
+              <th class="num">Ratio</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>GPU compute (Qwen-2.5 0.5B, 2K tokens)</td>    <td class="num">~5&ndash;15&nbsp;J</td>  <td class="num">~5&ndash;15&nbsp;J</td>      <td class="num">unchanged</td></tr>
+            <tr><td>Server CPU (response serialize + UTF-8 encode)</td><td class="num">~10&nbsp;mJ</td>    <td class="num">~0.5&nbsp;mJ</td>          <td class="num win">~20&times;</td></tr>
+            <tr><td>Network end-to-end (~150 nJ/bit)</td>          <td class="num">~580&nbsp;mJ</td>   <td class="num">~0.35&nbsp;mJ</td>          <td class="num win">~1,660&times;</td></tr>
+            <tr><td>Client radio (mobile, ~50&nbsp;nJ/bit)</td>    <td class="num">~194&nbsp;mJ</td>   <td class="num">~0.12&nbsp;mJ</td>          <td class="num win">~1,617&times;</td></tr>
+            <tr><td>Client CPU (BPE tokenize + JSON parse)</td>    <td class="num">~50&nbsp;mJ</td>    <td class="num">~4&nbsp;mJ</td>             <td class="num win">~12&times;</td></tr>
+            <tr class="agent-loop-delta"><td><strong>Per-response total (mobile path)</strong></td>
+                                                                   <td class="num"><strong>~6&nbsp;J + 824&nbsp;mJ</strong></td>
+                                                                   <td class="num"><strong>~6&nbsp;J + 5&nbsp;mJ</strong></td>
+                                                                   <td class="num">GPU dominant; everything else <strong>~165&times;</strong> less</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="cost-cell__body" style="margin-top: 1rem;">
+        <strong>Fleet scale &mdash; the only place power numbers get big:</strong>
+        for 100M chat replies/day on mobile, the non-GPU energy delta is
+        ~82 MJ/day = <strong>~23&nbsp;kWh/day</strong> saved (radio +
+        network + client CPU). At 1B replies/day = <strong>~230&nbsp;kWh/day</strong>
+        = an electric car's daily range of energy not pumped through
+        carrier base stations, ISP switches, and consumer modems. GPU
+        compute keeps drawing the same wattage either way &mdash; if you're
+        trying to reduce inference power, that's a model + accelerator
+        question, not a wire-protocol question.
+      </p>
+
+      <footer class="bench-card__foot">
+        TTFB numbers from MATRIX.md §4 (Python httpx <code>aiter_raw</code> first-body-byte median). Agent-loop wall-clock from <code>results/2026-05-15T20-00-00Z/agent-loop/</code> &mdash; wire numbers measured, not extrapolated; speedups are real wall-clock from POST to final answer. Energy estimates: GPU from published per-token figures for small models on Ampere; network end-to-end ~150&nbsp;nJ/bit (datacenter switching + transit + last-mile, conservative); radio link ~50&nbsp;nJ/bit (4G/5G/Wi-Fi midpoint); server CPU response-serialize from libcodec microbench scaled to msgpack-encode equivalent; client CPU from tokenize/detok microbench. Mileage varies per deployment.
+      </footer>
+    </article>
+
     <p class="bench-source">
       Source: <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-15T20-00-00Z/MATRIX.md" rel="noopener">cross-stack MATRIX.md</a>
       &middot; <a href="https://hub.docker.com/r/wdunn001/codec-sglang" rel="noopener">codec-sglang</a>,
@@ -1471,6 +1580,17 @@ const toolBars = [
     text-transform: uppercase;
   }
   .agent-loop-table--leaf { margin-top: 0.5rem; }
+
+  /* Power + latency card (v0.4.1) */
+  .bench-card--power {
+    border-color: color-mix(in srgb, var(--data) 35%, var(--border));
+    background:
+      radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--data) 4%, transparent), transparent 65%),
+      var(--bg-elev);
+  }
+  .bench-card--power .bench-card__hero-num { color: var(--data); }
+  .bench-card--power .bench-card__hero-num--alt { color: var(--control); }
+  .power-grid { margin: 0.5rem 0 1.25rem; }
 
   /* Cost translation card (v0.4.1) */
   .bench-card--cost {
