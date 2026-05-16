@@ -32,15 +32,65 @@ import Base from "../layouts/Base.astro";
       </figcaption>
     </figure>
 
+    <section class="protocol-map__common">
+      <h2 class="protocol-map__common-title">Headers common to every pathway (v0.4 floor)</h2>
+      <p>
+        Three header families apply uniformly across every pathway below
+        &mdash; not specific to text-tokens, MCP, or latents. They're the
+        v0.4 capability + enforcement floor, and the wire-compression
+        negotiation that v0.4.1 normalised across all 6 clients.
+      </p>
+      <ul class="protocol-map__common-list">
+        <li>
+          <strong>Capability advertisement.</strong> Client sends
+          <code>Codec-Client-Version: 0.4</code> on every request; the
+          server uses it to pick a graceful downgrade path. If the
+          deployment's floor is higher than the client can satisfy, the
+          server returns <strong>HTTP 426</strong> with
+          <code>Codec-Min-Version</code> + <code>Codec-Required-Features</code>
+          (comma-separated feature names, e.g.
+          <code>safety-policy-enforcement, mandatory-classifier</code>).
+        </li>
+        <li>
+          <strong>Compression negotiation.</strong> Client sends
+          <code>Accept-Encoding: zstd, br, gzip, identity</code>; the server
+          picks the smallest valid per the spec preference order
+          <code>zstd &gt; br &gt; gzip &gt; identity</code>. v0.4.1 fixed
+          brotli's per-chunk-flush bug + landed dict-zstd decode across all
+          6 clients, so advertising the full menu is correct on every
+          binding now. When <code>Content-Encoding: zstd</code>, the response
+          also carries <code>Codec-Zstd-Dict: sha256:&lt;short&gt;</code> so
+          the client picks the right local dict.
+        </li>
+        <li>
+          <strong>Safety-policy enforcement.</strong> Per-deployment opt-on
+          axis &mdash; see the "Safety policies (v0.4)" pathway below for
+          the full negotiation. When in force, the response carries
+          <code>Codec-Safety-Policy-Id</code> +
+          <code>Codec-Safety-Policy-Hash</code> and a server-side action
+          surfaces as <code>finish_reason: "policy_violation"</code> inside
+          the frame.
+        </li>
+      </ul>
+      <p class="protocol-map__where">
+        Full normative table: <a href="https://github.com/wdunn001/Codec/blob/main/spec/versions/v0.4.md" rel="noopener">spec/versions/v0.4.md § Graceful downgrade</a>;
+        request-vs-response split: <a href="/docs/protocol/#request-vs-response-where-each-codec-knob-lives">Protocol &raquo; Request vs response</a>.
+      </p>
+    </section>
+
     <section class="protocol-map__pathways">
       <article>
         <h2>Text-tokens (v0.2)</h2>
         <p>
           The original wire shape. Engines emit <code>CodecFrame</code>s of
           uint32 token IDs; the gateway forwards them; the client detokenizes
-          locally. The <code>Codec-Tokenizer-Map</code> response header carries
-          the sha256 of the active tokenizer map so the client can fail fast on
-          mismatch.
+          locally. The <code>Codec-Tokenizer-Map: &lt;id&gt; sha256:&lt;short&gt;</code>
+          response header identifies + hash-pins the active vocab so the
+          client can verify before decoding (mismatch is fail-fast).
+          The client may also resolve the map automatically from
+          <code>(origin, &lt;id&gt;)</code> via
+          <code>/.well-known/codec/maps/</code> &mdash; see
+          <a href="/docs/discovery/">discovery</a>.
         </p>
         <p class="protocol-map__where">
           See <a href="/docs/codec-sglang/">codec-sglang</a>,
@@ -57,40 +107,38 @@ import Base from "../layouts/Base.astro";
           via a per-block <code>_meta['ai.codec/leaf-tokenization']</code>
           payload (older sibling-block form still accepted by the reader for
           back-compat). The gateway recognizes the pre-tokenized output and
-          bypasses its back-compat shim — the <code>[Codec][leaf]</code> log
-          fires; <code>[Codec][shim]</code> warnings disappear. Non-Codec-aware
-          tools in the same namespace still work via the shim path. Trade is
-          a fixed ~210-byte envelope per text block (text crossover at ~300+
-          chars) for a 12.4× consumer-side BPE-tokenize speedup &mdash; large
-          MCP results win on both axes.
+          bypasses its back-compat shim &mdash; the <code>[Codec][leaf]</code>
+          log fires; <code>[Codec][shim]</code> warnings disappear.
+          Non-Codec-aware tools in the same namespace still work via the
+          shim path. Trade is a fixed ~210-byte <code>_meta</code> envelope
+          per text block (text crossover at ~300+ chars) for a 12.4&times;
+          consumer-side BPE-tokenize speedup &mdash; large MCP results win
+          on both axes.
         </p>
         <p>
-          <strong>v0.4 header changes that flow through MCP:</strong> the gateway
-          emits <code>Codec-Tokenizer-Map: &lt;id&gt; sha256:&lt;short&gt;</code>
-          so the receiver can verify the leaf payload's <code>map_id</code>
-          matches the negotiated vocab (mismatch is a fail-fast condition —
-          stops KV-cache poisoning). When an MCP-shaped zstd dict is loaded,
-          the gateway emits <code>Codec-Zstd-Dict: sha256:&lt;short&gt;</code>
-          on every response so a Codec-aware client can decompress
-          tools/list + tool-result bytes against the pre-trained dict
-          (codec-metamcp ships a 16&nbsp;KB MCP-shaped dict by default).
-          A v0.4 gateway can also require <code>Codec-Safety-Policy-Id</code> +
-          <code>Codec-Safety-Policy-Hash</code> on inbound requests (TLS-style
-          capability axis &mdash; see the next pathway), and respond
-          <strong>HTTP 426</strong> with <code>Codec-Min-Version</code> +
-          <code>Codec-Required-Features</code> when the client falls short of
-          the deployment's enforcement floor. v0.4.1 hardens the leaf reader
-          with hash-validation before fetch (refuses a malformed
-          <code>mapHash</code> instead of waiting for the network) and lands
-          dict-zstd interop across all 6 clients — the gateway can now safely
-          rely on the wire-compression headers being honored uniformly.
+          <strong>What's MCP-specific in the v0.4 / v0.4.1 wire:</strong>
+          the gateway's <code>Codec-Tokenizer-Map</code> response header is
+          the trust anchor the receiver compares the leaf payload's
+          <code>map_id</code> against (mismatch &rarr; reject the result,
+          KV-cache stays clean). codec-metamcp ships a pre-trained
+          <strong>16&nbsp;KB MCP-shaped zstd dict</strong> by default and
+          emits <code>Codec-Zstd-Dict</code> on every response so a
+          Codec-aware client can decompress <code>tools/list</code> +
+          tool-result bytes against it (~4.7&times; over JSON+gzip on real
+          MCP traffic). v0.4.1 hardens the leaf reader with hash-validation
+          before fetch (refuses a malformed <code>mapHash</code> instead of
+          surfacing it later as "fetch failed") and lands dict-zstd interop
+          across all 6 clients &mdash; the gateway can now safely rely on the
+          wire-compression headers being honored uniformly. The generic
+          v0.4 header floor above (capability / 426, compression negotiation,
+          safety-policy enforcement) applies to MCP traffic the same way it
+          applies to text-tokens and latents &mdash; not repeated here.
         </p>
         <p class="protocol-map__where">
           See <a href="/docs/codec-metamcp/">codec-metamcp</a>,
           <a href="/docs/codec-leaf/">codec-leaf</a>,
           <a href="https://www.npmjs.com/package/@codecai/mcp-leaf" rel="noopener">@codecai/mcp-leaf</a>,
-          <a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a> reference image,
-          <a href="https://github.com/wdunn001/Codec/blob/main/spec/versions/v0.4.md" rel="noopener">spec/versions/v0.4.md § header floor table</a>.
+          <a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a> reference image.
         </p>
       </article>
 
