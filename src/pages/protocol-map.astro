@@ -64,11 +64,33 @@ import Base from "../layouts/Base.astro";
           chars) for a 12.4× consumer-side BPE-tokenize speedup &mdash; large
           MCP results win on both axes.
         </p>
+        <p>
+          <strong>v0.4 header changes that flow through MCP:</strong> the gateway
+          emits <code>Codec-Tokenizer-Map: &lt;id&gt; sha256:&lt;short&gt;</code>
+          so the receiver can verify the leaf payload's <code>map_id</code>
+          matches the negotiated vocab (mismatch is a fail-fast condition —
+          stops KV-cache poisoning). When an MCP-shaped zstd dict is loaded,
+          the gateway emits <code>Codec-Zstd-Dict: sha256:&lt;short&gt;</code>
+          on every response so a Codec-aware client can decompress
+          tools/list + tool-result bytes against the pre-trained dict
+          (codec-metamcp ships a 16&nbsp;KB MCP-shaped dict by default).
+          A v0.4 gateway can also require <code>Codec-Safety-Policy-Id</code> +
+          <code>Codec-Safety-Policy-Hash</code> on inbound requests (TLS-style
+          capability axis &mdash; see the next pathway), and respond
+          <strong>HTTP 426</strong> with <code>Codec-Min-Version</code> +
+          <code>Codec-Required-Features</code> when the client falls short of
+          the deployment's enforcement floor. v0.4.1 hardens the leaf reader
+          with hash-validation before fetch (refuses a malformed
+          <code>mapHash</code> instead of waiting for the network) and lands
+          dict-zstd interop across all 6 clients — the gateway can now safely
+          rely on the wire-compression headers being honored uniformly.
+        </p>
         <p class="protocol-map__where">
           See <a href="/docs/codec-metamcp/">codec-metamcp</a>,
           <a href="/docs/codec-leaf/">codec-leaf</a>,
           <a href="https://www.npmjs.com/package/@codecai/mcp-leaf" rel="noopener">@codecai/mcp-leaf</a>,
-          <a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a> reference image.
+          <a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a> reference image,
+          <a href="https://github.com/wdunn001/Codec/blob/main/spec/versions/v0.4.md" rel="noopener">spec/versions/v0.4.md § header floor table</a>.
         </p>
       </article>
 
