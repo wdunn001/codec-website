@@ -69,32 +69,20 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       <span class="hero__title-accent">for AI inference.</span>
     </h1>
     <p class="hero__lede">
-      Codec is the substrate that lets gateways, routers, agents, and tool
-      dispatchers operate on raw token IDs end-to-end. Detokenize once, at
-      the only edge that needs text &mdash; never per-token, never per-hop.
-      What you get on the same wire: token-native binary streaming with a
-      content-addressed
-      <a href="/docs/discovery/">tokenizer-map handshake</a>;
-      <a href="/docs/tool-calling/">tool-call dispatch on raw IDs</a>
-      (ToolWatcher fires before any text reassembly); cross-vocab
-      <a href="/docs/translator/">agent-to-agent handoff</a> with in-process
-      re-tokenize so UTF-8 never crosses the wire;
-      <a href="/docs/codec-metamcp/">MCP gateway integration</a> with
-      <a href="/docs/codec-leaf/">leaf-mode bypass</a> so a Codec-aware tool
-      ships its token IDs alongside the text;
-      <a href="/docs/codec-diffusers/">image and video diffusion latents</a>
-      on the same wire (pixels stay client-side); and operator-side
-      <a href="/docs/web-safety/">safety-policy negotiation</a> as a TLS-style
-      capability axis. Six client packages
-      (<a href="/docs/typescript/">TS/Web</a>,
-      <a href="/docs/python/">Python</a>,
-      <a href="/docs/rust/">Rust</a>,
-      <a href="/docs/java/">Java</a>,
-      <a href="/docs/dotnet/">.NET</a>,
-      <a href="/docs/c/">C</a>) decode byte-identically against three
-      inference engines (sglang, vllm, llama.cpp). Compression and wire
-      reduction are byproducts; what you actually buy is the ability to run
-      the inference layer like infrastructure.
+      <strong>AI is getting cheap to run, expensive to ship.</strong>
+      Every chat reply, every agent loop, every image generation pumps
+      text-bloated JSON through datacenters, ISPs, and your users' devices
+      &mdash; burning bandwidth, server CPU, and battery on bytes the AI
+      never even reads. Codec is a drop-in upgrade for AI streaming that
+      fixes this. Same model, same prompts, same answers,
+      <strong>up to 1,700&times; less data on the wire</strong>,
+      <strong>up to 10&times; faster on mobile</strong>, and at fleet scale
+      <strong>~$1.5M/year off your cloud egress bill</strong> plus
+      <strong>~230&nbsp;kWh/day of network energy</strong> that no longer gets
+      pumped through switches and cell towers. Plug-in libraries for
+      TypeScript, Python, Rust, Java, .NET, and C work with the AI servers
+      you already use (sglang, vllm, llama.cpp). Your code doesn't change.
+      The model doesn't get smaller &mdash; the waste does.
     </p>
 
     <div class="hero__cta">
