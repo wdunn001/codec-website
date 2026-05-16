@@ -45,7 +45,7 @@ map = await discover_map(origin="https://example.com", id="qwen2")
 
 ### 2. Send a request
 
-A normal `/v1/completions` POST with `stream_format` added:
+A normal `/v1/completions` POST. `stream_format: "msgpack"` lives in the BODY because it piggybacks on OpenAI's request schema; the Codec REQUEST HEADERS are `Accept-Encoding` (compression menu) and `Codec-Client-Version` (v0.4 capability advertisement). See [Protocol &raquo; Request vs response](/docs/protocol/#request-vs-response-where-each-codec-knob-lives) for the full split.
 
 ```python
 import httpx
@@ -56,10 +56,14 @@ async with httpx.AsyncClient() as client:
         json={
             "model": "Qwen/Qwen2.5-7B-Instruct",
             "prompt": "Explain entropy in one paragraph.",
-            "stream_format": "msgpack",
+            "stream": True,
+            "stream_format": "msgpack",  # Codec opt-in (body, not header)
             "max_tokens": 256,
         },
-        headers={"Accept-Encoding": "gzip"},
+        headers={
+            "Accept-Encoding": "zstd, br, gzip, identity",  # full v0.4.1 stack
+            "Codec-Client-Version": "0.4",                   # v0.4 normative
+        },
     ) as resp:
         # see step 3
         ...
@@ -155,7 +159,10 @@ loaded_dicts = {hash_zstd_dict(msgpack_dict): msgpack_dict}
 async with httpx.AsyncClient() as http:
     async with http.stream(
         "POST", "http://localhost:8000/v1/completions",
-        headers={"Accept-Encoding": "zstd, gzip"},
+        headers={
+            "Accept-Encoding": "zstd, br, gzip, identity",
+            "Codec-Client-Version": "0.4",
+        },
         json={
             "model": "Qwen/Qwen2.5-7B-Instruct",
             "prompt": "Explain entropy.",

@@ -55,17 +55,22 @@ HttpClient http = HttpClient.newBuilder()
     .connectTimeout(Duration.ofSeconds(10))
     .build();
 
+// stream_format lives in the BODY (piggybacks on OpenAI's request schema);
+// Accept-Encoding + Codec-Client-Version are the v0.4.1 Codec REQUEST HEADERS.
+// See /docs/protocol/#request-vs-response-where-each-codec-knob-lives.
 String body = """
     {"model":"Qwen/Qwen2.5-7B-Instruct",
      "prompt":"Explain entropy in one paragraph.",
+     "stream":true,
      "stream_format":"msgpack",
      "max_tokens":256}
     """;
 
 HttpRequest req = HttpRequest.newBuilder()
     .uri(URI.create("http://localhost:8000/v1/completions"))
-    .header("Content-Type", "application/json")
-    .header("Accept-Encoding", "gzip")
+    .header("Content-Type",        "application/json")
+    .header("Accept-Encoding",     "zstd, br, gzip, identity")  // full v0.4.1 stack
+    .header("Codec-Client-Version", "0.4")                       // v0.4 normative
     .POST(HttpRequest.BodyPublishers.ofString(body))
     .build();
 

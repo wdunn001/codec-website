@@ -5,9 +5,12 @@ section: Reference
 order: 3
 ---
 
-The default way to load a vocab map is `loadMap({ url, hash })` — you pass the exact URL and the exact sha256, the binding fetches and verifies. That works, but it requires *you* to know the URL and hash in advance and ship them in your config.
+There are **two paths to a loaded map**, and you almost always want the first:
 
-`.well-known/codec/` is the convention for **self-hosted discovery**: a model maintainer publishes a small static document at a stable path on their domain, and clients can resolve a map from `(origin, id)` alone. No registry, no central authority &mdash; just the same trust model as `robots.txt` or `.well-known/openid-configuration`.
+1. **Automatic discovery** &mdash; the server's response carries a `Codec-Tokenizer-Map: <id> sha256:<short>` header. The client extracts `<id>` + the server's origin, fetches `<origin>/.well-known/codec/maps/<id>.json` (which is either the inline map or a hash-pinned pointer to a CDN), verifies the hash, and caches the parsed map. **No URL or hash in your config &mdash; the protocol carries them.** See `discoverMap({ origin, id })` in [`@codecai/web/discover`](#typescript--codecaiwebdiscover) and `discover_map(origin=..., id=...)` in [`codecai.discover`](#python--codecaidiscover).
+2. **Manual pinning** &mdash; `loadMap({ url, hash })` if you want to bind to a specific URL and sha256 yourself (e.g. air-gapped deployments, supply-chain audits, or pinning a frozen version against vendor rotations).
+
+`.well-known/codec/` is the convention that makes path 1 work without a central registry: a model maintainer publishes a small static document at a stable path on their domain, and clients resolve from `(origin, id)` alone. No registry, no central authority &mdash; just the same trust model as `robots.txt` or `.well-known/openid-configuration`.
 
 > The full convention is specified in [`spec/WELL_KNOWN_DISCOVERY.md`](https://github.com/wdunn001/Codec/blob/main/spec/WELL_KNOWN_DISCOVERY.md). [PROTOCOL.md](https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md) lists it as the resolution to Open Question #3 (decentralised first; a registry remains an option for cross-org and air-gapped use).
 

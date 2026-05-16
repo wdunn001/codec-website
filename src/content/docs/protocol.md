@@ -205,6 +205,60 @@ Clients check the hash against a dict they have loaded. Hash mismatch is a fatal
 
 Reference dicts ship at [`dictionaries/`](https://github.com/wdunn001/Codec/tree/main/dictionaries) in the main repo; the training pipeline is [`packages/bench/scripts/train-zstd-dict.py`](https://github.com/wdunn001/Codec/blob/main/packages/bench/scripts/train-zstd-dict.py).
 
+## Request vs response — where each Codec knob lives
+
+Codec piggybacks on the OpenAI `/v1/completions` body schema rather than redefining the request envelope. That makes the asymmetry confusing at first &mdash; some Codec configuration is in the **request body**, some is in **HTTP headers** (request and response), some only shows up on the response side. The table:
+
+| Knob | Where | Why |
+|---|---|---|
+| `stream_format: "msgpack" \| "protobuf" \| "json"` | **request body** (next to `model`, `prompt`, `max_tokens`) | Per-request choice that piggybacks on the OpenAI body. Default `"json"` keeps existing JSON-SSE traffic byte-identical; no Codec presence at all on requests that don't ask for it. |
+| `model`, `prompt`, `max_tokens`, `messages`, … | **request body** | Standard OpenAI fields. Codec doesn't touch them. |
+| `Content-Type: application/json` | request header | Standard HTTP for the JSON body. |
+| `Accept-Encoding: zstd, br, gzip, identity` | **request header** | The client's compression menu. The server's negotiator picks per spec preference `zstd > br > gzip > identity` and picks the smallest valid for the response size. v0.4.1 made brotli usable across all sizes and landed dict-zstd decode in every client &mdash; advertising the full menu is now correct for every binding. |
+| `Codec-Client-Version: 0.4` | **request header** | v0.4 normative. Client advertises the maximum spec version it can correctly decode. The server uses this to pick a graceful downgrade if the deployment requires newer features. Omitting it on a v0.4 deployment is equivalent to claiming v0.3 &mdash; you get the v0.3 wire surface. |
+| `Codec-Tokenizer-Map: <id> sha256:<short>` | **response header** | Identifies + hash-pins the vocab the server is using. Client verifies before decoding (mismatch = fail-fast, stops KV-cache poisoning). |
+| `Codec-Zstd-Dict: sha256:<short>` | **response header** | Identifies the pre-trained zstd dict when `Content-Encoding: zstd`. Multiple dicts per tokenizer is allowed; the header is how the client picks the right local copy. |
+| `Content-Encoding: zstd \| br \| gzip \| identity` | **response header** | The encoding the server chose from the request's `Accept-Encoding`. |
+| `Codec-Safety-Policy-Id`, `Codec-Safety-Policy-Hash` | **response header** (v0.4) | Identifies the safety policy the server enforced. Pairs with the hash-anchored descriptor at `/.well-known/codec/policies/<id>.json`. |
+| `Codec-Min-Version`, `Codec-Required-Features` | **response header on 426** (v0.4) | Server's enforcement floor. Returned when the client's `Codec-Client-Version` falls short. |
+| `finish_reason: "policy_violation"` | **in-frame field** (v0.4) | Surfaces inside a `CodecFrame.finish_reason` when a server-side safety action fired mid-stream. Not a header. |
+
+**Why no `Codec-Stream-Format` header?** We considered it. The OpenAI request body already carries `model` + `prompt` + `max_tokens` + `stream`, so making `stream_format` a sibling field there was the smallest possible patch into upstream sglang / vllm / llama.cpp's request validator &mdash; one extra optional field, JSON-Schema-compatible, no header parser changes. The v0.5 plan covers a separate negotiation path (OPTIONS preflight + a persistent `Codec-Session` token) that would let frequent agent-mesh clients drop most per-request bytes, but the per-request knob staying in the body is by design.
+
+A complete v0.4.1 client request looks like:
+
+```http
+POST /v1/completions HTTP/1.1
+Host: inference.example.com
+Content-Type: application/json
+Accept-Encoding: zstd, br, gzip, identity
+Codec-Client-Version: 0.4
+
+{
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "prompt": "Explain entropy in one paragraph.",
+  "stream": true,
+  "stream_format": "msgpack",
+  "max_tokens": 256
+}
+```
+
+And the response headers that come back:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/octet-stream
+Content-Encoding: zstd
+Codec-Tokenizer-Map: qwen2 sha256:62c2f94f...
+Codec-Zstd-Dict: sha256:79b707ae...
+Codec-Safety-Policy-Id: lab-vinez-prod
+Codec-Safety-Policy-Hash: sha256:4d8a91...
+
+<msgpack frames, zstd-compressed against the pinned dict>
+```
+
+The two halves carry different things: the request-side headers + body declare what the client wants and can decode; the response headers tell the client what it actually got and how to interpret it.
+
 ## Headers — the full v0.4 / v0.4.1 floor
 
 Every Codec response carries a small set of HTTP response headers that name the wire-level capabilities the server is using. v0.4 normalised the floor; v0.4.1 closed the cross-client decode gap. The normative table lives in [`spec/versions/v0.4.md` § Graceful downgrade](https://github.com/wdunn001/Codec/blob/main/spec/versions/v0.4.md). The short version:

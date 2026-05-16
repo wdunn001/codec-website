@@ -40,15 +40,22 @@ var map = await MapLoader.LoadAsync(new LoadOptions {
 using System.Net.Http;
 using System.Net.Http.Json;
 
+// stream_format lives in the BODY (piggybacks on OpenAI's request schema);
+// Accept-Encoding + Codec-Client-Version are the v0.4.1 Codec REQUEST HEADERS.
+// See /docs/protocol/#request-vs-response-where-each-codec-knob-lives.
 using var http = new HttpClient {
-    DefaultRequestHeaders = { { "Accept-Encoding", "gzip" } },
+    DefaultRequestHeaders = {
+        { "Accept-Encoding",       "zstd, br, gzip, identity" },
+        { "Codec-Client-Version",  "0.4" },
+    },
 };
 
 using var req = new HttpRequestMessage(HttpMethod.Post, "http://localhost:8000/v1/completions") {
     Content = JsonContent.Create(new {
         model = "Qwen/Qwen2.5-7B-Instruct",
         prompt = "Explain entropy in one paragraph.",
-        stream_format = "msgpack",
+        stream = true,
+        stream_format = "msgpack",  // Codec opt-in (body, not header)
         max_tokens = 256,
     }),
 };

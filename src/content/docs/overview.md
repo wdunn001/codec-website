@@ -21,7 +21,7 @@ Three primitives fall out of that layering:
 
 ## Wire format in five sentences
 
-Each Codec frame is **4-byte big-endian length** + **msgpack or protobuf body**. The body carries a packed array of `uint32` token IDs, a `done` boolean, and an optional `finish_reason`. A vocab handshake (a sha256-addressed JSON map &mdash; see [codec-maps](https://github.com/wdunn001/codec-maps)) tells both ends which tokenizer the IDs belong to. Frames stream over plain HTTP responses, with `Accept-Encoding: gzip` for streaming-safe compression. That's the whole spec &mdash; nothing else.
+Each Codec frame is **4-byte big-endian length** + **msgpack or protobuf body**. The body carries a packed array of `uint32` token IDs, a `done` boolean, and an optional `finish_reason`. A vocab handshake (a sha256-addressed JSON map &mdash; either resolved automatically via `/.well-known/codec/maps/<id>.json` from the server's `Codec-Tokenizer-Map` response header, or fetched directly from [codec-maps](https://github.com/wdunn001/codec-maps) and hash-pinned) tells both ends which tokenizer the IDs belong to. Frames stream over plain HTTP responses; clients advertise `Accept-Encoding: zstd, br, gzip, identity` and the server picks the smallest valid encoding per spec preference (`zstd > br > gzip > identity`). That's the whole spec &mdash; nothing else.
 
 ## Where Codec earns its keep
 

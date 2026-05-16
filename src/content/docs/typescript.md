@@ -52,23 +52,27 @@ const map = await discoverMap({ origin: "https://example.com", id: "qwen2" });
 
 ### 2. Send a request
 
-A Codec request is **a normal `/v1/completions` POST with one extra field**: `stream_format`. The server reads the field and switches its response body from JSON-SSE to the matching binary frame format.
+A Codec request is **a normal `/v1/completions` POST with one extra body field** (`stream_format`) **and two Codec request HEADERS**: `Accept-Encoding` (compression menu) + `Codec-Client-Version` (capability advertisement, v0.4 normative). The server reads `stream_format` from the body and switches its response from JSON-SSE to binary frames; it reads `Accept-Encoding` to pick the smallest valid encoding per spec preference `zstd > br > gzip > identity`. See [Protocol &raquo; Request vs response](/docs/protocol/#request-vs-response-where-each-codec-knob-lives) for why `stream_format` lives in the body rather than as a `Codec-Stream-Format` header (short answer: piggybacks on OpenAI's request schema so the patch slots into upstream engines without forking the request validator).
 
 ```ts
 const resp = await fetch("http://localhost:8000/v1/completions", {
   method: "POST",
   headers: {
-    "Content-Type": "application/json",
-    "Accept-Encoding": "gzip",
+    "Content-Type":         "application/json",
+    "Accept-Encoding":      "zstd, br, gzip, identity", // full v0.4.1 stack
+    "Codec-Client-Version": "0.4",                       // v0.4 normative
   },
   body: JSON.stringify({
-    model: "Qwen/Qwen2.5-7B-Instruct",
-    prompt: "Explain entropy in one paragraph.",
-    stream_format: "msgpack",
-    max_tokens: 256,
+    model:         "Qwen/Qwen2.5-7B-Instruct",
+    prompt:        "Explain entropy in one paragraph.",
+    stream:        true,
+    stream_format: "msgpack",   // Codec opt-in (body, not header)
+    max_tokens:    256,
   }),
 });
 ```
+
+The server's response will carry `Codec-Tokenizer-Map`, `Codec-Zstd-Dict` (when `Content-Encoding: zstd`), and v0.4 `Codec-Safety-Policy-{Id,Hash}` headers &mdash; read those to verify the wire before decoding (`Codec-Tokenizer-Map` hash MUST match your loaded map; mismatch is a fail-fast condition).
 
 > **Why msgpack over protobuf?** Both work and produce identical semantics. Pick **msgpack** if you want zero schema toolchain. Pick **protobuf** if you already have `protoc` set up or you need stricter typing across polyglot teams. Performance is within noise; the wire bytes match within 1%.
 

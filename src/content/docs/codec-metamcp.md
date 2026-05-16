@@ -34,14 +34,14 @@ Accept: application/x-codec-msgpack    # request header
 ?stream_format=json        # explicit opt-out (back to JSON-RPC)
 ```
 
-Add `Accept-Encoding: gzip` for streaming compression on top.
+Add `Accept-Encoding: zstd, br, gzip, identity` for the full v0.4.1 compression menu (server picks per spec order `zstd > br > gzip > identity`; MCP-shaped zstd dict ships ~4.7× over JSON+gzip on real MCP traffic).
 
 ## What you get
 
 For tool-heavy sessions &mdash; long file reads, web fetches, RAG context, model-generated text piped through tools &mdash; the wire weight collapses. Same physics as the [cross-stack benchmark matrix](https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-08T01-15-02Z/MATRIX.md):
 
 - **Length-prefixed msgpack/protobuf framing** instead of newline-delimited JSON-RPC envelopes
-- **Streaming gzip** on top via standard `Accept-Encoding` negotiation
+- **Full v0.4.1 compression stack** (gzip + brotli + dict-zstd) on top via standard `Accept-Encoding` negotiation, per spec preference order `zstd > br > gzip > identity`
 - **TTFB unchanged** &mdash; first-body-byte stays within 1&nbsp;ms of the JSON-RPC path on the same server
 - **MCP-shaped zstd dictionary negotiation** &mdash; the gateway loads a pre-trained 16&nbsp;KB dict at startup and emits a `Codec-Zstd-Dict: sha256:…` header so a Codec-aware client can fetch the matching dict and decompress every frame against it. **+78.8&nbsp;% wire-byte reduction over no-dict zstd; ~4.7× over JSON+gzip** on real MCP traffic ([2026-05-08T22-24-23Z bench](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-08T22-24-23Z/mcp)).
 - **Leaf-mode bypass for Codec-aware tools** &mdash; tools that wrap their results with `_codec_meta` blocks (see [`@codecai/mcp-leaf`](https://www.npmjs.com/package/@codecai/mcp-leaf) and the [`codec-time-leaf`](https://hub.docker.com/r/wdunn001/codec-time-leaf) reference image) tell the gateway "the IDs are already here, don't re-tokenize." `[Codec][leaf]` log fires on bypass; `[Codec][shim]` log fires on legacy fallback.
@@ -103,9 +103,10 @@ const resp = await fetch(
   {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/x-codec-msgpack",
-      "Accept-Encoding": "gzip",
+      "Content-Type":         "application/json",
+      "Accept":               "application/x-codec-msgpack",
+      "Accept-Encoding":      "zstd, br, gzip, identity",  // full v0.4.1 stack
+      "Codec-Client-Version": "0.4",                        // v0.4 normative
     },
     body: JSON.stringify({
       jsonrpc: "2.0",

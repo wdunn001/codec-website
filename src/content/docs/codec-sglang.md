@@ -209,13 +209,21 @@ const map = await loadMap({
   hash: "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
 });
 
+// stream_format lives in the BODY (piggybacks on OpenAI's request schema);
+// Accept-Encoding + Codec-Client-Version are the v0.4.1 Codec REQUEST HEADERS.
+// See /docs/protocol/#request-vs-response-where-each-codec-knob-lives.
 const resp = await fetch("http://localhost:8080/v1/completions", {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type":         "application/json",
+    "Accept-Encoding":      "zstd, br, gzip, identity", // full v0.4.1 stack
+    "Codec-Client-Version": "0.4",                       // v0.4 normative
+  },
   body: JSON.stringify({
     model: "Qwen/Qwen2.5-0.5B-Instruct",
     prompt: "Explain entropy in one paragraph.",
-    stream_format: "msgpack",
+    stream: true,
+    stream_format: "msgpack",  // Codec opt-in (body, not header)
     max_tokens: 256,
   }),
 });
