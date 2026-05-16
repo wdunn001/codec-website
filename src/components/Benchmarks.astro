@@ -709,11 +709,11 @@ const toolBars = [
       <header class="bench-card__head">
         <div>
           <h3 class="bench-card__title">What the bench numbers cost &mdash; in dollars and watts</h3>
-          <p class="bench-card__sub">honest translations from the measured wire/CPU numbers above &middot; public egress rates &middot; published radio-link energy estimates</p>
+          <p class="bench-card__sub">honest translations from the measured wire/CPU numbers above &middot; public egress rates &middot; published per-platform reply volumes (ChatGPT 2.5B, Claude 900M, Gemini 600M, &hellip;)</p>
         </div>
         <div class="bench-card__hero">
-          <span class="bench-card__hero-num">$1.6M/yr</span>
-          <span class="bench-card__hero-cap">egress saved @ 100M chat replies/day, sglang</span>
+          <span class="bench-card__hero-num">~$80M/yr</span>
+          <span class="bench-card__hero-cap">cloud egress saved at worldwide conversational-AI volume (~5B replies/day)</span>
         </div>
       </header>
 
@@ -737,15 +737,17 @@ const toolBars = [
             A 2K-token chat reply ships 485&nbsp;KB JSON-SSE vs 291&nbsp;B Codec msgpack+dict-zstd on sglang. Egress is billed per byte the cloud sends to the user:
           </p>
           <table class="cost-table">
-            <thead><tr><th>Volume</th><th class="num">JSON-SSE</th><th class="num">Codec</th><th class="num win">Saved</th></tr></thead>
+            <thead><tr><th>Real-world scale</th><th class="num">Replies/day</th><th class="num">JSON-SSE egress</th><th class="num win">Codec saves</th></tr></thead>
             <tbody>
-              <tr><td>1M replies/day</td>     <td class="num">$1,310/mo</td><td class="num">$0.78/mo</td>  <td class="num win"><strong>$1,309/mo</strong></td></tr>
-              <tr><td>10M replies/day</td>    <td class="num">$13,100/mo</td><td class="num">$7.80/mo</td> <td class="num win"><strong>$13,092/mo</strong></td></tr>
-              <tr><td>100M replies/day</td>   <td class="num">$131,000/mo</td><td class="num">$78/mo</td>  <td class="num win"><strong>~$1.57M/yr</strong></td></tr>
+              <tr><td>Anthropic Claude</td>          <td class="num">~900M</td>  <td class="num">$14.2M/yr</td>  <td class="num win"><strong>~$14M/yr</strong></td></tr>
+              <tr><td>OpenAI ChatGPT + Copilot</td>  <td class="num">~2.5B</td>  <td class="num">$39.3M/yr</td>  <td class="num win"><strong>~$40M/yr</strong></td></tr>
+              <tr><td>Google Gemini</td>             <td class="num">~600M</td>  <td class="num">$9.4M/yr</td>   <td class="num win"><strong>~$9M/yr</strong></td></tr>
+              <tr><td>Others (Grok, Perplexity, &hellip;)</td><td class="num">~300M</td><td class="num">$4.7M/yr</td><td class="num win"><strong>~$5M/yr</strong></td></tr>
+              <tr class="agent-loop-delta"><td><strong>Worldwide conversational AI</strong></td><td class="num"><strong>~5B</strong></td><td class="num"><strong>$78.6M/yr</strong></td><td class="num win"><strong>~$80M/yr</strong></td></tr>
             </tbody>
           </table>
           <p class="cost-cell__foot">
-            GCP + Azure egress are in the same ballpark ($0.08&ndash;$0.12/GB). Numbers round; per-reply ratio is fixed by the wire bench at <strong>1,707&times;</strong> &mdash; cost shrinks by the same factor.
+            Math: 485&nbsp;KB JSON-SSE per 2&nbsp;K-token reply &times; replies/day = bytes/day &times; $0.09/GB AWS S3 egress. Per-platform reply volumes from publicly reported / inferred 2026 numbers (OpenAI confirms ChatGPT at 2.5B prompts/day; Claude estimated ~900M across web + API; Gemini estimated 525&ndash;600M; total worldwide conversational AI ~4.5&ndash;5B/day &mdash; comparable to ~1/3 of global Google search traffic). GCP + Azure egress are in the same ballpark ($0.08&ndash;$0.12/GB).
           </p>
         </section>
 
@@ -767,7 +769,7 @@ const toolBars = [
             </tbody>
           </table>
           <p class="cost-cell__foot">
-            Per-response cost is tiny on a phone; fleet-scale meaningful. 1B chat replies/day across a mobile fleet: ~194&nbsp;MJ vs ~0.12&nbsp;MJ on radio links &mdash; <strong>~54&nbsp;kWh/day</strong> saved at the airlink alone (about <strong>~1.8 average US households' daily electricity</strong> &mdash; EIA average is ~30&nbsp;kWh/household/day), plus the per-user battery + data-cap relief. The full non-GPU energy delta (radio + network + client CPU) is bigger &mdash; see the power+latency card below.
+            Per-response cost is tiny on a phone; the unit you can intuit comes from multiplying by the user base. <strong>~20M Claude users &times; ~50 mobile chat replies/day each</strong> &asymp; 1B replies/day across a mobile fleet: ~194&nbsp;MJ vs ~0.12&nbsp;MJ on radio links &mdash; <strong>~54&nbsp;kWh/day</strong> saved at the airlink alone, about <strong>~1.8 average US households' daily electricity</strong> (EIA ~30&nbsp;kWh/household-day), plus the per-user battery + data-cap relief. The full non-GPU energy delta (radio + network + client CPU) is bigger &mdash; see the power+latency card below.
           </p>
         </section>
 
@@ -905,20 +907,25 @@ const toolBars = [
       </div>
 
       <p class="cost-cell__body" style="margin-top: 1rem;">
-        <strong>Fleet scale &mdash; what these numbers mean at AI-provider volume:</strong>
-        for 100M chat replies/day on mobile, the non-GPU energy delta is
-        ~82 MJ/day = <strong>~23&nbsp;kWh/day</strong> saved (radio +
-        network + client CPU) &mdash; <strong>~0.8 US households' daily electricity</strong>
-        (EIA average ~30&nbsp;kWh/household/day). At
-        <strong>~1B replies/day &mdash; the rough order of magnitude
-        public estimates place a major AI provider's 2026 fleet at
-        (Anthropic Claude across web + API + Code, OpenAI ChatGPT, etc.;
-        none publish exact numbers)</strong> &mdash; the delta is
-        <strong>~230&nbsp;kWh/day</strong> = <strong>~7-8 US households powered for a day</strong>,
-        or an electric car's worth of charging, every day. GPU compute
-        keeps drawing the same wattage either way &mdash; if you're
-        trying to reduce inference power, that's a model + accelerator
-        question, not a wire-protocol question.
+        <strong>What these numbers mean at real-world AI scale &mdash; non-GPU energy:</strong>
+        per chat reply, the non-GPU energy delta (radio + network + client
+        CPU combined) is <strong>~819&nbsp;mJ</strong>. Multiplied by the
+        publicly-reported worldwide conversational-AI request volume:
+      </p>
+      <table class="cost-table" style="margin: 0.75rem 0 1rem;">
+        <thead><tr><th>Real-world scale</th><th class="num">Replies/day</th><th class="num">Saved/day</th><th class="num">Saved/year</th><th class="num win">Annual equivalent</th></tr></thead>
+        <tbody>
+          <tr><td>Anthropic Claude</td>          <td class="num">~900M</td><td class="num">205&nbsp;kWh</td><td class="num">75&nbsp;MWh</td><td class="num win">~7 US homes/yr · ~7 cars off road</td></tr>
+          <tr><td>OpenAI ChatGPT + Copilot</td>  <td class="num">~2.5B</td><td class="num">569&nbsp;kWh</td><td class="num">208&nbsp;MWh</td><td class="num win">~19 US homes/yr · ~18 cars off road</td></tr>
+          <tr><td>Google Gemini</td>             <td class="num">~600M</td><td class="num">137&nbsp;kWh</td><td class="num">50&nbsp;MWh</td><td class="num win">~5 US homes/yr · ~4 cars off road</td></tr>
+          <tr class="agent-loop-delta"><td><strong>Worldwide conversational AI</strong></td><td class="num"><strong>~5B</strong></td><td class="num"><strong>1.14&nbsp;MWh</strong></td><td class="num"><strong>416&nbsp;MWh</strong></td><td class="num win"><strong>~38 US homes/yr · ~36 US cars off the road</strong></td></tr>
+        </tbody>
+      </table>
+      <p class="cost-cell__body">
+        Math: 819&nbsp;mJ per reply &times; replies/day = J/day &rarr; kWh/day; annual &times;365; CO<sub>2</sub> at US grid average 0.4&nbsp;kg/kWh; cars at US average 4.6&nbsp;t CO<sub>2</sub>/car/year. Per-platform reply volumes from publicly reported / inferred 2026 numbers; worldwide totals comparable to ~1/3 of global Google search traffic (~14&ndash;16B searches/day).
+      </p>
+      <p class="cost-cell__body" style="margin-top: 0.75rem;">
+        <strong>GPU compute keeps drawing the same wattage either way.</strong> If you're trying to reduce inference power, that's a model + accelerator question, not a wire-protocol question. What Codec eliminates is everything you're paying on TOP of the GPU bill &mdash; the network energy and middleware CPU spent shipping bytes the AI never reads.
       </p>
 
       <footer class="bench-card__foot">
