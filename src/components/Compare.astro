@@ -70,22 +70,36 @@ content-type: application/codec`;
       </article>
     </div>
 
+    <p class="compare__split-note">
+      v0.4.1 separates two numbers that prior cuts conflated. <strong>§1 protocol-only</strong> is the synthetic-stream bench &mdash; known token-ID corpora run through Codec's encoder + compression libs locally, no engine, no model. <strong>§1b engine-output</strong> is what each engine actually emits at temperature&nbsp;0; ratios depend on what the model decides to generate, not just the protocol. Both numbers are real; they answer different questions.
+    </p>
+
     <ul class="compare__bullets">
       <li>
-        <span class="bullet-num">1,707&times;</span>
-        <span class="bullet-body">Smaller on the wire at 2&nbsp;K tokens
-        with the full Codec stack on sglang (msgpack&nbsp;+&nbsp;dict-zstd). <a href="#benchmarks">Receipts &rarr;</a></span>
+        <span class="bullet-num">4.8&times;<br/>&ndash;&thinsp;392&times;</span>
+        <span class="bullet-body">
+          <strong>§1 protocol-only</strong> &mdash; synthetic-stream wire reduction at 2&nbsp;K msgpack across token-distribution profiles:
+          <strong>4.8&times;</strong> on uniform random (worst case),
+          <strong>16.6&times;</strong> on low-entropy 50-unique-IDs,
+          <strong>392&times;</strong> on cyclic period-10 (best case).
+          Same library, no engine in the loop &mdash; this is the protocol's contribution alone.
+          <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-15T20-00-00Z/synthetic/wire.json" rel="noopener">wire.json &rarr;</a>
+        </span>
       </li>
       <li>
-        <span class="bullet-num">3</span>
-        <span class="bullet-body">Engines tested end-to-end: sglang, vllm,
-        and llama.cpp &mdash; same wire bytes on every one.</span>
+        <span class="bullet-num">1,707&times;<br/>3,868&times;</span>
+        <span class="bullet-body">
+          <strong>§1b engine-output</strong> at 2&nbsp;K msgpack+dict-zstd &mdash; what each engine actually produces:
+          <strong>1,707&times;</strong> sglang, <strong>137&times;</strong> vllm, <strong>3,868&times;</strong> llama.cpp fp16. Ratios scale with how compressible the engine's emitted token sequence is at temp&nbsp;0; vllm's sampler emits less compressible output, hence the lower number despite the same protocol.
+          <a href="#benchmarks">Receipts &rarr;</a>
+        </span>
       </li>
       <li>
-        <span class="bullet-num">6</span>
-        <span class="bullet-body">Client implementations &mdash; TypeScript,
-        Python, .NET, C, Rust, Java &mdash; <strong>24/24 wire-unanimous
-        AND 24/24 decode-unanimous</strong> on every engine.</span>
+        <span class="bullet-num">24/24<br/>24/24</span>
+        <span class="bullet-body">
+          <strong>Cross-stack unanimity (new in v0.4.1).</strong> 6 client implementations
+          (TS/Web, Python, .NET, Rust, Java, C) &times; 3 engines (sglang, vllm, llama.cpp) = 24 cells per engine. Every cell is <strong>wire-unanimous</strong> (clients receive byte-identical bytes) AND <strong>decode-unanimous</strong> (clients produce byte-identical IDs after decompressing). The decode side is what caught 5 of 6 silent dict-zstd failures in v0.4.0.
+        </span>
       </li>
     </ul>
   </div>
@@ -162,10 +176,22 @@ content-type: application/codec`;
     background: var(--bg);
   }
 
+  .compare__split-note {
+    margin: 2.5rem 0 1.25rem;
+    padding: 0.875rem 1rem;
+    color: var(--fg-muted);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    background: color-mix(in srgb, var(--data) 4%, transparent);
+    border-left: 3px solid color-mix(in srgb, var(--data) 50%, transparent);
+    border-radius: 0 6px 6px 0;
+  }
+  .compare__split-note strong { color: var(--fg); font-weight: 600; }
+
   .compare__bullets {
     list-style: none;
     padding: 0;
-    margin: 2.5rem 0 0;
+    margin: 0;
     display: grid;
     gap: 1rem;
     grid-template-columns: 1fr;
@@ -182,16 +208,28 @@ content-type: application/codec`;
     padding: 1rem 1.125rem;
     border-radius: 8px;
   }
+  .compare__bullets li:nth-child(1) {
+    border-color: color-mix(in srgb, var(--control) 35%, var(--border));
+  }
+  .compare__bullets li:nth-child(1) .bullet-num { color: var(--control); }
+  .compare__bullets li strong { color: var(--fg); font-weight: 600; }
+  .compare__bullets li a {
+    color: var(--data);
+    border-bottom: 1px dotted var(--border-strong);
+    font-size: 0.8125rem;
+  }
+  .compare__bullets li a:hover { border-bottom-color: var(--data); }
   .bullet-num {
     font-family: var(--font-mono);
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--data);
     letter-spacing: -0.02em;
-    /* "1,707×" is the widest stat we ship — give every number column
-       enough room for it so it never bleeds into the body copy. */
+    line-height: 1.15;
+    /* Two-line stats like "1,707× / 3,868×" need a slightly wider gutter
+       than the prior 5.5rem single-line ones. */
     flex: 0 0 auto;
-    min-width: 5.5rem;
+    min-width: 6.5rem;
     white-space: nowrap;
   }
   .bullet-body {
