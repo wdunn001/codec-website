@@ -48,17 +48,19 @@
           <h3>MCP tool calls, leaf-mode bypass</h3>
         </header>
         <p class="uc__body">
-          v0.3 ships the leaf-mode contract end-to-end: a Codec-aware MCP
-          server (<a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a>)
-          attaches token IDs to its result via
+          A Codec-aware MCP server
+          (<a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a>)
+          attaches token IDs to its tool result via
           <code>_meta['ai.codec/leaf-tokenization']</code>; the
           <a href="/docs/codec-metamcp/">codec-metamcp gateway</a> recognizes
           the payload and forwards IDs verbatim &mdash; <code>[Codec][leaf]</code>
-          fires, the gateway becomes a transparent ID pipe.
-          <strong>tools/list</strong> across a 40-tool namespace:
-          <strong>21.4&nbsp;KB &rarr; 5.9&nbsp;KB (3.6&times;)</strong> on the
-          measured lab run. ToolWatcher CPU on the hot path:
-          <strong>~100&times;</strong> faster than detokenize+regex.
+          fires, the gateway becomes a transparent ID pipe and the consumer
+          skips the BPE re-tokenize hop (12.4&times; faster on the tool-result
+          microbench). <strong>tools/list</strong> across a 40-tool namespace:
+          <strong>21.4&nbsp;KB &rarr; 5.9&nbsp;KB (3.6&times;)</strong>.
+          ToolWatcher CPU on the model-emission side:
+          <strong>~100&times;</strong> faster than detokenize+regex
+          (libcodec measures 26.7&times; on the lab's EPYC, 481&nbsp;Mtok/s).
         </p>
         <ul class="uc__metrics">
           <li><span class="uc__num">3.6&times;</span><span>tools/list (40 tools)</span></li>
@@ -74,15 +76,16 @@
         <p class="uc__body">
           A Llama-3 agent's stream feeds a Qwen-2 agent through one
           in-process detokenize / retokenize step. UTF-8 never crosses
-          the wire. At 2&nbsp;K tokens the bridge produces target-vocab
-          IDs <strong>~30% sooner</strong> (10.9&nbsp;ms &rarr;
-          7.7&nbsp;ms of bridge CPU) on <strong>15.1&times;</strong>
-          fewer wire bytes. Both paths emit byte-identical Qwen-2 output;
-          the bench asserts strict equality.
+          the wire. At 2&nbsp;K tokens the Codec path ships
+          <strong>15.1&times;</strong> fewer wire bytes
+          (10.4&nbsp;KB &rarr; 709&nbsp;B) at bridge CPU within noise of
+          the JSON-SSE+retokenize path. Both paths emit byte-identical
+          Qwen-2 output; the bench asserts strict equality before
+          reporting numbers.
         </p>
         <ul class="uc__metrics">
-          <li><span class="uc__num">30%</span><span>faster bridge</span></li>
-          <li><span class="uc__num">15.1&times;</span><span>smaller wire</span></li>
+          <li><span class="uc__num">15.1&times;</span><span>smaller wire @ 2K</span></li>
+          <li><span class="uc__num">≡</span><span>byte-identical output</span></li>
         </ul>
       </article>
     </div>
@@ -91,7 +94,7 @@
     <div class="usecases__latent">
       <article class="uc uc--latent">
         <header class="uc__head">
-          <span class="uc__tag uc__tag--latent">v0.3 &middot; latents</span>
+          <span class="uc__tag uc__tag--latent">latents</span>
           <h3>Image &amp; video diffusion on the wire</h3>
         </header>
         <p class="uc__body">

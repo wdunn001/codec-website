@@ -61,6 +61,20 @@ The wrapped result keeps every original `text` block intact and attaches a per-b
 
 Non-Codec-aware clients in the same MCP namespace ignore the `_meta` field per the MCP spec and see the original text exactly as before. No protocol change, no MCP version bump.
 
+### Wire trade-off, measured
+
+Leaf is **purely additive** — the IDs ride alongside the text, not in place of it. That means the `_meta` envelope (`map_id` sha256 hex + ids array in JSON) is a fixed ~210-byte cost per text block. On a ~30-character timestamp result it's a wire-loss (`105 B → 316 B`, leaf 3× larger); on a 1&nbsp;KB search result it's a wire-win. The crossover where leaf wire&nbsp;&le;&nbsp;plain wire sits at **~300+ characters per text block**. The consumer-CPU win is unconditional: re-tokenize is O(chars), `readCodecMeta()` is O(blocks).
+
+Measured against the reference [`codec-time-leaf`](https://hub.docker.com/r/wdunn001/codec-time-leaf) server (20 warm `get_current_time` calls, qwen/qwen2 map, MCP stdio):
+
+| Path                                       | wire (bytes) | consumer tokenize | total   |
+|--------------------------------------------|-------------:|------------------:|--------:|
+| plain MCP (consumer re-tokenizes text)     |          105 |          0.052 ms | 0.5 ms  |
+| mcp-leaf (consumer reads ids from `_meta`) |          316 |          0.004 ms | 0.4 ms  |
+| **delta**                                  | **+211 bytes** | **12.4× faster** | — |
+
+Driver: [`packages/bench/src/leaf-live.ts`](https://github.com/wdunn001/Codec/blob/main/packages/bench/src/leaf-live.ts). Captured to [`packages/bench/results/2026-05-15T20-00-00Z/agent-loop/leaf.txt`](https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-15T20-00-00Z/agent-loop/leaf.txt). 20/20 integrity: every leaf sample's `ids` equal `tokenizer.encode(text)` under the declared `map_id`.
+
 ## Reader side
 
 For client code that wants to lift the IDs out symmetrically (and skip *its* re-tokenization step):

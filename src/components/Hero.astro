@@ -61,7 +61,7 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
 <section class="section section--hero hero">
   <div class="container">
     <p class="eyebrow">
-      v0.4 shipping &middot; source-available &middot;
+      v0.4.1 shipping &middot; source-available &middot;
       <a href="/changelog/" style="color: var(--data); text-decoration: none;">what's new &rarr;</a>
     </p>
     <h1 class="hero__title">
@@ -72,16 +72,29 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       Codec is the substrate that lets gateways, routers, agents, and tool
       dispatchers operate on raw token IDs end-to-end. Detokenize once, at
       the only edge that needs text &mdash; never per-token, never per-hop.
-      v0.4 adds safety-policy negotiation as a TLS-style capability axis &mdash;
-      operator-side categories, sanitized published descriptors, hash-anchored
-      via <code>.well-known/codec/policies/</code>. Every v0.4 addition is
-      opt-on (default OFF, like HTTPS or CORS): a controlled fleet pays zero
-      v0.4 wire cost, and a v0.3 client connecting to a v0.4 server sees v0.3
-      wire byte-for-byte. v0.3 extended the same wire format to
-      <a href="/docs/codec-metamcp/">MCP tool calls</a> (with leaf-mode
-      bypass) and <a href="/docs/codec-diffusers/">image / video latents</a>.
-      Compression and wire reduction are byproducts; what you actually buy is
-      the ability to run the inference layer like infrastructure.
+      What you get on the same wire: token-native binary streaming with a
+      content-addressed
+      <a href="/docs/discovery/">tokenizer-map handshake</a>;
+      <a href="/docs/tool-calling/">tool-call dispatch on raw IDs</a>
+      (ToolWatcher fires before any text reassembly); cross-vocab
+      <a href="/docs/translator/">agent-to-agent handoff</a> with in-process
+      re-tokenize so UTF-8 never crosses the wire;
+      <a href="/docs/codec-metamcp/">MCP gateway integration</a> with
+      <a href="/docs/codec-leaf/">leaf-mode bypass</a> so a Codec-aware tool
+      ships its token IDs alongside the text;
+      <a href="/docs/codec-diffusers/">image and video diffusion latents</a>
+      on the same wire (pixels stay client-side); and operator-side
+      <a href="/docs/web-safety/">safety-policy negotiation</a> as a TLS-style
+      capability axis. Six client packages
+      (<a href="/docs/typescript/">TS/Web</a>,
+      <a href="/docs/python/">Python</a>,
+      <a href="/docs/rust/">Rust</a>,
+      <a href="/docs/java/">Java</a>,
+      <a href="/docs/dotnet/">.NET</a>,
+      <a href="/docs/c/">C</a>) decode byte-identically against three
+      inference engines (sglang, vllm, llama.cpp). Compression and wire
+      reduction are byproducts; what you actually buy is the ability to run
+      the inference layer like infrastructure.
     </p>
 
     <div class="hero__cta">

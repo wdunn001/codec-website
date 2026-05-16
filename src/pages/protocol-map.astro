@@ -53,15 +53,20 @@ import Base from "../layouts/Base.astro";
         <h2>MCP tool-calls (leaf-mode bypass)</h2>
         <p>
           The fast path on a Codec-aware gateway: the tool itself tokenizes its
-          result once, against a pinned tokenizer map, and ships the IDs in a
-          sibling <code>_codec_meta</code> block. The gateway recognizes the
-          pre-tokenized output and bypasses its back-compat shim — the
-          <code>[Codec][leaf]</code> log fires; <code>[Codec][shim]</code>
-          warnings disappear. Non-Codec-aware tools in the same namespace still
-          work via the shim path.
+          result once, against a pinned tokenizer map, and attaches the IDs
+          via a per-block <code>_meta['ai.codec/leaf-tokenization']</code>
+          payload (older sibling-block form still accepted by the reader for
+          back-compat). The gateway recognizes the pre-tokenized output and
+          bypasses its back-compat shim — the <code>[Codec][leaf]</code> log
+          fires; <code>[Codec][shim]</code> warnings disappear. Non-Codec-aware
+          tools in the same namespace still work via the shim path. Trade is
+          a fixed ~210-byte envelope per text block (text crossover at ~300+
+          chars) for a 12.4× consumer-side BPE-tokenize speedup &mdash; large
+          MCP results win on both axes.
         </p>
         <p class="protocol-map__where">
           See <a href="/docs/codec-metamcp/">codec-metamcp</a>,
+          <a href="/docs/codec-leaf/">codec-leaf</a>,
           <a href="https://www.npmjs.com/package/@codecai/mcp-leaf" rel="noopener">@codecai/mcp-leaf</a>,
           <a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a> reference image.
         </p>

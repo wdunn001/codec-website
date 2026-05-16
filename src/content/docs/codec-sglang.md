@@ -7,7 +7,7 @@ order: 1
 
 `codec-sglang` is the easy way to stand up a Codec-speaking inference server. It's a pre-built Docker image bundling:
 
-- **SGLang** with the Codec patches already applied &mdash; token-native binary transport on `/v1/completions` and a server-side ToolWatcher that emits tool-call boundaries on the ID stream.
+- **SGLang** with the Codec patches already applied &mdash; token-native binary transport on `/v1/completions`, a server-side ToolWatcher that emits tool-call boundaries on the ID stream, and the full compression stack (gzip + brotli + dict-zstd) negotiated via `Accept-Encoding` per the spec preference order `zstd > br > gzip > identity`.
 - **codec-supervisor** &mdash; a FastAPI admin sidecar that handles model uploads, Hugging Face pulls, hot-swaps, and reverse-proxies the inference backend.
 - All upstream sglang kernels (flash-attn, sgl_kernel, triton) intact &mdash; the patches are applied as an editable overlay.
 
@@ -39,10 +39,13 @@ curl http://localhost:8080/v1/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"x","prompt":"Hello","max_tokens":20}'
 
-# Codec wire format — msgpack frames of token IDs
+# Codec wire format — msgpack frames of token IDs (with dict-zstd if a dict is loaded)
 curl http://localhost:8080/v1/completions \
+  -H "Accept-Encoding: zstd, br, gzip" \
   -d '{"model":"x","prompt":"Hello","max_tokens":20,"stream":true,"stream_format":"msgpack"}'
 ```
+
+The full Codec stack on Qwen2.5-0.5B-Instruct at 2&nbsp;K tokens lands at **291&nbsp;bytes** &mdash; **1,707&times;** smaller than the 485&nbsp;KB JSON-SSE baseline, at the same ~45&nbsp;ms TTFB. The wire reduction is essentially free in latency.
 
 The `model` field is ignored when only one model is loaded at a time &mdash; the supervisor proxies whichever model is currently loaded. Use `/admin/load` to swap.
 

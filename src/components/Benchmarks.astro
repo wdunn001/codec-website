@@ -557,6 +557,99 @@ const toolBars = [
       </footer>
     </article>
 
+    <!-- ============== CHART 4.5: agent-loop end-to-end (v0.4.1) ============== -->
+    <article class="bench-card">
+      <header class="bench-card__head">
+        <div>
+          <h3 class="bench-card__title">Agent loops &mdash; end-to-end tool dispatch</h3>
+          <p class="bench-card__sub">codec-sglang:v0.4.1 &middot; Qwen2.5-0.5B &middot; prompt &rarr; model emits tool call &rarr; real dispatch &rarr; tool result &rarr; final answer</p>
+        </div>
+        <div class="bench-card__hero">
+          <span class="bench-card__hero-num">16.9&ndash;18.0&times;</span>
+          <span class="bench-card__hero-cap">wire reduction across three tool surfaces</span>
+        </div>
+      </header>
+
+      <div class="agent-loop-wrap">
+        <table class="agent-loop-table">
+          <thead>
+            <tr>
+              <th>Surface</th>
+              <th class="num">JSON wire</th>
+              <th class="num">Codec wire</th>
+              <th class="num">Reduction</th>
+              <th class="num">JSON total</th>
+              <th class="num">Codec total</th>
+              <th class="num">Speedup</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>mock <code>get_weather</code></td>
+              <td class="num">13,419&nbsp;B</td><td class="num">794&nbsp;B</td><td class="num win"><strong>16.9&times;</strong></td>
+              <td class="num">1,662&nbsp;ms</td><td class="num">189&nbsp;ms</td><td class="num win"><strong>8.8&times;</strong></td>
+            </tr>
+            <tr>
+              <td>SearXNG (live web)</td>
+              <td class="num">42,302&nbsp;B</td><td class="num">2,348&nbsp;B</td><td class="num win"><strong>18.0&times;</strong></td>
+              <td class="num">2,078&nbsp;ms</td><td class="num">1,257&nbsp;ms</td><td class="num win"><strong>1.65&times;</strong></td>
+            </tr>
+            <tr>
+              <td>MetaMCP gateway (Time MCP)</td>
+              <td class="num">18,072&nbsp;B</td><td class="num">1,061&nbsp;B</td><td class="num win"><strong>17.0&times;</strong></td>
+              <td class="num">210&nbsp;ms</td><td class="num">216&nbsp;ms</td><td class="num">~neutral</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="agent-leaf-callout">
+          <header>
+            <span class="agent-leaf-tag">+ MCP leaf-mode &mdash; tool-result-side axis</span>
+            <p>Complementary to the rows above (those measure the model-emission side &mdash; ToolWatcher fires on raw IDs in the inference stream). Leaf measures the <em>tool-result</em> hop: a Codec-aware tool ships token IDs in <code>_meta['ai.codec/leaf-tokenization']</code> alongside its text so the consumer reads <code>ids</code> directly instead of re-tokenizing.</p>
+          </header>
+          <table class="agent-loop-table agent-loop-table--leaf">
+            <thead>
+              <tr>
+                <th>Path (<code>get_current_time</code>, ~30 char result)</th>
+                <th class="num">wire (bytes)</th>
+                <th class="num">consumer tokenize</th>
+                <th class="num">total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>plain MCP (consumer re-tokenizes text)</td>
+                <td class="num">105</td>
+                <td class="num">0.052&nbsp;ms</td>
+                <td class="num">0.5&nbsp;ms</td>
+              </tr>
+              <tr>
+                <td>mcp-leaf (consumer reads ids from <code>_meta</code>)</td>
+                <td class="num">316</td>
+                <td class="num">0.004&nbsp;ms</td>
+                <td class="num">0.4&nbsp;ms</td>
+              </tr>
+              <tr class="agent-loop-delta">
+                <td><strong>delta</strong></td>
+                <td class="num"><strong>+211 bytes</strong><br/><span class="agent-loop-note">leaf 3&times; larger on wire</span></td>
+                <td class="num win"><strong>12.4&times; faster</strong></td>
+                <td class="num">&mdash;</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="agent-loop-note agent-loop-note--block">
+            The leaf <code>_meta</code> envelope is a fixed ~210-byte cost per text block; the consumer-CPU savings scale linearly with text length. The wire crossover where leaf&nbsp;&le;&nbsp;plain sits at <strong>~300+ characters per text block</strong> &mdash; timestamps pay a wire tax for the CPU win, while paginated docs / search results / large MCP outputs win on both axes. 20/20 integrity: every leaf sample's <code>ids</code> equal <code>tokenizer.encode(text)</code> under the declared <code>map_id</code>.
+          </p>
+        </div>
+      </div>
+
+      <footer class="bench-card__foot">
+        Wire-reduction ratios are protocol properties and stable across cuts. Total-time speedups depend on the tool's dispatch latency: when the tool is fast (mock, MetaMCP Time), the wire savings dominate; when the tool is slow (SearXNG live web), tool latency dominates. Source:
+        <a href="https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-15T20-00-00Z/agent-loop" rel="noopener">results/2026-05-15T20-00-00Z/agent-loop/</a>
+        (mock.txt, searxng.txt, metamcp.txt, leaf.txt, leaf.json).
+      </footer>
+    </article>
+
     <!-- ============== CHART 5: tool-call detection ============== -->
     <article class="bench-card bench-card--solo">
       <header class="bench-card__head">
@@ -610,14 +703,14 @@ const toolBars = [
     </article>
 
     <p class="bench-source">
-      Source: <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-11T00-12-00Z/MATRIX.md" rel="noopener">cross-stack MATRIX.md</a>
+      Source: <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-15T20-00-00Z/MATRIX.md" rel="noopener">cross-stack MATRIX.md</a>
       &middot; <a href="https://hub.docker.com/r/wdunn001/codec-sglang" rel="noopener">codec-sglang</a>,
       <a href="https://hub.docker.com/r/wdunn001/codec-vllm" rel="noopener">codec-vllm</a>,
-      <a href="https://hub.docker.com/r/wdunn001/codec-llamacpp" rel="noopener">codec-llamacpp</a> (all v0.4)
+      <a href="https://hub.docker.com/r/wdunn001/codec-llamacpp" rel="noopener">codec-llamacpp</a> (all v0.4.1)
       &middot; Qwen-2.5 0.5B &middot; RTX&nbsp;3090 &middot; temp 0.0
       &middot; reproducible from <code>packages/bench/scripts/run-all-langs.sh</code>
-      and <code>packages/bench/scripts/run-all-token-benches.sh</code> (new for v0.4 &mdash;
-      cross-language tokenize/detok micro-bench).
+      (cross-stack matrix), <code>synthetic_wire_bench.py</code> (§1 protocol-only),
+      and <code>leaf-live.ts</code> (MCP leaf-mode tool-result-side).
     </p>
   </div>
 </section>
@@ -1185,8 +1278,96 @@ const toolBars = [
     font-size: 0.85em;
   }
 
+  /* Agent-loop bench card (v0.4.1) — table + leaf-mode callout */
+  .agent-loop-wrap { display: flex; flex-direction: column; gap: 1.25rem; }
+  .agent-loop-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  .agent-loop-table th,
+  .agent-loop-table td {
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+  }
+  .agent-loop-table th {
+    color: var(--fg-faint);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom-color: var(--border-strong);
+  }
+  .agent-loop-table td { color: var(--fg-muted); }
+  .agent-loop-table .num { text-align: right; font-family: var(--font-mono); white-space: nowrap; color: var(--fg); }
+  .agent-loop-table .num.win { color: var(--data); }
+  .agent-loop-table tr:last-child td { border-bottom: none; }
+  .agent-loop-table code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--fg);
+  }
+  .agent-loop-delta td { background: color-mix(in srgb, var(--data) 4%, transparent); }
+  .agent-loop-note { color: var(--fg-faint); font-size: 0.75rem; font-family: var(--font-mono); }
+  .agent-loop-note--block { margin: 0.75rem 0 0; font-size: 0.8125rem; font-family: inherit; line-height: 1.55; }
+  .agent-loop-note--block strong { color: var(--fg); }
+  .agent-loop-note--block code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--fg);
+  }
+
+  .agent-leaf-callout {
+    border: 1px solid color-mix(in srgb, var(--control) 35%, var(--border));
+    background:
+      radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--control) 6%, transparent), transparent 65%),
+      var(--bg);
+    border-radius: 10px;
+    padding: 1rem 1.125rem 1.125rem;
+  }
+  .agent-leaf-callout > header { margin-bottom: 0.75rem; }
+  .agent-leaf-callout > header p {
+    margin: 0.5rem 0 0;
+    color: var(--fg-muted);
+    font-size: 0.875rem;
+    line-height: 1.55;
+  }
+  .agent-leaf-callout > header p code {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--fg);
+  }
+  .agent-leaf-tag {
+    display: inline-flex;
+    padding: 0.125rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--control) 55%, transparent);
+    background: color-mix(in srgb, var(--control) 14%, transparent);
+    color: var(--control);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .agent-loop-table--leaf { margin-top: 0.5rem; }
+
   @media (max-width: 640px) {
     .bench-card__head { gap: 0.75rem; }
     .bench-card__hero { align-items: flex-start; text-align: left; }
+    .agent-loop-table { font-size: 0.75rem; }
+    .agent-loop-table th, .agent-loop-table td { padding: 0.4rem 0.4rem; }
   }
 </style>

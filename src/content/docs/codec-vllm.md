@@ -37,15 +37,16 @@ curl http://localhost:8080/v1/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"Qwen/Qwen2.5-0.5B-Instruct","prompt":"Hello","max_tokens":20}'
 
-# Codec wire format - msgpack frames of token IDs (gzip-wrapped)
+# Codec wire format - msgpack frames of token IDs with dict-zstd
 curl http://localhost:8080/v1/completions \
   -H "Content-Type: application/json" \
+  -H "Accept-Encoding: zstd, br, gzip" \
   -d '{"model":"Qwen/Qwen2.5-0.5B-Instruct","prompt":"Hello","max_tokens":20,"stream":true,"stream_format":"msgpack"}'
 ```
 
 Unlike sglang, vLLM **strictly validates the `model` field** &mdash; pass the loaded model id, not a placeholder. Use `/admin/status` to check the current model.
 
-The codec patches on vLLM also auto-apply **gzip compression** on the binary path (the response starts with the gzip magic `1f 8b 08 ...`). The Codec clients in [`@codecai/web`](https://www.npmjs.com/package/@codecai/web) and the Python/Rust/.NET equivalents handle decompression transparently.
+The codec patches on vLLM ship the full compression stack (gzip + brotli + dict-zstd) and negotiate via `Accept-Encoding` per the spec preference order `zstd > br > gzip > identity`. All 6 Codec clients (TS/Web, Python, .NET, Rust, Java, C) decode every encoding byte-identically. On Qwen2.5-0.5B-Instruct at 2&nbsp;K tokens the dict-zstd path lands at **3.9&nbsp;KB** (~**137&times;** smaller than the 518&nbsp;KB JSON-SSE baseline; the ratio is content-bound at this engine because vLLM's sampler emits less compressible output at temp&nbsp;0 — see the synthetic-stream cells for the protocol-only headline).
 
 ## Run your own model
 

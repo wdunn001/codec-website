@@ -7,7 +7,7 @@ order: 3
 
 `codec-llamacpp` is the easy way to stand up a Codec-speaking inference server on top of llama.cpp. It's a pre-built Docker image bundling:
 
-- **`llama-server`** &mdash; statically-linked CUDA binary built from the Codec fork (token-native binary transport on the OpenAI-compatible server, plus the stacked `feat/codec-compression` follow-ups: server-side ToolWatcher, streaming gzip, zstd-dict-header docs).
+- **`llama-server`** &mdash; statically-linked CUDA binary built from the Codec fork (token-native binary transport on the OpenAI-compatible server, plus server-side ToolWatcher, streaming gzip&nbsp;+&nbsp;brotli&nbsp;+&nbsp;dict-zstd compression, `Codec-Zstd-Dict` header negotiation, and `/codec/schema` endpoint).
 - **codec-supervisor** &mdash; the same FastAPI admin sidecar as [codec-sglang](/docs/codec-sglang/), handling model uploads, Hugging Face pulls, hot-swaps, and reverse-proxying the llama-server backend.
 - **Static linking** (`GGML_BACKEND_DL=OFF`, `BUILD_SHARED_LIBS=OFF`) &mdash; the CUDA backend is compiled into the binary, no `.so` plugins to load at runtime, no `LD_LIBRARY_PATH` config.
 
@@ -32,11 +32,14 @@ curl http://localhost:8080/v1/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"x","prompt":"Hello","max_tokens":20}'
 
-# Codec wire format - msgpack frames of token IDs
+# Codec wire format - msgpack frames of token IDs with dict-zstd
 curl http://localhost:8080/v1/completions \
   -H "Content-Type: application/json" \
+  -H "Accept-Encoding: zstd, br, gzip" \
   -d '{"model":"x","prompt":"Hello","max_tokens":20,"stream":true,"stream_format":"msgpack"}'
 ```
+
+The negotiator honors the spec preference order `zstd > br > gzip > identity` and picks the smallest. On Qwen2.5-0.5B-Instruct fp16 at 2&nbsp;K tokens, the dict-zstd path lands at **140&nbsp;B** &mdash; **3,868&times;** smaller than the JSON-SSE baseline (529&nbsp;KB), with TTFB ~40.8&nbsp;ms (within ~1&nbsp;ms of the JSON path on the same server).
 
 llama-server ignores the `model` field for routing (single-model-per-process), so `"x"` is fine.
 
