@@ -69,23 +69,29 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       <span class="hero__title-accent">for AI inference.</span>
     </h1>
     <p class="hero__lede">
-      <strong>AI inference is burning megawatts of GPU power, datacenter
-      buildout is racing to keep up &mdash; and you're paying twice for every
-      response.</strong> Once for the GPU watts the model actually uses,
-      again for the JSON-bloated bytes shipping the answer through
-      datacenters, ISPs, and your users' devices &mdash; bytes the AI never
-      even reads. Codec is a drop-in upgrade for AI streaming that stops
-      the second charge. Same model, same prompts, same answers;
-      <strong>typically 16&times; less data on the wire on real agent
-      traffic, up to ~1,700&times; when the content compresses well</strong>
-      &mdash; how big the win is depends on what your AI actually generates,
-      and we show the full range with measured receipts below. On mobile
-      that's a snappier app and a lighter cloud bill; at fleet scale,
-      megawatt-hours of network energy not pumped through switches and
-      cell towers. Plug-in libraries for TypeScript, Python, Rust, Java,
-      .NET, and C work with the AI servers you already use (sglang, vllm,
-      llama.cpp). Your code doesn't change. We can't make the model
-      smaller &mdash; the waste, we can.
+      <strong>AI inference is burning megawatts of GPU power and datacenter
+      buildout is racing to keep up &mdash; meanwhile your inference stack
+      is paying again at every hop on top of the GPU bill.</strong> Models
+      think in tokens, but the rest of the stack speaks text. Every gateway,
+      router, tool dispatcher, and middleware in the path does the same
+      ritual: detokenize the model's IDs to text, encode as UTF-8, wrap in
+      JSON, ship it, parse it, decode UTF-8, re-tokenize back to IDs &mdash;
+      burning CPU, memory, and latency on lossy conversions the AI never
+      asked for, and risking KV-cache corruption when the re-tokenize
+      doesn't round-trip cleanly. Codec is a drop-in upgrade that keeps
+      token IDs as the wire format <em>end-to-end</em>: gateways forward
+      IDs verbatim, tool dispatchers match on raw IDs, cross-model handoffs
+      translate vocabularies in-process. Same model, same prompts, same
+      answers; <strong>typically 16&times; less data on the wire on real
+      agent traffic, up to ~1,700&times; when the content compresses
+      well</strong> &mdash; how big the win is depends on what your AI
+      generates, full receipts below. On mobile: snappier app, lighter
+      cloud bill. At fleet scale: megawatt-hours of network energy <em>and
+      middleware CPU</em> not burned on bytes nobody reads. Plug-in
+      libraries for TypeScript, Python, Rust, Java, .NET, and C work with
+      the AI servers you already use (sglang, vllm, llama.cpp). Your code
+      doesn't change. We can't make the model smaller &mdash; the waste,
+      we can.
     </p>
 
     <div class="hero__cta">
