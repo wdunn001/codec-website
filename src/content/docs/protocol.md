@@ -155,7 +155,7 @@ For very large prompts where even the JSON envelope is too big. The whole reques
 
 ## Compression
 
-Codec is **streaming-safe with gzip**. Set `Accept-Encoding: gzip, identity` on the request; the server compresses if it's worth it. Identity is always a valid response. Brotli underperforms gzip at every payload size measured (per-block overhead doesn't amortize on small frames).
+Codec is **streaming-safe with gzip**. Set `Accept-Encoding: gzip, identity` on the request; the server compresses if it's worth it. Identity is always a valid response. Brotli was broken in v0.4.0 (per-chunk `flush()` reset the sliding window, inflating small streams); the v0.4.1 fix in both sglang + vllm forks restores brotli's between-chunk dictionary, and brotli is now Pareto-front for 32&ndash;256 token msgpack streams &mdash; beating both gzip and dict-zstd in that size band. The server's compression negotiator honours spec preference order `zstd > br > gzip > identity` and picks the smallest.
 
 ### zstd is dict-only
 
