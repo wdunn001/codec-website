@@ -55,6 +55,35 @@ Re-running the post-fix synthetic bench, brotli is now Pareto-front for 32-256 t
 
 The release process now refuses to ship a bench with errored cells. `aggregate.py` exits non-zero if any row has a non-empty `error` field, and §2 reports both **wire-unanimous** AND **decode-unanimous** counts (the wire-only check was the loophole that hid the 5/6 dict-zstd silent failures). An `engine-acceptance` pytest (`packages/bench/tests/test_engine_acceptance.py`) runs 9 protocol probes against any candidate engine image — `/codec/schema`, spec-preference-order compression negotiation, `Codec-Zstd-Dict` header presence, detokenize-bypass — *before* the cross-stack bench is invoked. Catches "image was built from a stale Dockerfile" regressions in ~15s instead of via the bench's headline aggregator.
 
+## MCP leaf-mode: why the tiny-result row is wire-larger
+
+`@codecai/mcp-leaf` lets an MCP tool author attach pre-tokenized IDs to a `CallToolResult` via `_meta['ai.codec/leaf-tokenization']`, so a Codec-aware consumer skips the re-tokenize hop. We bumped the package 0.3.2 → 0.4.1 in this release (with a hash-validation fix in `makeMetaTokenizer`) and shipped a new tool-result-side bench at [`packages/bench/src/leaf-live.ts`](https://github.com/wdunn001/Codec/blob/main/packages/bench/src/leaf-live.ts). The first published number deserves an explanation because it looks the wrong way at first glance — leaf is wire-LARGER, not smaller, on tiny results.
+
+The honest accounting on a ~30-char timestamp result:
+
+**Plain MCP response body (105 bytes):**
+
+```json
+{"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"05/16/2026, 21:24:36 (UTC)"}]}}
+```
+
+**Leaf MCP response body (316 bytes) — same tool, same text, plus a `_meta` payload:**
+
+```json
+{"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text",
+  "text":"05/16/2026, 21:24:36 (UTC)",
+  "_meta":{"ai.codec/leaf-tokenization":{
+    "map_id":"sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
+    "ids":[15,20,14,16,21,14,17,15,17,21,11,220,17,16,25,18,20,25,16,15,27403,320,21183,8]
+  }}}]}}
+```
+
+The +211 byte delta breaks down to ~10 B for the `_meta` opener, ~32 B for the `ai.codec/leaf-tokenization` namespace key, ~80 B for the full sha256 hex `map_id`, ~85 B for the 24 token IDs as ASCII decimals + commas, and ~4 B for closing braces. The IDs array alone is already >3× the size of the text it's annotating.
+
+**Why the design ships both text AND ids:** non-Codec-aware clients on the same MCP namespace need to keep reading the result the way they always have, so leaf is purely *additive*. Legacy clients see the text block and ignore the `_meta`; Codec-aware clients call `readCodecMeta(result)` and take the ids without paying the BPE tokenize hop. **The win is consumer CPU** (12.4× faster on this row — 0.052 ms → 0.004 ms), **the cost is the +210-byte fixed envelope per text block**. Since the envelope is fixed and the savings scale linearly with text length, the wire crossover where leaf ≤ plain sits around ~300+ characters per text block — paginated docs, search results, large MCP outputs win both axes; timestamps and short status strings pay a wire tax for the CPU win.
+
+The bench (20 warm calls) also asserts `leaf.ids == tokenizer.encode(leaf.text)` on every sample under the declared `map_id` — 20/20 integrity pass. A regression there would mean the tool's tokenization had drifted from what the consumer's map declares, which is exactly the corruption mode leaf has to defend against.
+
 ## What's verified end-to-end at v0.4.1
 
 | Bench surface                              | Result                                                    |
