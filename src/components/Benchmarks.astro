@@ -116,10 +116,10 @@ const engineRows: EngineRow[] = [
   {
     name: "llama.cpp",
     jsonKB: 529,
-    bestBytes: 16100,
-    bestDisplay: "16 KB",
-    bestKind: "Codec msgpack + gzip",
-    ratio: "33×",
+    bestBytes: 140,
+    bestDisplay: "140 B",
+    bestKind: "Codec msgpack + dict-zstd",
+    ratio: "3,868×",
     ttftMs: "40.8 ms",
   },
 ];
@@ -401,9 +401,12 @@ const toolBars = [
       <footer class="bench-card__foot">
         sglang reaches <strong>1,707&times;</strong> on msgpack&nbsp;+&nbsp;dict-zstd because it has the full
         compression stack (gzip + brotli + dict-zstd) wired into the Codec
-        chunker. vllm hits <strong>137&times;</strong> with gzip alone.
-        llama.cpp ships gzip only too; <strong>33&times;</strong> at zero
-        protocol cost.
+        chunker. llama.cpp added brotli + zstd in v0.4.1 and now hits
+        <strong>3,868&times;</strong> on dict-zstd as well. vllm hits
+        <strong>137&times;</strong> with gzip; its content compresses less
+        cooperatively at temperature&nbsp;=&nbsp;0, so the ratio is content-bound,
+        not protocol-bound (see the synthetic-stream cells for the protocol-
+        only headline).
       </footer>
     </article>
 
