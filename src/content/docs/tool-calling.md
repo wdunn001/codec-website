@@ -1,6 +1,6 @@
 ---
 title: Tool calling — ToolWatcher
-description: Detect tool-call regions in token-ID streams without detokenizing. ~100× faster than the text path.
+description: Detect tool-call regions in token-ID streams without detokenizing. 26.7× faster than detokenize+regex on the v0.4.1 lab box (EPYC 8124P / gcc:13); ~26–100× depending on host.
 section: Reference
 order: 1
 ---
@@ -83,7 +83,7 @@ From [RESULTS.md §7](https://github.com/wdunn001/Codec/blob/main/RESULTS.md), `
 | ToolWatcher (uint32 compare)    | **0.61** | 1,648 |
 | Detokenize + regex (text path)  |   60.4   |  16.6 |
 
-About **100&times; faster on the hot path**. End-to-end agent benchmarks in [§3–§6 of RESULTS.md](https://github.com/wdunn001/Codec/blob/main/RESULTS.md) show 17–18&times; wire-byte reduction and 20% wall-clock improvement on real two-turn dispatch loops.
+**26.7&times; faster** on the v0.4.1 lab box (EPYC 8124P / gcc:13) running [`packages/c/examples/bench_watcher`](https://github.com/wdunn001/Codec/blob/main/packages/c/examples/bench_watcher.c) &mdash; `codec_tool_watcher_feed` at 481&nbsp;Mtok/s vs `codec_detokenizer_render` at 18&nbsp;Mtok/s on a 1&nbsp;M-token stream with 5% region density. Prior README claim of `~100×` was from an undocumented CPU/compiler combination; the speedup remains in ToolWatcher's favour by `~26–100×` depending on host. End-to-end agent benchmarks in [`packages/bench/results/2026-05-15T20-00-00Z/agent-loop/`](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-15T20-00-00Z/agent-loop) show **16.9&ndash;18.0&times; wire-byte reduction** and total speedups from 8.8&times; (in-process tool) to ~neutral (tool-latency-dominated) on real two-turn dispatch loops.
 
 ## Custom delimiters
 

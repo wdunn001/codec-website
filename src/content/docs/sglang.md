@@ -48,7 +48,7 @@ If the client omits `stream_format` (or sets `stream: true`), sglang behaves exa
 
 The Codec patches add an in-server tool-call detector that runs on the token-ID stream *before* the stream leaves the server. When the model emits a tool-call region, sglang surfaces it as a discrete event in the Codec stream &mdash; with a reserved control-ID frame the client picks up via `ToolWatcher.feed()`.
 
-This is the source of the **~100&times; tool-call detection speedup** in [RESULTS.md §3](https://github.com/wdunn001/Codec/blob/main/RESULTS.md). The server skips its usual "detokenize and regex-match against tool delimiters" step entirely; the client gets pre-segmented frames and can dispatch with no further parsing.
+This is the source of the tool-call detection speedup measured in [RESULTS.md](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md) &mdash; **26.7&times;** on the v0.4.1 lab box (EPYC 8124P / gcc:13) running the libcodec C99 microbench, with the speedup ratio in ToolWatcher's favour by `~26-100×` depending on host. The server skips its usual "detokenize and regex-match against tool delimiters" step entirely; the client gets pre-segmented frames and can dispatch with no further parsing.
 
 ```python
 from codecai import Detokenizer, ToolWatcher, decode_msgpack_stream, load_map
