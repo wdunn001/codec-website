@@ -66,7 +66,7 @@ The release process now refuses to ship a bench with errored cells. `aggregate.p
 | Agent loop — mock get_weather              | 16.9× wire / 8.8× total latency speedup                  |
 | Agent loop — SearXNG (live web)            | 18.0× wire / 1.65× speedup                                |
 | Agent loop — MetaMCP (Time MCP)            | 17.0× wire / ~neutral                                     |
-| MCP leaf-mode — tool-result-side (tiny)    | +211 B wire / 12.4× consumer-CPU speedup; crossover ~300 chars |
+| MCP leaf-mode — tool-result-side (tiny)    | +211 bytes wire (leaf 3× larger on tiny results) / **12.4× faster consumer CPU** (re-tokenize 0.052 ms → meta-read 0.004 ms); wire crossover where leaf ≤ plain sits ~300+ chars per text block |
 | ToolWatcher microbench                     | 481 Mtok/s vs detokenize 18 Mtok/s → 26.7× speedup       |
 
 ## What didn't change
