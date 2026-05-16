@@ -1,7 +1,7 @@
 ---
 title: v0.4.1 — cross-client dict-zstd, llama.cpp br+zstd, synthetic protocol bench
 date: "2026-05-16"
-kind: release
+kind: improvement
 version: v0.4.1
 summary: A patch release that closes three correctness gaps the v0.4.0 cross-stack matrix had been silently papering over — the §1 headline conflated protocol efficiency with model-output behaviour, only Python actually decoded dict-zstd, and the bench's unanimity check only inspected wire bytes (not whether anything decoded). All fixed AND defended by regression tests. New synthetic-stream bench is the protocol-only headline; 24/24 wire AND 24/24 decode unanimous across all 6 clients × 3 engines for the first time.
 links:
