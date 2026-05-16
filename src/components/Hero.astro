@@ -74,15 +74,17 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       text-bloated JSON through datacenters, ISPs, and your users' devices
       &mdash; burning bandwidth, server CPU, and battery on bytes the AI
       never even reads. Codec is a drop-in upgrade for AI streaming that
-      fixes this. Same model, same prompts, same answers,
-      <strong>up to 1,700&times; less data on the wire</strong>,
-      <strong>up to 10&times; faster on mobile</strong>, and at fleet scale
-      <strong>~$1.5M/year off your cloud egress bill</strong> plus
-      <strong>~230&nbsp;kWh/day of network energy</strong> that no longer gets
-      pumped through switches and cell towers. Plug-in libraries for
-      TypeScript, Python, Rust, Java, .NET, and C work with the AI servers
-      you already use (sglang, vllm, llama.cpp). Your code doesn't change.
-      The model doesn't get smaller &mdash; the waste does.
+      fixes this. Same model, same prompts, same answers;
+      <strong>typically 16&times; less data on the wire on real agent
+      traffic, up to ~1,700&times; when the content compresses well</strong>
+      &mdash; how big the win is depends on what your AI actually generates,
+      and we show the full range with measured receipts below. On mobile
+      that translates to a snappier app and a lighter cloud bill; at fleet
+      scale, megawatt-hours of network energy not pumped through switches
+      and cell towers. Plug-in libraries for TypeScript, Python, Rust,
+      Java, .NET, and C work with the AI servers you already use (sglang,
+      vllm, llama.cpp). Your code doesn't change. The model doesn't get
+      smaller &mdash; the waste does.
     </p>
 
     <div class="hero__cta">
