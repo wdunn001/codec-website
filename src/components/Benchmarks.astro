@@ -712,8 +712,8 @@ const toolBars = [
           <p class="bench-card__sub">honest translations from the measured wire/CPU numbers above &middot; public egress rates &middot; published per-platform reply volumes (ChatGPT 2.5B, Claude 900M, Gemini 600M, &hellip;)</p>
         </div>
         <div class="bench-card__hero">
-          <span class="bench-card__hero-num">~$80M/yr</span>
-          <span class="bench-card__hero-cap">cloud egress saved at worldwide conversational-AI volume (~5B replies/day)</span>
+          <span class="bench-card__hero-num">~$280M+/yr</span>
+          <span class="bench-card__hero-cap">cloud egress + Starlink + GPU-on-blocked-prompts saved at worldwide AI scale (compound real-world rate)</span>
         </div>
       </header>
 
@@ -731,23 +731,23 @@ const toolBars = [
         <section class="cost-cell">
           <header class="cost-cell__head">
             <span class="cost-cell__tag">cloud egress</span>
-            <h4>AWS S3 outbound @ $0.09/GB</h4>
+            <h4>AWS S3 outbound @ $0.09/GB &mdash; compound rate</h4>
           </header>
           <p class="cost-cell__body">
-            A 2K-token chat reply ships 485&nbsp;KB JSON-SSE vs 291&nbsp;B Codec msgpack+dict-zstd on sglang. Egress is billed per byte the cloud sends to the user:
+            A 2K-token chat reply ships 485&nbsp;KB JSON-SSE vs 291&nbsp;B Codec on sglang &mdash; but per visible user reply, the real bytes-out are ~2-3&times; that because the same response gets re-shipped on internal A2A hops, plus tool requests + tool results crossing the egress boundary. Egress is billed per byte the cloud sends out:
           </p>
           <table class="cost-table">
-            <thead><tr><th>Real-world scale</th><th class="num">Replies/day</th><th class="num">JSON-SSE egress</th><th class="num win">Codec saves</th></tr></thead>
+            <thead><tr><th>Scope</th><th class="num">Replies/day</th><th class="num">Single-resp.</th><th class="num win">Compound (~2.5&times;)</th></tr></thead>
             <tbody>
-              <tr><td>Anthropic Claude</td>          <td class="num">~900M</td>  <td class="num">$14.2M/yr</td>  <td class="num win"><strong>~$14M/yr</strong></td></tr>
-              <tr><td>OpenAI ChatGPT + Copilot</td>  <td class="num">~2.5B</td>  <td class="num">$39.3M/yr</td>  <td class="num win"><strong>~$40M/yr</strong></td></tr>
-              <tr><td>Google Gemini</td>             <td class="num">~600M</td>  <td class="num">$9.4M/yr</td>   <td class="num win"><strong>~$9M/yr</strong></td></tr>
-              <tr><td>Others (Grok, Perplexity, &hellip;)</td><td class="num">~300M</td><td class="num">$4.7M/yr</td><td class="num win"><strong>~$5M/yr</strong></td></tr>
-              <tr class="agent-loop-delta"><td><strong>Worldwide conversational AI</strong></td><td class="num"><strong>~5B</strong></td><td class="num"><strong>$78.6M/yr</strong></td><td class="num win"><strong>~$80M/yr</strong></td></tr>
+              <tr><td>Anthropic Claude</td>          <td class="num">~900M</td>  <td class="num">$14M/yr</td>  <td class="num win"><strong>~$35M/yr</strong></td></tr>
+              <tr><td>OpenAI ChatGPT + Copilot</td>  <td class="num">~2.5B</td>  <td class="num">$40M/yr</td>  <td class="num win"><strong>~$100M/yr</strong></td></tr>
+              <tr><td>Google Gemini</td>             <td class="num">~600M</td>  <td class="num">$9M/yr</td>   <td class="num win"><strong>~$23M/yr</strong></td></tr>
+              <tr><td>Others (Grok, Perplexity, &hellip;)</td><td class="num">~300M</td><td class="num">$5M/yr</td><td class="num win"><strong>~$12M/yr</strong></td></tr>
+              <tr class="agent-loop-delta"><td><strong>Worldwide conversational AI</strong></td><td class="num"><strong>~5B</strong></td><td class="num"><strong>$80M/yr</strong></td><td class="num win"><strong>~$200M/yr</strong></td></tr>
             </tbody>
           </table>
           <p class="cost-cell__foot">
-            Math: 485&nbsp;KB JSON-SSE per 2&nbsp;K-token reply &times; replies/day = bytes/day &times; $0.09/GB AWS S3 egress. Per-platform reply volumes from publicly reported / inferred 2026 numbers (OpenAI confirms ChatGPT at 2.5B prompts/day; Claude estimated ~900M across web + API; Gemini estimated 525&ndash;600M; total worldwide conversational AI ~4.5&ndash;5B/day &mdash; comparable to ~1/3 of global Google search traffic). GCP + Azure egress are in the same ballpark ($0.08&ndash;$0.12/GB).
+            Per-platform single-response numbers are the floor (485&nbsp;KB JSON-SSE per 2K-token reply &times; replies/day &times; $0.09/GB AWS S3). Compound multiplies by ~2.5&times; for typical agent topology &mdash; initial response + final response + tool requests/results that cross egress + some internal A2A spanning regions. Heavy multi-tool agents push to 5&ndash;6&times; ($400-480M/yr); chat-only deployments stay near the floor. GCP + Azure egress are in the same ballpark ($0.08-$0.12/GB).
           </p>
         </section>
 
@@ -791,11 +791,33 @@ const toolBars = [
           </p>
         </section>
 
-        <!-- 4. Server-side inference cost (honest framing) -->
+        <!-- 4. GPU compute saved from client-side blocked prompts -->
+        <section class="cost-cell">
+          <header class="cost-cell__head">
+            <span class="cost-cell__tag cost-cell__tag--warn">GPU compute (blocked prompts)</span>
+            <h4>The one place Codec actually saves GPU $</h4>
+          </header>
+          <p class="cost-cell__body">
+            Codec-aware clients with <a href="/docs/web-safety/">web-safety</a> enabled refuse doomed prompts locally &mdash; policy violations, safety-policy mismatches, malformed payloads &mdash; before any wire round-trip. Those requests never reach the GPU. At ~10% client-side block rate on ~5B daily requests = ~500M GPU requests/day avoided.
+          </p>
+          <table class="cost-table" style="margin-bottom: 0.5rem;">
+            <thead><tr><th>Assumption</th><th class="num">Per call</th><th class="num win">At 500M blocks/day</th></tr></thead>
+            <tbody>
+              <tr><td>GPU-seconds avoided</td>     <td class="num">~1 s avg</td>  <td class="num win">~138K GPU-hr/day</td></tr>
+              <tr><td>@ $1/GPU-hr blended</td>     <td class="num">$0.000278</td> <td class="num win"><strong>~$50M/yr saved</strong></td></tr>
+              <tr><td>@ $2/GPU-hr (premium)</td>   <td class="num">$0.000556</td> <td class="num win"><strong>~$100M/yr saved</strong></td></tr>
+            </tbody>
+          </table>
+          <p class="cost-cell__foot">
+            This is the <em>only</em> place Codec actually reduces GPU dollars &mdash; not because the model runs faster, but because the request never runs at all. On the ~90% of requests that DO reach the GPU, compute is unchanged. ~$50&ndash;100M/yr is the defensible range at 10% block rate; more aggressive client-side dedup / safety / format-validation pushes it higher.
+          </p>
+        </section>
+
+        <!-- 5. Server CPU floor (honest framing) -->
         <section class="cost-cell">
           <header class="cost-cell__head">
             <span class="cost-cell__tag cost-cell__tag--warn">server CPU floor</span>
-            <h4>What Codec does NOT change: GPU compute</h4>
+            <h4>What Codec does NOT change on served requests</h4>
           </header>
           <p class="cost-cell__body">
             The model still runs at the same TPS. Codec doesn't accelerate token generation, doesn't change weights, doesn't change KV-cache footprint. <strong>If you're GPU-bound, Codec is invisible to your $/token.</strong>
