@@ -929,32 +929,12 @@ const toolBars = [
         </table>
       </div>
 
-      <h4 class="bench-subhead bench-subhead--secondary">Energy budget per response</h4>
-      <p class="bench-subhead-note">Where the joules actually go. Conservative estimates from published per-bit + per-Mtok values multiplied through the v0.4.1 wire numbers.</p>
+      <h4 class="bench-subhead bench-subhead--secondary">Per-response energy breakdown (one-liner)</h4>
+      <p class="bench-subhead-note">GPU compute is unchanged; everything else collapses. Full per-component numbers in the prose paragraph below; the fleet-scale aggregation is in the cost card above.</p>
 
-      <div class="power-grid">
-        <table class="cost-table">
-          <thead>
-            <tr>
-              <th>Component</th>
-              <th class="num">JSON-SSE</th>
-              <th class="num">Codec</th>
-              <th class="num">Ratio</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>GPU compute (Qwen-2.5 0.5B, 2K tokens)</td>    <td class="num">~5&ndash;15&nbsp;J</td>  <td class="num">~5&ndash;15&nbsp;J</td>      <td class="num">unchanged</td></tr>
-            <tr><td>Server CPU (response serialize + UTF-8 encode)</td><td class="num">~10&nbsp;mJ</td>    <td class="num">~0.5&nbsp;mJ</td>          <td class="num win">~20&times;</td></tr>
-            <tr><td>Network end-to-end (~150 nJ/bit)</td>          <td class="num">~580&nbsp;mJ</td>   <td class="num">~0.35&nbsp;mJ</td>          <td class="num win">~1,660&times;</td></tr>
-            <tr><td>Client radio (mobile, ~50&nbsp;nJ/bit)</td>    <td class="num">~194&nbsp;mJ</td>   <td class="num">~0.12&nbsp;mJ</td>          <td class="num win">~1,617&times;</td></tr>
-            <tr><td>Client CPU (BPE tokenize + JSON parse)</td>    <td class="num">~50&nbsp;mJ</td>    <td class="num">~4&nbsp;mJ</td>             <td class="num win">~12&times;</td></tr>
-            <tr class="agent-loop-delta"><td><strong>Per-response total (mobile path)</strong></td>
-                                                                   <td class="num"><strong>~6&nbsp;J + 824&nbsp;mJ</strong></td>
-                                                                   <td class="num"><strong>~6&nbsp;J + 5&nbsp;mJ</strong></td>
-                                                                   <td class="num">GPU dominant; everything else <strong>~165&times;</strong> less</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <p class="cost-cell__body">
+        <strong>GPU compute (~5&ndash;15&nbsp;J on Qwen-2.5 0.5B at 2K tokens): unchanged.</strong> Codec is not an inference accelerator. Everything else collapses by 12&ndash;1,660&times;: server CPU response-serialize <code>10 mJ &rarr; 0.5 mJ</code> (~20&times;), network end-to-end <code>580 mJ &rarr; 0.35 mJ</code> (~1,660&times; at ~150 nJ/bit), client radio on mobile <code>194 mJ &rarr; 0.12 mJ</code> (~1,617&times; at ~50 nJ/bit), client CPU for BPE tokenize + JSON parse <code>50 mJ &rarr; 4 mJ</code> (~12&times;). Total non-GPU per-response: <code>~824 mJ &rarr; ~5 mJ</code> = <strong>~165&times;</strong> less of everything you pay on top of the GPU bill.
+      </p>
 
       <p class="cost-cell__body" style="margin-top: 1rem;">
         <strong>Non-GPU energy at real-world AI scale &mdash; annual.</strong>
