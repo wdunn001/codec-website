@@ -968,40 +968,31 @@ const toolBars = [
       </p>
 
       <p class="cost-cell__body" style="margin-top: 1rem;">
-        <strong>Non-GPU energy at real-world AI scale &mdash; compounded across the conversion cycle.</strong>
-        Earlier framings under-counted by treating each AI request as a single
-        chat reply (~819&nbsp;mJ non-GPU delta). Real-world AI is increasingly
-        <em>agent</em> work &mdash; multi-turn loops with tool calls, middleware
-        re-tokenization at every gateway hop, sometimes cross-model handoffs.
-        Each conversion cycle (detokenize &rarr; UTF-8 &rarr; JSON &rarr; parse
-        &rarr; re-tokenize) is its own slice of CPU + network energy, and a
-        typical agent task chains 5&ndash;8 of them. Per-task non-GPU energy
-        delta on the JSON-SSE path:
+        <strong>Non-GPU energy at real AI workload &mdash; bidirectional, multi-round-trip, with client-side blocks.</strong>
+        Three factors prior framings under-counted:
       </p>
-      <ul class="cost-bullets" style="margin: 0.5rem 0 1rem;">
-        <li>Server detokenize per pass: <code>~25 mJ</code> (2K tokens &times; ~5 µs CPU)</li>
-        <li>Client re-tokenize per pass: <code>~100 mJ</code> (BPE encode, ~2&times; detok cost)</li>
-        <li>JSON serialize + parse per round-trip: <code>~20 mJ</code></li>
-        <li>Network end-to-end per response: <code>~580 mJ</code> at ~150 nJ/bit</li>
-        <li>Compound per agent task (5&ndash;8 cycles): <strong>~2&ndash;4&nbsp;J non-GPU energy</strong> vs Codec's ~50&nbsp;mJ all-in</li>
-      </ul>
+      <ol class="cost-bullets" style="margin: 0.5rem 0 1rem;">
+        <li><strong>Bidirectional.</strong> Every visible "reply" has a request side too &mdash; 5&ndash;50 KB JSON with system prompt + history + tool schemas, serialized at client, parsed + re-tokenized at gateway, re-parsed at server. Not free.</li>
+        <li><strong>~5&ndash;8 wire round-trips per visible reply.</strong> Almost every modern AI call invokes at least one tool + one agent-to-agent handoff: user&nbsp;&rarr;&nbsp;API, internal A2A out + back, tool call out + result back, final response out. Each round-trip carries the full detokenize&nbsp;&rarr;&nbsp;UTF-8&nbsp;&rarr;&nbsp;JSON&nbsp;&rarr;&nbsp;parse&nbsp;&rarr;&nbsp;re-tokenize ritual on both ends.</li>
+        <li><strong>~10% client-side blocked.</strong> Codec-aware clients run safety / policy / validation checks locally and refuse doomed prompts before the wire. Those requests never spend GPU compute, never traverse the network &mdash; ~10% of attempted requests eliminated entirely (industry-mid baseline for deployments with <a href="/docs/web-safety/">web-safety</a> enabled).</li>
+      </ol>
       <p class="cost-cell__body">
-        Recomputed annual savings using a realistic 50/50 mix of single chat replies + multi-turn agent tasks (~1.9&nbsp;J avg per-task delta):
+        Per-round-trip non-GPU energy (JSON-SSE path): request side ~70&nbsp;mJ (5&nbsp;KB serialize + ship + gateway retok) + response side ~915&nbsp;mJ (server detok + ship 485&nbsp;KB + parse + retok) = <strong>~985&nbsp;mJ per round-trip</strong> vs Codec's ~15&nbsp;mJ all-in. Compound per visible reply (~6 round-trips): <strong>~5.85&nbsp;J non-GPU energy</strong> vs Codec's ~90&nbsp;mJ. Plus blocked-doomed-prompts savings: 10% of attempts &times; (~1&nbsp;J round-trip + ~10&nbsp;J GPU compute avoided) = ~1.1&nbsp;J avg per visible reply. <strong>Effective per visible reply delta: ~6.85&nbsp;J.</strong>
       </p>
       <table class="cost-table" style="margin: 0.75rem 0 1rem;">
-        <thead><tr><th>Workload assumption</th><th class="num">Today (5B/day)</th><th class="num win">Annual equivalent</th></tr></thead>
+        <thead><tr><th>Scope</th><th class="num">Today (5B/day visible)</th><th class="num win">Annual equivalent</th></tr></thead>
         <tbody>
-          <tr><td>Pure single chat reply (floor)</td>                                  <td class="num">~416&nbsp;MWh/yr</td>  <td class="num win">~38 US homes-yr · ~36 cars off road</td></tr>
-          <tr class="agent-loop-delta"><td><strong>Real-world mix (50/50 single + agent), today</strong></td><td class="num"><strong>~950&nbsp;MWh/yr</strong></td><td class="num win"><strong>~87 US homes-yr · ~83 cars off road</strong></td></tr>
-          <tr><td>Heavy agent / tool-using mix (~3 J/task)</td>                        <td class="num">~1.5&nbsp;GWh/yr</td>  <td class="num win">~140 US homes-yr · ~135 cars off road</td></tr>
-          <tr class="agent-loop-delta"><td><strong>2030 projection &mdash; ~10&times; current AI volume, real-world mix</strong></td><td class="num"><strong>~9.5&nbsp;GWh/yr</strong></td><td class="num win"><strong>~870 US homes-yr · ~830 US cars off the road every year</strong></td></tr>
+          <tr><td>Single chat reply only (under-count floor)</td>                                       <td class="num">~416&nbsp;MWh/yr</td>  <td class="num win">~36 cars off road</td></tr>
+          <tr><td>+ Compound 6-round-trip per visible reply</td>                                        <td class="num">~3.0&nbsp;GWh/yr</td>  <td class="num win">~260 cars off road</td></tr>
+          <tr class="agent-loop-delta"><td><strong>+ Client-side blocked doomed prompts (10%)</strong> &mdash; today</td><td class="num"><strong>~3.5&nbsp;GWh/yr</strong></td><td class="num win"><strong>~320 US homes for a year · ~300 US cars off the road every year</strong></td></tr>
+          <tr class="agent-loop-delta"><td><strong>2030 projection &mdash; 10&times; AI volume, same topology</strong></td><td class="num"><strong>~35&nbsp;GWh/yr</strong></td><td class="num win"><strong>~3,200 US homes-yr · ~3,000 US cars off the road every year</strong></td></tr>
         </tbody>
       </table>
       <p class="cost-cell__body">
-        Honest scope: per-response wire bytes (485&nbsp;KB JSON &rarr; 291&nbsp;B Codec) are <em>measured</em>; per-task compound non-GPU energy is <em>estimated</em> from typical agent-loop topology (server detok + JSON encode/parse + client retok per conversion cycle, 5&ndash;8 cycles per agent task). The per-platform breakdown of today's number: Claude ~170&nbsp;MWh/yr, ChatGPT ~475&nbsp;MWh/yr, Gemini ~115&nbsp;MWh/yr at the real-world mix. As AI shifts further toward agents and multi-step workflows, the per-task multiplier rises and the savings scale up faster than raw request counts.
+        Honest scope: per-response wire bytes (485&nbsp;KB JSON &rarr; 291&nbsp;B Codec, request side similar ratio) are <em>measured</em>; the 6-round-trip-per-visible-reply multiplier and 10% client-block rate are <em>estimated</em> from typical 2026 agent topology (tool-call + A2A handoff is now near-universal across ChatGPT / Claude / Gemini / Copilot per public architecture descriptions). Per-platform at the compound rate: Claude ~625&nbsp;MWh/yr, ChatGPT ~1.7&nbsp;GWh/yr, Gemini ~420&nbsp;MWh/yr.
       </p>
       <p class="cost-cell__body" style="margin-top: 0.75rem;">
-        <strong>GPU compute keeps drawing the same wattage either way.</strong> Codec is not an inference accelerator &mdash; if you're trying to reduce model wattage that's a model + accelerator question. What Codec eliminates is everything you're paying on TOP of the GPU bill: the network energy and middleware CPU spent shipping bytes through 5&ndash;8 detokenize/retokenize cycles the AI never even reads.
+        <strong>GPU compute on served requests keeps drawing the same wattage either way.</strong> Codec is not an inference accelerator. What Codec eliminates is (a) everything you're paying on TOP of the GPU bill at every conversion cycle through every middleware hop in every round-trip on both the request and response sides, AND (b) the entire GPU bill on doomed prompts that never need to be served because the client caught them. The deeper the agent topology and the more aggressive the client-side guard, the bigger the multiplier.
       </p>
 
       <footer class="bench-card__foot">
