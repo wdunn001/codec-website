@@ -134,10 +134,22 @@ import Base from "../layouts/Base.astro";
           safety-policy enforcement) applies to MCP traffic the same way it
           applies to text-tokens and latents &mdash; not repeated here.
         </p>
+        <p>
+          <strong>Two SDKs, two scopes</strong> for the tool-author side:
+          <a href="/docs/codec-leaf/">codec-leaf</a> wraps <em>existing</em>
+          MCP servers (adds the <code>_meta['ai.codec/leaf-tokenization']</code>
+          payload on results); <a href="/docs/codec-tool-kit/">codec-tool-kit</a>
+          is the SDK for authoring <em>net-new</em> Codec-native tools
+          as independently-hosted bolt-ons (manifest + build-time
+          precache + runtime hashtable-lookup, gateway stays a pure
+          token router). Both are valid; complementary in real deployments.
+        </p>
         <p class="protocol-map__where">
           See <a href="/docs/codec-metamcp/">codec-metamcp</a>,
           <a href="/docs/codec-leaf/">codec-leaf</a>,
+          <a href="/docs/codec-tool-kit/">codec-tool-kit</a>,
           <a href="https://www.npmjs.com/package/@codecai/mcp-leaf" rel="noopener">@codecai/mcp-leaf</a>,
+          <a href="https://www.npmjs.com/package/@codecai/tool-kit" rel="noopener">@codecai/tool-kit</a>,
           <a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a> reference image.
         </p>
       </article>
