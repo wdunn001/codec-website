@@ -114,30 +114,15 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
         <span class="hero-metric__label">faster on mobile</span>
         <span class="hero-metric__sub">2&nbsp;K-token reply over 10&nbsp;Mbps 4G</span>
       </li>
-      <li class="hero-metric hero-metric--cpu">
-        <span class="hero-metric__num">12.4&ndash;26.7&times;</span>
-        <span class="hero-metric__label">less middleware CPU</span>
-        <span class="hero-metric__sub">leaf consumer &rarr; ToolWatcher</span>
-      </li>
       <li class="hero-metric hero-metric--cost">
         <span class="hero-metric__num">~$80M/yr</span>
         <span class="hero-metric__label">worldwide cloud egress saved</span>
-        <span class="hero-metric__sub">at ~5B AI replies/day combined; ~$14M/yr Claude alone, ~$40M/yr ChatGPT alone</span>
-      </li>
-      <li class="hero-metric hero-metric--energy">
-        <span class="hero-metric__num">~38 US homes</span>
-        <span class="hero-metric__label">non-GPU energy saved daily</span>
-        <span class="hero-metric__sub">at worldwide conversational-AI volume (~5B replies/day: ChatGPT 2.5B + Claude 900M + Gemini 600M + others ~300M); annually ≈ 36 US cars off the road in CO<sub>2</sub></span>
+        <span class="hero-metric__sub">~$40M ChatGPT, ~$14M Claude, ~$9M Gemini</span>
       </li>
       <li class="hero-metric hero-metric--access">
         <span class="hero-metric__num">~5B people</span>
         <span class="hero-metric__label">AI accessible where it wasn't</span>
-        <span class="hero-metric__sub">2.6B offline + 2&ndash;3B on slow/expensive mobile (ITU 2024); at $2&ndash;10/GB data, JSON-SSE is luxury, Codec is rounding error</span>
-      </li>
-      <li class="hero-metric hero-metric--unanimity">
-        <span class="hero-metric__num">24/24 &middot; 24/24</span>
-        <span class="hero-metric__label">wire &amp; decode unanimous</span>
-        <span class="hero-metric__sub">6 clients &times; 3 engines (v0.4.1)</span>
+        <span class="hero-metric__sub">2.6B offline + 2&ndash;3B on slow / expensive mobile (ITU 2024)</span>
       </li>
     </ul>
 
@@ -331,11 +316,12 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
     gap: 1rem 1.25rem;
   }
   @media (min-width: 720px) {
-    .hero__metrics { grid-template-columns: repeat(3, 1fr); }
+    .hero__metrics { grid-template-columns: repeat(2, 1fr); }
   }
   @media (min-width: 1100px) {
-    .hero__metrics { grid-template-columns: repeat(7, 1fr); padding: 1.25rem 1.25rem; }
+    .hero__metrics { grid-template-columns: repeat(4, 1fr); padding: 1.5rem 1.75rem; gap: 1.5rem 2rem; }
   }
+  .hero-metric__num { font-size: clamp(1.3rem, 2.5vw, 1.9rem) !important; }
   .hero-metric {
     display: flex;
     flex-direction: column;

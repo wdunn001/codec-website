@@ -855,34 +855,8 @@ const toolBars = [
         </table>
       </div>
 
-      <h4 class="bench-subhead bench-subhead--secondary">Where JSON-SSE just plain doesn't work</h4>
-      <p class="bench-subhead-note">From the wall-clock-by-link-speed table in the power card. The threshold below which JSON-SSE becomes unusable is where Codec just keeps working.</p>
-
-      <div class="power-grid">
-        <table class="cost-table">
-          <thead>
-            <tr>
-              <th>Connection</th>
-              <th class="num">JSON-SSE</th>
-              <th class="num">Codec</th>
-              <th>UX verdict</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Mobile 4G &mdash; 10&nbsp;Mbps</td>          <td class="num">433&nbsp;ms</td>    <td class="num">45&nbsp;ms</td>  <td>JSON sluggish, Codec snappy</td></tr>
-            <tr><td>Edge / weak mobile &mdash; 1&nbsp;Mbps</td>  <td class="num">3.9&nbsp;s</td>     <td class="num">47&nbsp;ms</td>  <td>JSON painful, Codec normal</td></tr>
-            <tr><td>2G / EDGE &mdash; 256&nbsp;Kbps</td>         <td class="num">15.2&nbsp;s</td>    <td class="num">54&nbsp;ms</td>  <td>JSON unusable, Codec normal</td></tr>
-            <tr><td>Iridium satellite voice link &mdash; ~24&nbsp;Kbps</td><td class="num"><strong>~2.7&nbsp;min</strong></td><td class="num">142&nbsp;ms</td><td>JSON broken, Codec viable</td></tr>
-          </tbody>
-        </table>
-      </div>
-
       <p class="cost-cell__body" style="margin-top: 1.25rem;">
-        <strong>Who this brings inside the door:</strong> the <a href="https://www.itu.int/itu-d/reports/statistics/facts-figures-2024/" rel="noopener">ITU's 2024 Facts &amp; Figures</a> puts ~2.6 billion people offline entirely and another ~2&ndash;3 billion online via slow or expensive mobile-only connections; <a href="https://a4ai.org/" rel="noopener">A4AI's affordability index</a> consistently flags 1&nbsp;GB of mobile data as costing &gt;5% of monthly income across most of sub-Saharan Africa and parts of Asia. JSON-SSE at 485&nbsp;KB per reply prices those users out of AI &mdash; the data cost alone is a fraction of a day's wages per conversation. Codec at 291&nbsp;B/reply pushes per-reply cost into rounding error in any region, on any connection, on any device. Same model, same answers, same TTFB &mdash; just available to the other 5 billion humans.
-      </p>
-
-      <p class="cost-cell__body" style="margin-top: 0.75rem;">
-        <strong>Plus: older / cheaper client hardware.</strong> Parsing a 485&nbsp;KB JSON-SSE stream + re-tokenizing for downstream KV-cache reuse takes meaningful CPU on a $50 Android phone. Codec's length-prefixed binary frames + the consumer-CPU savings (12.4&times; from leaf, 26.7&times; from ToolWatcher) mean AI agent loops are practical on hardware that couldn't run them otherwise &mdash; not just usable, but cheap on battery.
+        <strong>Who this brings inside the door:</strong> the <a href="https://www.itu.int/itu-d/reports/statistics/facts-figures-2024/" rel="noopener">ITU's 2024 Facts &amp; Figures</a> puts ~2.6 billion people offline entirely and another ~2&ndash;3 billion online via slow or expensive mobile-only connections; <a href="https://a4ai.org/" rel="noopener">A4AI's affordability index</a> flags 1&nbsp;GB of mobile data as costing &gt;5% of monthly income across most of sub-Saharan Africa and parts of Asia. JSON-SSE at 485&nbsp;KB/reply prices those users out of AI; Codec at 291&nbsp;B/reply pushes per-reply cost into rounding error in any region, on any connection, on any device. The link-speed table in the power+latency card below shows where JSON-SSE crosses from "sluggish" to "unusable" while Codec keeps working &mdash; mobile 4G to 2G/EDGE to satellite voice link, all viable. Plus: $50 Android phones can run agent loops on Codec frames where JSON-SSE parse + re-tokenize would burn the battery.
       </p>
 
       <footer class="bench-card__foot">
@@ -983,25 +957,24 @@ const toolBars = [
       </div>
 
       <p class="cost-cell__body" style="margin-top: 1rem;">
-        <strong>What these numbers mean at real-world AI scale &mdash; non-GPU energy:</strong>
-        per chat reply, the non-GPU energy delta (radio + network + client
-        CPU combined) is <strong>~819&nbsp;mJ</strong>. Multiplied by the
-        publicly-reported worldwide conversational-AI request volume:
+        <strong>Non-GPU energy at real-world AI scale &mdash; annual.</strong>
+        Per chat reply, the non-GPU energy delta (radio + network + middleware
+        CPU combined) is ~819&nbsp;mJ &mdash; small per call, structural at fleet
+        scale. Annual savings at today's AI volume, and the AI-volume-growth
+        projection most analysts cite for 2030:
       </p>
       <table class="cost-table" style="margin: 0.75rem 0 1rem;">
-        <thead><tr><th>Real-world scale</th><th class="num">Replies/day</th><th class="num">Saved/day</th><th class="num">Saved/year</th><th class="num win">Annual equivalent</th></tr></thead>
+        <thead><tr><th>Scale</th><th class="num">Replies/day</th><th class="num">Saved/year</th><th class="num win">Annual equivalent</th></tr></thead>
         <tbody>
-          <tr><td>Anthropic Claude</td>          <td class="num">~900M</td><td class="num">205&nbsp;kWh</td><td class="num">75&nbsp;MWh</td><td class="num win">~7 US homes/yr · ~7 cars off road</td></tr>
-          <tr><td>OpenAI ChatGPT + Copilot</td>  <td class="num">~2.5B</td><td class="num">569&nbsp;kWh</td><td class="num">208&nbsp;MWh</td><td class="num win">~19 US homes/yr · ~18 cars off road</td></tr>
-          <tr><td>Google Gemini</td>             <td class="num">~600M</td><td class="num">137&nbsp;kWh</td><td class="num">50&nbsp;MWh</td><td class="num win">~5 US homes/yr · ~4 cars off road</td></tr>
-          <tr class="agent-loop-delta"><td><strong>Worldwide conversational AI</strong></td><td class="num"><strong>~5B</strong></td><td class="num"><strong>1.14&nbsp;MWh</strong></td><td class="num"><strong>416&nbsp;MWh</strong></td><td class="num win"><strong>~38 US homes/yr · ~36 US cars off the road</strong></td></tr>
+          <tr><td>Today &mdash; worldwide conversational AI</td>                  <td class="num">~5B</td>     <td class="num">~416&nbsp;MWh</td>    <td class="num win"><strong>~38 US homes for a year · ~36 US cars off the road</strong></td></tr>
+          <tr class="agent-loop-delta"><td><strong>2030 projection &mdash; ~10&times; current AI volume</strong></td><td class="num"><strong>~50B</strong></td><td class="num"><strong>~4.16&nbsp;GWh</strong></td><td class="num win"><strong>~380 US homes for a year · ~360 US cars off the road</strong></td></tr>
         </tbody>
       </table>
       <p class="cost-cell__body">
-        Math: 819&nbsp;mJ per reply &times; replies/day = J/day &rarr; kWh/day; annual &times;365; CO<sub>2</sub> at US grid average 0.4&nbsp;kg/kWh; cars at US average 4.6&nbsp;t CO<sub>2</sub>/car/year. Per-platform reply volumes from publicly reported / inferred 2026 numbers; worldwide totals comparable to ~1/3 of global Google search traffic (~14&ndash;16B searches/day).
+        Honest scale check: at today's ~5B replies/day the non-GPU energy delta is real but modest (~38 households-annual). The number grows linearly with AI usage &mdash; if AI traffic 10&times;s by 2030 as widely projected (current rate is ~1/3 of global Google search traffic and rising), the same protocol shift removes the equivalent of <strong>~360 cars' annual emissions every year</strong>, in perpetuity, just by not shipping bytes the AI never reads. Per-platform breakdown of today's number: Claude ~75&nbsp;MWh/yr, ChatGPT ~208&nbsp;MWh/yr, Gemini ~50&nbsp;MWh/yr.
       </p>
       <p class="cost-cell__body" style="margin-top: 0.75rem;">
-        <strong>GPU compute keeps drawing the same wattage either way.</strong> If you're trying to reduce inference power, that's a model + accelerator question, not a wire-protocol question. What Codec eliminates is everything you're paying on TOP of the GPU bill &mdash; the network energy and middleware CPU spent shipping bytes the AI never reads.
+        <strong>GPU compute keeps drawing the same wattage either way.</strong> Codec is not an inference accelerator &mdash; if you're trying to reduce model wattage that's a model + accelerator question. What Codec eliminates is everything you're paying on TOP of the GPU bill: the network energy and middleware CPU spent shipping bytes the AI never reads.
       </p>
 
       <footer class="bench-card__foot">
