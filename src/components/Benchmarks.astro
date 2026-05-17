@@ -849,18 +849,49 @@ const toolBars = [
             <tr><td>US, postpaid mobile add'l</td>           <td class="num">~$10</td>    <td class="num">$0.0049</td>  <td class="num">$0.0000029</td> <td class="num win">1,700&times;</td></tr>
             <tr><td>India, prepaid mobile</td>               <td class="num">~$0.20</td>  <td class="num">$0.0001</td>  <td class="num">$0.00000006</td><td class="num win">1,700&times;</td></tr>
             <tr><td>Kenya / Sub-Saharan Africa avg</td>      <td class="num">~$2&ndash;5</td><td class="num">$0.001&ndash;0.0024</td><td class="num">~$0.0000007</td><td class="num win">1,700&times;</td></tr>
+            <tr><td><strong>Starlink Roam add'l data</strong></td>           <td class="num">~$2</td>      <td class="num">$0.00097</td>  <td class="num">$0.0000006</td>  <td class="num win">1,700&times;</td></tr>
+            <tr><td><strong>Starlink Mobile Priority overage</strong></td>   <td class="num">~$1&ndash;2</td>   <td class="num">$0.00049&ndash;0.00097</td><td class="num">~$0.0000006</td><td class="num win">1,700&times;</td></tr>
+            <tr><td><strong>Starlink Maritime Mobile Priority</strong></td>  <td class="num">~$10</td>     <td class="num">$0.00485</td>  <td class="num">$0.000003</td>   <td class="num win">1,700&times;</td></tr>
             <tr><td>In-flight Wi-Fi (Gogo / Viasat)</td>     <td class="num">~$15&ndash;30/hr</td><td class="num">~$0.10</td><td class="num">~$0.00006</td><td class="num win">1,700&times;</td></tr>
-            <tr><td>Maritime / Iridium satellite</td>        <td class="num">~$5&ndash;15/MB</td><td class="num"><strong>$2.42&ndash;7.28</strong></td><td class="num">$0.0014&ndash;0.0044</td><td class="num win"><strong>1,700&times;</strong></td></tr>
+            <tr><td>Iridium satellite (legacy maritime)</td> <td class="num">~$5&ndash;15/MB</td><td class="num"><strong>$2.42&ndash;7.28</strong></td><td class="num">$0.0014&ndash;0.0044</td><td class="num win"><strong>1,700&times;</strong></td></tr>
           </tbody>
         </table>
       </div>
+
+      <h4 class="bench-subhead bench-subhead--secondary">Starlink &mdash; "pay-per-byte AI" at fleet scale</h4>
+      <p class="bench-subhead-note">Starlink's metered tiers (Roam add'l, Mobile Priority overage, Maritime Priority) make the per-byte savings show up as a line-item dollar figure on the customer's bill, every month.</p>
+
+      <div class="power-grid">
+        <table class="cost-table">
+          <thead>
+            <tr>
+              <th>Customer profile</th>
+              <th class="num">AI replies/mo</th>
+              <th class="num">Starlink tier</th>
+              <th class="num">JSON-SSE / mo</th>
+              <th class="num win">Codec saves</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>RV / van-life heavy user (100 replies/day)</td>           <td class="num">~3K</td>     <td class="num">Roam $2/GB</td>      <td class="num">$2.91/mo</td>   <td class="num win">~$2.91/mo</td></tr>
+            <tr><td>Remote homestead working remotely (300 replies/day)</td>  <td class="num">~9K</td>     <td class="num">Roam $2/GB</td>      <td class="num">$8.73/mo</td>   <td class="num win">~$8.70/mo</td></tr>
+            <tr><td>Offshore vessel, 20-crew running AI agents</td>           <td class="num">~300K</td>   <td class="num">Maritime $10/GB</td> <td class="num">$1,455/mo</td>  <td class="num win"><strong>~$1,455/mo / ~$17.5K/yr per vessel</strong></td></tr>
+            <tr><td>Mining / oil-rig field operations, 100 users</td>         <td class="num">~1M</td>     <td class="num">Maritime $10/GB</td> <td class="num">$4,850/mo</td>  <td class="num win"><strong>~$4.85K/mo / ~$58K/yr per site</strong></td></tr>
+            <tr class="agent-loop-delta"><td><strong>Starlink fleet estimate &mdash; ~1M subs on metered tiers running AI</strong></td><td class="num"><strong>~3B</strong></td><td class="num"><strong>blended ~$2&ndash;3/GB</strong></td><td class="num"><strong>~$2.9M/mo</strong></td><td class="num win"><strong>~$35M/yr Starlink bandwidth saved</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="cost-cell__body" style="margin-top: 1rem;">
+        <strong>The big number isn't consumer Starlink &mdash; it's fleet deployments.</strong> A single offshore vessel running AI tools through Starlink Maritime Mobile Priority at $10/GB pays ~$1,455/month <em>just for the JSON-SSE envelope bytes</em> on a 20-crew workload. Drop that to Codec wire and the same workload bills out at a few dollars &mdash; a $17.5K/year line item per vessel that goes away. For a maritime operator running 100 vessels, that's <strong>$1.75M/year</strong> of Starlink Maritime bandwidth invoiced for nothing. Aviation customers ($2K&ndash;25K/month all-in plans) don't see a per-GB line item but get more concurrent AI sessions on the same priority pool. <a href="https://www.starlink.com/business" rel="noopener">Starlink Business / Maritime / Aviation</a> tariffs are public.
+      </p>
 
       <p class="cost-cell__body" style="margin-top: 1.25rem;">
         <strong>Who this brings inside the door:</strong> the <a href="https://www.itu.int/itu-d/reports/statistics/facts-figures-2024/" rel="noopener">ITU's 2024 Facts &amp; Figures</a> puts ~2.6 billion people offline entirely and another ~2&ndash;3 billion online via slow or expensive mobile-only connections; <a href="https://a4ai.org/" rel="noopener">A4AI's affordability index</a> flags 1&nbsp;GB of mobile data as costing &gt;5% of monthly income across most of sub-Saharan Africa and parts of Asia. JSON-SSE at 485&nbsp;KB/reply prices those users out of AI; Codec at 291&nbsp;B/reply pushes per-reply cost into rounding error in any region, on any connection, on any device. The link-speed table in the power+latency card below shows where JSON-SSE crosses from "sluggish" to "unusable" while Codec keeps working &mdash; mobile 4G to 2G/EDGE to satellite voice link, all viable. Plus: $50 Android phones can run agent loops on Codec frames where JSON-SSE parse + re-tokenize would burn the battery.
       </p>
 
       <footer class="bench-card__foot">
-        Mobile data retail rates: 2024 averages from <a href="https://www.cable.co.uk/mobiles/worldwide-data-pricing/" rel="noopener">cable.co.uk worldwide mobile data pricing</a> (227 countries, public dataset). Satellite + in-flight rates: published carrier tariffs. Per-reply costs are arithmetic from the measured wire bytes (485&nbsp;KB JSON-SSE, 291&nbsp;B Codec at sglang best case) &times; regional $/GB; ratios are fixed by the wire bench. The accessibility angle is structural, not contingent on which engine you use.
+        Mobile data retail rates: 2024 averages from <a href="https://www.cable.co.uk/mobiles/worldwide-data-pricing/" rel="noopener">cable.co.uk worldwide mobile data pricing</a> (227 countries, public dataset). Satellite + in-flight + Starlink tariffs: published carrier rate cards (Starlink Roam / Mobile Priority / Maritime / Business / Aviation tiers as of 2026). Per-reply costs are arithmetic from the measured wire bytes (485&nbsp;KB JSON-SSE, 291&nbsp;B Codec at sglang best case) &times; regional $/GB; ratios are fixed by the wire bench. Fleet-scale Starlink estimate assumes ~1M of ~5M total subs on metered tiers running AI workloads at ~100 replies/day blended &mdash; conservative given enterprise/maritime tier adoption. The accessibility angle is structural, not contingent on which engine you use.
       </footer>
     </article>
 
