@@ -968,24 +968,40 @@ const toolBars = [
       </p>
 
       <p class="cost-cell__body" style="margin-top: 1rem;">
-        <strong>Non-GPU energy at real-world AI scale &mdash; annual.</strong>
-        Per chat reply, the non-GPU energy delta (radio + network + middleware
-        CPU combined) is ~819&nbsp;mJ &mdash; small per call, structural at fleet
-        scale. Annual savings at today's AI volume, and the AI-volume-growth
-        projection most analysts cite for 2030:
+        <strong>Non-GPU energy at real-world AI scale &mdash; compounded across the conversion cycle.</strong>
+        Earlier framings under-counted by treating each AI request as a single
+        chat reply (~819&nbsp;mJ non-GPU delta). Real-world AI is increasingly
+        <em>agent</em> work &mdash; multi-turn loops with tool calls, middleware
+        re-tokenization at every gateway hop, sometimes cross-model handoffs.
+        Each conversion cycle (detokenize &rarr; UTF-8 &rarr; JSON &rarr; parse
+        &rarr; re-tokenize) is its own slice of CPU + network energy, and a
+        typical agent task chains 5&ndash;8 of them. Per-task non-GPU energy
+        delta on the JSON-SSE path:
+      </p>
+      <ul class="cost-bullets" style="margin: 0.5rem 0 1rem;">
+        <li>Server detokenize per pass: <code>~25 mJ</code> (2K tokens &times; ~5 µs CPU)</li>
+        <li>Client re-tokenize per pass: <code>~100 mJ</code> (BPE encode, ~2&times; detok cost)</li>
+        <li>JSON serialize + parse per round-trip: <code>~20 mJ</code></li>
+        <li>Network end-to-end per response: <code>~580 mJ</code> at ~150 nJ/bit</li>
+        <li>Compound per agent task (5&ndash;8 cycles): <strong>~2&ndash;4&nbsp;J non-GPU energy</strong> vs Codec's ~50&nbsp;mJ all-in</li>
+      </ul>
+      <p class="cost-cell__body">
+        Recomputed annual savings using a realistic 50/50 mix of single chat replies + multi-turn agent tasks (~1.9&nbsp;J avg per-task delta):
       </p>
       <table class="cost-table" style="margin: 0.75rem 0 1rem;">
-        <thead><tr><th>Scale</th><th class="num">Replies/day</th><th class="num">Saved/year</th><th class="num win">Annual equivalent</th></tr></thead>
+        <thead><tr><th>Workload assumption</th><th class="num">Today (5B/day)</th><th class="num win">Annual equivalent</th></tr></thead>
         <tbody>
-          <tr><td>Today &mdash; worldwide conversational AI</td>                  <td class="num">~5B</td>     <td class="num">~416&nbsp;MWh</td>    <td class="num win"><strong>~38 US homes for a year · ~36 US cars off the road</strong></td></tr>
-          <tr class="agent-loop-delta"><td><strong>2030 projection &mdash; ~10&times; current AI volume</strong></td><td class="num"><strong>~50B</strong></td><td class="num"><strong>~4.16&nbsp;GWh</strong></td><td class="num win"><strong>~380 US homes for a year · ~360 US cars off the road</strong></td></tr>
+          <tr><td>Pure single chat reply (floor)</td>                                  <td class="num">~416&nbsp;MWh/yr</td>  <td class="num win">~38 US homes-yr · ~36 cars off road</td></tr>
+          <tr class="agent-loop-delta"><td><strong>Real-world mix (50/50 single + agent), today</strong></td><td class="num"><strong>~950&nbsp;MWh/yr</strong></td><td class="num win"><strong>~87 US homes-yr · ~83 cars off road</strong></td></tr>
+          <tr><td>Heavy agent / tool-using mix (~3 J/task)</td>                        <td class="num">~1.5&nbsp;GWh/yr</td>  <td class="num win">~140 US homes-yr · ~135 cars off road</td></tr>
+          <tr class="agent-loop-delta"><td><strong>2030 projection &mdash; ~10&times; current AI volume, real-world mix</strong></td><td class="num"><strong>~9.5&nbsp;GWh/yr</strong></td><td class="num win"><strong>~870 US homes-yr · ~830 US cars off the road every year</strong></td></tr>
         </tbody>
       </table>
       <p class="cost-cell__body">
-        Honest scale check: at today's ~5B replies/day the non-GPU energy delta is real but modest (~38 households-annual). The number grows linearly with AI usage &mdash; if AI traffic 10&times;s by 2030 as widely projected (current rate is ~1/3 of global Google search traffic and rising), the same protocol shift removes the equivalent of <strong>~360 cars' annual emissions every year</strong>, in perpetuity, just by not shipping bytes the AI never reads. Per-platform breakdown of today's number: Claude ~75&nbsp;MWh/yr, ChatGPT ~208&nbsp;MWh/yr, Gemini ~50&nbsp;MWh/yr.
+        Honest scope: per-response wire bytes (485&nbsp;KB JSON &rarr; 291&nbsp;B Codec) are <em>measured</em>; per-task compound non-GPU energy is <em>estimated</em> from typical agent-loop topology (server detok + JSON encode/parse + client retok per conversion cycle, 5&ndash;8 cycles per agent task). The per-platform breakdown of today's number: Claude ~170&nbsp;MWh/yr, ChatGPT ~475&nbsp;MWh/yr, Gemini ~115&nbsp;MWh/yr at the real-world mix. As AI shifts further toward agents and multi-step workflows, the per-task multiplier rises and the savings scale up faster than raw request counts.
       </p>
       <p class="cost-cell__body" style="margin-top: 0.75rem;">
-        <strong>GPU compute keeps drawing the same wattage either way.</strong> Codec is not an inference accelerator &mdash; if you're trying to reduce model wattage that's a model + accelerator question. What Codec eliminates is everything you're paying on TOP of the GPU bill: the network energy and middleware CPU spent shipping bytes the AI never reads.
+        <strong>GPU compute keeps drawing the same wattage either way.</strong> Codec is not an inference accelerator &mdash; if you're trying to reduce model wattage that's a model + accelerator question. What Codec eliminates is everything you're paying on TOP of the GPU bill: the network energy and middleware CPU spent shipping bytes through 5&ndash;8 detokenize/retokenize cycles the AI never even reads.
       </p>
 
       <footer class="bench-card__foot">
