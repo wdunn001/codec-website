@@ -949,19 +949,16 @@ const toolBars = [
       </footer>
     </article>
 
-    <!-- ============== CHART 7: power + latency ============== -->
+    <!-- ============== CHART 7: response time ============== -->
     <article class="bench-card bench-card--power">
       <header class="bench-card__head">
         <div>
-          <h3 class="bench-card__title">Power consumption + response time &mdash; what the user feels</h3>
-          <p class="bench-card__sub">TTFB is unchanged &middot; wire-transfer time scales with link speed &middot; per-response energy &times; fleet scale</p>
+          <h3 class="bench-card__title">Response time &mdash; what the user feels</h3>
+          <p class="bench-card__sub">TTFB unchanged &middot; wire-transfer time goes from dominant to invisible as link speed drops</p>
         </div>
-        <div class="bench-card__hero bench-card__hero--dual">
+        <div class="bench-card__hero">
           <span class="bench-card__hero-num">~3.5&nbsp;s &rarr; ~0.4&nbsp;s</span>
-          <span class="bench-card__hero-cap">per AI request on 10&nbsp;Mbps mobile (heavy-agent baseline)</span>
-          <span class="bench-card__hero-sep">·</span>
-          <span class="bench-card__hero-num bench-card__hero-num--alt">~9&times;</span>
-          <span class="bench-card__hero-cap">wall-clock; absolute time is what the user feels</span>
+          <span class="bench-card__hero-cap">per AI request on 10&nbsp;Mbps mobile (heavy-agent baseline); JSON-SSE crosses into "unusable" around 1&nbsp;Mbps, Codec stays under half a second</span>
         </div>
       </header>
 
@@ -1016,15 +1013,8 @@ const toolBars = [
         </table>
       </div>
 
-      <h4 class="bench-subhead bench-subhead--secondary">Per-AI-request energy breakdown (heavy-agent baseline)</h4>
-      <p class="bench-subhead-note">Same scope as the wall-clock table above and the cost card &mdash; per real AI request (8 wire round-trips). GPU compute is unchanged; everything else collapses.</p>
-
-      <p class="cost-cell__body">
-        <strong>GPU compute on served requests (~5&ndash;15&nbsp;J on Qwen-2.5 0.5B at 2K tokens): unchanged.</strong> Codec is not an inference accelerator. Everything else collapses ~165&times; per round-trip &mdash; server CPU response-serialize, network end-to-end (~150 nJ/bit), client radio on mobile (~50 nJ/bit), client CPU for BPE tokenize + JSON parse. <strong>Per AI request at heavy-agent baseline (8 round-trips): non-GPU energy drops from ~6.6&nbsp;J to ~40&nbsp;mJ</strong> &mdash; ~165&times; per hop, compounded across all 8. Plus the GPU compute itself avoided on the ~10% of requests that client-side safety / format checks refuse before the wire (each blocked prompt = full ~10&nbsp;J GPU pass not run). Fleet-scale aggregation (~400 US cars off the road every year today, ~4,000 by 2030) is in the cost card above.
-      </p>
-
       <footer class="bench-card__foot">
-        TTFB numbers from MATRIX.md §4 (Python httpx <code>aiter_raw</code> first-body-byte median). Agent-loop wall-clock from <code>results/2026-05-15T20-00-00Z/agent-loop/</code> &mdash; wire numbers measured, not extrapolated; speedups are real wall-clock from POST to final answer. Energy estimates: GPU from published per-token figures for small models on Ampere; network end-to-end ~150&nbsp;nJ/bit (datacenter switching + transit + last-mile, conservative); radio link ~50&nbsp;nJ/bit (4G/5G/Wi-Fi midpoint); server CPU response-serialize from libcodec microbench scaled to msgpack-encode equivalent; client CPU from tokenize/detok microbench. Mileage varies per deployment.
+        TTFB numbers from MATRIX.md §4 (Python httpx <code>aiter_raw</code> first-body-byte median). Agent-loop wall-clock from <code>results/2026-05-15T20-00-00Z/agent-loop/</code> &mdash; wire numbers measured, not extrapolated; speedups are real wall-clock from POST to final answer. Per-AI-request totals assume the heavy-agent baseline of ~8 wire round-trips per visible request. Energy and dollar aggregation across the fleet (network electricity, datacenter pressure, cars-off-road equivalence) live in the cost card above &mdash; this card is just about the wall-clock one user feels.
       </footer>
     </article>
 
