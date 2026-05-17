@@ -712,8 +712,8 @@ const toolBars = [
           <p class="bench-card__sub">honest translations from the measured wire/CPU numbers above &middot; public egress rates &middot; published per-platform reply volumes (ChatGPT 2.5B, Claude 900M, Gemini 600M, &hellip;)</p>
         </div>
         <div class="bench-card__hero">
-          <span class="bench-card__hero-num">~$280M+/yr</span>
-          <span class="bench-card__hero-cap">cloud egress + Starlink + GPU-on-blocked-prompts saved at worldwide AI scale (compound real-world rate)</span>
+          <span class="bench-card__hero-num">~$400M+/yr</span>
+          <span class="bench-card__hero-cap">cloud egress + Starlink + GPU-on-blocked-prompts saved at worldwide AI scale (heavy-agent baseline &mdash; tool-use + A2A is now default across Claude, ChatGPT, Gemini)</span>
         </div>
       </header>
 
@@ -734,20 +734,20 @@ const toolBars = [
             <h4>AWS S3 outbound @ $0.09/GB &mdash; compound rate</h4>
           </header>
           <p class="cost-cell__body">
-            A 2K-token chat reply ships 485&nbsp;KB JSON-SSE vs 291&nbsp;B Codec on sglang &mdash; but per visible user reply, the real bytes-out are ~2-3&times; that because the same response gets re-shipped on internal A2A hops, plus tool requests + tool results crossing the egress boundary. Egress is billed per byte the cloud sends out:
+            A 2K-token chat reply ships 485&nbsp;KB JSON-SSE vs 291&nbsp;B Codec on sglang &mdash; but per visible user reply, real bytes-out are <strong>~4&times;</strong> that because every major AI platform now defaults to tool-use + agent-to-agent: initial response + final response + 2&ndash;3 tool requests/results + sub-agent handoffs that span regions. The "single chat reply" era is over &mdash; Claude Code, ChatGPT-with-tools, Gemini-Agentic are all multi-hop by design.
           </p>
           <table class="cost-table">
-            <thead><tr><th>Scope</th><th class="num">Replies/day</th><th class="num">Single-resp.</th><th class="num win">Compound (~2.5&times;)</th></tr></thead>
+            <thead><tr><th>Scope</th><th class="num">Replies/day</th><th class="num">Chat-only floor</th><th class="num win">Heavy-agent baseline (~4&times;)</th></tr></thead>
             <tbody>
-              <tr><td>Anthropic Claude</td>          <td class="num">~900M</td>  <td class="num">$14M/yr</td>  <td class="num win"><strong>~$35M/yr</strong></td></tr>
-              <tr><td>OpenAI ChatGPT + Copilot</td>  <td class="num">~2.5B</td>  <td class="num">$40M/yr</td>  <td class="num win"><strong>~$100M/yr</strong></td></tr>
-              <tr><td>Google Gemini</td>             <td class="num">~600M</td>  <td class="num">$9M/yr</td>   <td class="num win"><strong>~$23M/yr</strong></td></tr>
-              <tr><td>Others (Grok, Perplexity, &hellip;)</td><td class="num">~300M</td><td class="num">$5M/yr</td><td class="num win"><strong>~$12M/yr</strong></td></tr>
-              <tr class="agent-loop-delta"><td><strong>Worldwide conversational AI</strong></td><td class="num"><strong>~5B</strong></td><td class="num"><strong>$80M/yr</strong></td><td class="num win"><strong>~$200M/yr</strong></td></tr>
+              <tr><td>Anthropic Claude</td>          <td class="num">~900M</td>  <td class="num">$14M/yr</td>  <td class="num win"><strong>~$56M/yr</strong></td></tr>
+              <tr><td>OpenAI ChatGPT + Copilot</td>  <td class="num">~2.5B</td>  <td class="num">$40M/yr</td>  <td class="num win"><strong>~$160M/yr</strong></td></tr>
+              <tr><td>Google Gemini</td>             <td class="num">~600M</td>  <td class="num">$9M/yr</td>   <td class="num win"><strong>~$36M/yr</strong></td></tr>
+              <tr><td>Others (Grok, Perplexity, &hellip;)</td><td class="num">~300M</td><td class="num">$5M/yr</td><td class="num win"><strong>~$20M/yr</strong></td></tr>
+              <tr class="agent-loop-delta"><td><strong>Worldwide AI traffic (heavy baseline)</strong></td><td class="num"><strong>~5B</strong></td><td class="num"><strong>$80M/yr</strong></td><td class="num win"><strong>~$320M/yr</strong></td></tr>
             </tbody>
           </table>
           <p class="cost-cell__foot">
-            Per-platform single-response numbers are the floor (485&nbsp;KB JSON-SSE per 2K-token reply &times; replies/day &times; $0.09/GB AWS S3). Compound multiplies by ~2.5&times; for typical agent topology &mdash; initial response + final response + tool requests/results that cross egress + some internal A2A spanning regions. Heavy multi-tool agents push to 5&ndash;6&times; ($400-480M/yr); chat-only deployments stay near the floor. GCP + Azure egress are in the same ballpark ($0.08-$0.12/GB).
+            Chat-only floor: 485&nbsp;KB JSON-SSE per reply &times; replies/day &times; $0.09/GB AWS S3. Heavy-agent baseline multiplies by ~4&times; for the topology that's now default at every major provider &mdash; multi-tool dispatch, A2A handoffs, sub-agent invocations, RAG context retrieval all crossing egress. Extreme deep-research / sub-agent-heavy flows push to 6-8&times; ($480-640M/yr); only legacy chat-only deployments hit the floor. GCP + Azure egress are in the same ballpark ($0.08-$0.12/GB).
           </p>
         </section>
 
@@ -843,19 +843,19 @@ const toolBars = [
         <li><strong>~10% client-side blocked.</strong> Codec-aware clients run safety / policy / validation checks locally and refuse doomed prompts before the wire. Those requests never spend GPU compute, never traverse the network &mdash; ~10% of attempted requests eliminated entirely (industry-mid baseline for deployments with <a href="/docs/web-safety/">web-safety</a> enabled).</li>
       </ol>
       <p class="cost-cell__body">
-        Per-round-trip non-GPU energy (JSON-SSE path): request side ~70&nbsp;mJ (5&nbsp;KB serialize + ship + gateway retok) + response side ~915&nbsp;mJ (server detok + ship 485&nbsp;KB + parse + retok) = <strong>~985&nbsp;mJ per round-trip</strong> vs Codec's ~15&nbsp;mJ all-in. Compound per visible reply (~6 round-trips): <strong>~5.85&nbsp;J non-GPU energy</strong> vs Codec's ~90&nbsp;mJ. Plus blocked-doomed-prompts savings: 10% of attempts &times; (~1&nbsp;J round-trip + ~10&nbsp;J GPU compute avoided) = ~1.1&nbsp;J avg per visible reply. <strong>Effective per visible reply delta: ~6.85&nbsp;J.</strong>
+        Per-round-trip non-GPU energy (JSON-SSE path): request side ~70&nbsp;mJ (5&nbsp;KB serialize + ship + gateway retok) + response side ~915&nbsp;mJ (server detok + ship 485&nbsp;KB + parse + retok) = <strong>~985&nbsp;mJ per round-trip</strong> vs Codec's ~15&nbsp;mJ all-in. Compound per visible reply at the <strong>heavy-agent baseline (~8 round-trips)</strong>: <strong>~7.9&nbsp;J non-GPU energy</strong> vs Codec's ~120&nbsp;mJ. Plus blocked-doomed-prompts savings: 10% of attempts &times; (~1&nbsp;J round-trip + ~10&nbsp;J GPU compute avoided) = ~1.1&nbsp;J avg per visible reply. <strong>Effective per visible reply delta: ~9&nbsp;J.</strong>
       </p>
       <table class="cost-table" style="margin: 0.75rem 0 1rem;">
         <thead><tr><th>Scope</th><th class="num">Today (5B/day visible)</th><th class="num win">Annual equivalent</th></tr></thead>
         <tbody>
-          <tr><td>Single chat reply only (under-count floor)</td>                                       <td class="num">~416&nbsp;MWh/yr</td>  <td class="num win">~36 cars off road</td></tr>
-          <tr><td>+ Compound 6-round-trip per visible reply</td>                                        <td class="num">~3.0&nbsp;GWh/yr</td>  <td class="num win">~260 cars off road</td></tr>
-          <tr class="agent-loop-delta"><td><strong>+ Client-side blocked doomed prompts (10%)</strong> &mdash; today</td><td class="num"><strong>~3.5&nbsp;GWh/yr</strong></td><td class="num win"><strong>~320 US homes for a year · ~300 US cars off the road every year</strong></td></tr>
-          <tr class="agent-loop-delta"><td><strong>2030 projection &mdash; 10&times; AI volume, same topology</strong></td><td class="num"><strong>~35&nbsp;GWh/yr</strong></td><td class="num win"><strong>~3,200 US homes-yr · ~3,000 US cars off the road every year</strong></td></tr>
+          <tr><td>Single chat reply only (legacy floor)</td>                                       <td class="num">~416&nbsp;MWh/yr</td>  <td class="num win">~36 cars off road</td></tr>
+          <tr><td>Chat + light agent (4 round-trips)</td>                                          <td class="num">~2.0&nbsp;GWh/yr</td>  <td class="num win">~175 cars off road</td></tr>
+          <tr class="agent-loop-delta"><td><strong>Heavy-agent baseline (8 round-trips + 10% blocked)</strong> &mdash; what Claude/ChatGPT/Gemini actually do today</td><td class="num"><strong>~4.6&nbsp;GWh/yr</strong></td><td class="num win"><strong>~420 US homes for a year · ~400 US cars off the road every year</strong></td></tr>
+          <tr class="agent-loop-delta"><td><strong>2030 projection &mdash; 10&times; AI volume, heavy-agent baseline</strong></td><td class="num"><strong>~46&nbsp;GWh/yr</strong></td><td class="num win"><strong>~4,200 US homes-yr · ~4,000 US cars off the road every year</strong></td></tr>
         </tbody>
       </table>
       <p class="cost-cell__body">
-        Honest scope: per-response wire bytes (485&nbsp;KB JSON &rarr; 291&nbsp;B Codec, request side similar ratio) are <em>measured</em>; the 6-round-trip-per-visible-reply multiplier and 10% client-block rate are <em>estimated</em> from typical 2026 agent topology (tool-call + A2A handoff is now near-universal across ChatGPT / Claude / Gemini / Copilot per public architecture descriptions). Per-platform at the compound rate: Claude ~625&nbsp;MWh/yr, ChatGPT ~1.7&nbsp;GWh/yr, Gemini ~420&nbsp;MWh/yr.
+        Honest scope: per-response wire bytes are <em>measured</em>; the 8-round-trip heavy-agent baseline and 10% client-block rate are <em>estimated</em> from typical 2026 production agent topology &mdash; tool-use + sub-agent dispatch + A2A is the default-on architecture across Claude (Code, computer-use, web-search), ChatGPT (tools, deep-research, Operator), Gemini (Agentic, code-execution, search). The "single chat reply" floor still applies to legacy text-only deployments but is increasingly the exception. Per-platform at the heavy-agent rate: Claude ~830&nbsp;MWh/yr, ChatGPT ~2.3&nbsp;GWh/yr, Gemini ~560&nbsp;MWh/yr.
       </p>
       <p class="cost-cell__body" style="margin-top: 0.75rem;">
         <strong>GPU compute on served requests keeps drawing the same wattage either way.</strong> Codec is not an inference accelerator. What Codec eliminates is (a) everything you're paying on TOP of the GPU bill at every conversion cycle through every middleware hop in every round-trip on both the request and response sides, AND (b) the entire GPU bill on doomed prompts that never need to be served because the client caught them. The deeper the agent topology and the more aggressive the client-side guard, the bigger the multiplier.
