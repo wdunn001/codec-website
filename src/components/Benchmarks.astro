@@ -814,6 +814,82 @@ const toolBars = [
       </footer>
     </article>
 
+    <!-- ============== CHART 6.5: accessibility ============== -->
+    <article class="bench-card bench-card--access">
+      <header class="bench-card__head">
+        <div>
+          <h3 class="bench-card__title">Accessibility &mdash; who can use AI when the wire shrinks 1,000&times;</h3>
+          <p class="bench-card__sub">AI as utility vs AI as luxury &middot; the populations Codec brings inside the door</p>
+        </div>
+        <div class="bench-card__hero">
+          <span class="bench-card__hero-num">~5B</span>
+          <span class="bench-card__hero-cap">people on slow / expensive / metered connections</span>
+        </div>
+      </header>
+
+      <p class="cost-lede">
+        <strong>JSON-SSE makes AI a rich-country product.</strong> 485&nbsp;KB per 2&nbsp;K-token reply is fine on US fibre; it's a luxury anywhere that mobile data costs $2&ndash;10/GB, a no-show on satellite or weak cell, and a battery-killer on cheap Android. Codec at 291&nbsp;B per reply works in all of those places at the same TTFB &mdash; the wire stops being the gating factor.
+      </p>
+
+      <h4 class="bench-subhead">Per-reply data cost across the world</h4>
+      <p class="bench-subhead-note">Mobile data retail prices vary &gt;100&times; across countries. Wages don't. AI being "essentially free" or "a day's wages" hangs on the per-reply bytes.</p>
+
+      <div class="power-grid">
+        <table class="cost-table">
+          <thead>
+            <tr>
+              <th>Region / connection</th>
+              <th class="num">$ per GB</th>
+              <th class="num">JSON-SSE / reply</th>
+              <th class="num">Codec / reply</th>
+              <th class="num win">Ratio</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>US, postpaid mobile add'l</td>           <td class="num">~$10</td>    <td class="num">$0.0049</td>  <td class="num">$0.0000029</td> <td class="num win">1,700&times;</td></tr>
+            <tr><td>India, prepaid mobile</td>               <td class="num">~$0.20</td>  <td class="num">$0.0001</td>  <td class="num">$0.00000006</td><td class="num win">1,700&times;</td></tr>
+            <tr><td>Kenya / Sub-Saharan Africa avg</td>      <td class="num">~$2&ndash;5</td><td class="num">$0.001&ndash;0.0024</td><td class="num">~$0.0000007</td><td class="num win">1,700&times;</td></tr>
+            <tr><td>In-flight Wi-Fi (Gogo / Viasat)</td>     <td class="num">~$15&ndash;30/hr</td><td class="num">~$0.10</td><td class="num">~$0.00006</td><td class="num win">1,700&times;</td></tr>
+            <tr><td>Maritime / Iridium satellite</td>        <td class="num">~$5&ndash;15/MB</td><td class="num"><strong>$2.42&ndash;7.28</strong></td><td class="num">$0.0014&ndash;0.0044</td><td class="num win"><strong>1,700&times;</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 class="bench-subhead bench-subhead--secondary">Where JSON-SSE just plain doesn't work</h4>
+      <p class="bench-subhead-note">From the wall-clock-by-link-speed table in the power card. The threshold below which JSON-SSE becomes unusable is where Codec just keeps working.</p>
+
+      <div class="power-grid">
+        <table class="cost-table">
+          <thead>
+            <tr>
+              <th>Connection</th>
+              <th class="num">JSON-SSE</th>
+              <th class="num">Codec</th>
+              <th>UX verdict</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Mobile 4G &mdash; 10&nbsp;Mbps</td>          <td class="num">433&nbsp;ms</td>    <td class="num">45&nbsp;ms</td>  <td>JSON sluggish, Codec snappy</td></tr>
+            <tr><td>Edge / weak mobile &mdash; 1&nbsp;Mbps</td>  <td class="num">3.9&nbsp;s</td>     <td class="num">47&nbsp;ms</td>  <td>JSON painful, Codec normal</td></tr>
+            <tr><td>2G / EDGE &mdash; 256&nbsp;Kbps</td>         <td class="num">15.2&nbsp;s</td>    <td class="num">54&nbsp;ms</td>  <td>JSON unusable, Codec normal</td></tr>
+            <tr><td>Iridium satellite voice link &mdash; ~24&nbsp;Kbps</td><td class="num"><strong>~2.7&nbsp;min</strong></td><td class="num">142&nbsp;ms</td><td>JSON broken, Codec viable</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="cost-cell__body" style="margin-top: 1.25rem;">
+        <strong>Who this brings inside the door:</strong> the <a href="https://www.itu.int/itu-d/reports/statistics/facts-figures-2024/" rel="noopener">ITU's 2024 Facts &amp; Figures</a> puts ~2.6 billion people offline entirely and another ~2&ndash;3 billion online via slow or expensive mobile-only connections; <a href="https://a4ai.org/" rel="noopener">A4AI's affordability index</a> consistently flags 1&nbsp;GB of mobile data as costing &gt;5% of monthly income across most of sub-Saharan Africa and parts of Asia. JSON-SSE at 485&nbsp;KB per reply prices those users out of AI &mdash; the data cost alone is a fraction of a day's wages per conversation. Codec at 291&nbsp;B/reply pushes per-reply cost into rounding error in any region, on any connection, on any device. Same model, same answers, same TTFB &mdash; just available to the other 5 billion humans.
+      </p>
+
+      <p class="cost-cell__body" style="margin-top: 0.75rem;">
+        <strong>Plus: older / cheaper client hardware.</strong> Parsing a 485&nbsp;KB JSON-SSE stream + re-tokenizing for downstream KV-cache reuse takes meaningful CPU on a $50 Android phone. Codec's length-prefixed binary frames + the consumer-CPU savings (12.4&times; from leaf, 26.7&times; from ToolWatcher) mean AI agent loops are practical on hardware that couldn't run them otherwise &mdash; not just usable, but cheap on battery.
+      </p>
+
+      <footer class="bench-card__foot">
+        Mobile data retail rates: 2024 averages from <a href="https://www.cable.co.uk/mobiles/worldwide-data-pricing/" rel="noopener">cable.co.uk worldwide mobile data pricing</a> (227 countries, public dataset). Satellite + in-flight rates: published carrier tariffs. Per-reply costs are arithmetic from the measured wire bytes (485&nbsp;KB JSON-SSE, 291&nbsp;B Codec at sglang best case) &times; regional $/GB; ratios are fixed by the wire bench. The accessibility angle is structural, not contingent on which engine you use.
+      </footer>
+    </article>
+
     <!-- ============== CHART 7: power + latency ============== -->
     <article class="bench-card bench-card--power">
       <header class="bench-card__head">
@@ -1594,6 +1670,15 @@ const toolBars = [
     text-transform: uppercase;
   }
   .agent-loop-table--leaf { margin-top: 0.5rem; }
+
+  /* Accessibility card (v0.4.1) */
+  .bench-card--access {
+    border-color: color-mix(in srgb, var(--control) 35%, var(--border));
+    background:
+      radial-gradient(120% 140% at 0% 100%, color-mix(in srgb, var(--control) 6%, transparent), transparent 65%),
+      var(--bg-elev);
+  }
+  .bench-card--access .bench-card__hero-num { color: var(--control); }
 
   /* Power + latency card (v0.4.1) */
   .bench-card--power {

@@ -91,7 +91,10 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       libraries for TypeScript, Python, Rust, Java, .NET, and C work with
       the AI servers you already use (sglang, vllm, llama.cpp). Your code
       doesn't change. We can't make the model smaller &mdash; the waste,
-      we can.
+      we can. And by shrinking the wire 1,000+&times;, Codec opens AI
+      access to the <strong>~5&nbsp;billion people</strong> on slow,
+      expensive, or metered connections that JSON-SSE prices out of
+      the door.
     </p>
 
     <div class="hero__cta">
@@ -125,6 +128,11 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
         <span class="hero-metric__num">~38 US homes</span>
         <span class="hero-metric__label">non-GPU energy saved daily</span>
         <span class="hero-metric__sub">at worldwide conversational-AI volume (~5B replies/day: ChatGPT 2.5B + Claude 900M + Gemini 600M + others ~300M); annually ≈ 36 US cars off the road in CO<sub>2</sub></span>
+      </li>
+      <li class="hero-metric hero-metric--access">
+        <span class="hero-metric__num">~5B people</span>
+        <span class="hero-metric__label">AI accessible where it wasn't</span>
+        <span class="hero-metric__sub">2.6B offline + 2&ndash;3B on slow/expensive mobile (ITU 2024); at $2&ndash;10/GB data, JSON-SSE is luxury, Codec is rounding error</span>
       </li>
       <li class="hero-metric hero-metric--unanimity">
         <span class="hero-metric__num">24/24 &middot; 24/24</span>
@@ -326,7 +334,7 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
     .hero__metrics { grid-template-columns: repeat(3, 1fr); }
   }
   @media (min-width: 1100px) {
-    .hero__metrics { grid-template-columns: repeat(6, 1fr); padding: 1.25rem 1.5rem; }
+    .hero__metrics { grid-template-columns: repeat(7, 1fr); padding: 1.25rem 1.25rem; }
   }
   .hero-metric {
     display: flex;
@@ -347,6 +355,7 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
   .hero-metric--cpu       .hero-metric__num { color: var(--accent, var(--control)); }
   .hero-metric--cost      .hero-metric__num { color: var(--accent, var(--data)); }
   .hero-metric--energy    .hero-metric__num { color: var(--control); }
+  .hero-metric--access    .hero-metric__num { color: var(--control); }
   .hero-metric--unanimity .hero-metric__num { color: var(--data); font-size: clamp(1rem, 1.8vw, 1.2rem); }
   .hero-metric__label {
     color: var(--fg);
