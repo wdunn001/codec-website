@@ -941,7 +941,39 @@ const toolBars = [
       </p>
 
       <p class="cost-cell__body" style="margin-top: 1.25rem;">
-        <strong>Who this brings inside the door:</strong> the <a href="https://www.itu.int/itu-d/reports/statistics/facts-figures-2024/" rel="noopener">ITU's 2024 Facts &amp; Figures</a> puts ~2.6 billion people offline entirely and another ~2&ndash;3 billion online via slow or expensive mobile-only connections; <a href="https://a4ai.org/" rel="noopener">A4AI's affordability index</a> flags 1&nbsp;GB of mobile data as costing &gt;5% of monthly income across most of sub-Saharan Africa and parts of Asia. JSON-SSE at ~4&nbsp;MB per heavy-agent AI request (the actual real-world transaction size, both directions, all round-trips) prices those users out; Codec at ~2.4&nbsp;KB per request pushes per-request cost into rounding error in any region, on any connection, on any device. The link-speed table in the power+latency card below shows where JSON-SSE crosses from "sluggish" to "unusable" while Codec keeps working &mdash; mobile 4G to 2G/EDGE to satellite voice link, all viable. Plus: $50 Android phones can run agent loops on Codec frames where JSON-SSE parse + re-tokenize would burn the battery.
+        <strong>Who this brings inside the door:</strong> the <a href="https://www.itu.int/itu-d/reports/statistics/facts-figures-2024/" rel="noopener">ITU's 2024 Facts &amp; Figures</a> puts ~2.6 billion people offline entirely and another ~2&ndash;3 billion online via slow or expensive mobile-only connections; <a href="https://a4ai.org/" rel="noopener">A4AI's affordability index</a> flags 1&nbsp;GB of mobile data as costing &gt;5% of monthly income across most of sub-Saharan Africa and parts of Asia. JSON-SSE at ~4&nbsp;MB per heavy-agent AI request (the actual real-world transaction size, both directions, all round-trips) prices those users out; Codec at ~2.4&nbsp;KB per request pushes per-request cost into rounding error in any region, on any connection, on any device. The Response Time card below shows where JSON-SSE crosses from "sluggish" to "unusable" while Codec keeps working &mdash; mobile 4G to 2G/EDGE to satellite voice link, all viable. Plus: $50 Android phones can run agent loops on Codec frames where JSON-SSE parse + re-tokenize would burn the battery.
+      </p>
+
+      <h4 class="bench-subhead bench-subhead--secondary" style="margin-top: 1.75rem;">And then there's everything that isn't a phone &mdash; IoT &amp; low-bandwidth networks</h4>
+      <p class="bench-subhead-note">There are entire device categories that <em>physically can't fit</em> a JSON-SSE AI conversation in their network budget. Not "too expensive" &mdash; impossible. Codec brings AI to them for the first time.</p>
+
+      <div class="power-grid">
+        <table class="cost-table">
+          <thead>
+            <tr>
+              <th>Network class</th>
+              <th class="num">Typical budget</th>
+              <th class="num">JSON-SSE AI request (~4&nbsp;MB)</th>
+              <th class="num win">Codec AI request (~2.4&nbsp;KB)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>LoRaWAN</strong> sensors / smart meters / asset trackers</td>           <td class="num">11&ndash;242 B per uplink, ~handful/day</td>      <td class="num">~20,000&times; too big</td>            <td class="num win"><strong>fits in 1&ndash;2 packets</strong></td></tr>
+            <tr><td><strong>NB-IoT / LTE-M</strong> meters, telematics, wearables, industrial</td>  <td class="num">~hundreds of KB/day total</td>             <td class="num">can't fit one request</td>            <td class="num win"><strong>hundreds of requests/day</strong></td></tr>
+            <tr><td><strong>Sigfox</strong> endpoints</td>                                          <td class="num">12 B/msg, 140 msgs/day</td>                <td class="num">doesn't start</td>                    <td class="num win">control-frame responses fit</td></tr>
+            <tr><td><strong>Satellite IoT</strong> &mdash; Iridium SBD, Swarm, Astrocast</td>       <td class="num">$/byte; tens-hundreds of B per msg</td>   <td class="num">economically nonsensical</td>         <td class="num win">inside the cost envelope</td></tr>
+            <tr><td><strong>Mesh</strong> &mdash; Meshtastic, Helium, Reticulum, tactical mesh</td><td class="num">tens to hundreds of bps</td>                <td class="num">unavailable</td>                       <td class="num win">viable</td></tr>
+            <tr><td><strong>Industrial bus</strong> &mdash; Modbus / CAN / BACnet gateways</td>     <td class="num">tight gateway uplink windows</td>          <td class="num">doesn't fit</td>                       <td class="num win">rides through</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="cost-cell__body" style="margin-top: 0.75rem;">
+        <strong>What this opens up:</strong> smart agriculture with AI-derived irrigation recommendations on a daily LoRaWAN uplink; wildlife / anti-poaching collars with on-the-fly classification over satellite; cold-chain logistics with AI anomaly alerts en route instead of at port arrival; disaster response + field medicine on degraded networks; pipeline / grid / remote-infrastructure predictive maintenance; maritime, aviation, and expedition AI advisories on the satellite link that previously could only carry position pings; smart-city endpoints (parking / lighting / water / waste) running adaptive AI on the same NB-IoT links they already use. These are <strong>massive markets the AI industry has treated as out of scope</strong> &mdash; not because AI can't help them, because <em>JSON envelopes can't reach them</em>.
+      </p>
+
+      <p class="cost-cell__body" style="margin-top: 0.75rem;">
+        The Codec C99 library is small enough for microcontrollers. Six client packages (TypeScript, Python, Rust, Java, .NET, C) cover everything from a phone browser down to a battery-budget LoRaWAN endpoint. <strong>For the first time, AI is something a sensor can call &mdash; not just something the cloud can do <em>to</em> a sensor's data.</strong>
       </p>
 
       <footer class="bench-card__foot">
