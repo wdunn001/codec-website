@@ -145,31 +145,55 @@ codec_tool_watcher_free(w);
 
 This hot loop is the one we benchmark at **0.61 ns/token** &mdash; on a 1M-token stream that's 0.61 ms total. The text-path equivalent (detokenize + regex) takes 60.4 ms. See [`bench_watcher.c`](https://github.com/wdunn001/Codec/blob/main/packages/c/examples/bench_watcher.c) for the full microbench harness.
 
-## Encoding
+## Encoding (text &rarr; IDs)
 
-`libcodec` v0.2 ships a runtime BPE encoder bit-identical to the higher-level bindings:
+libcodec ships a runtime BPE encoder bit-identical to the higher-level bindings. Pretok runs on the regex-free [pre-tokenizer program](https://github.com/wdunn001/Codec/blob/main/spec/PRETOKENIZER_PROGRAM.md) using generated Unicode tables &mdash; **no PCRE2 dependency**.
 
 ```c
-codec_bpe_tokenizer_t *tok = NULL;
-codec_bpe_tokenizer_new(map, &tok);
+codec_bpe_encoder_t *enc = NULL;
+codec_bpe_encoder_new(map, &enc);
 
 uint32_t *ids = NULL;
 size_t ids_len = 0;
-codec_bpe_tokenizer_encode(tok, "System: be concise.", strlen("System: be concise."), &ids, &ids_len);
+const char *text = "System: be concise.";
+codec_bpe_encode(enc, text, strlen(text), &ids, &ids_len);
 
 /* ... use ids ... */
 
 free(ids);
-codec_bpe_tokenizer_free(tok);
+codec_bpe_encoder_free(enc);
 ```
 
-Output matches the upstream model's tokenizer to the exact ID sequence.
+Output matches the upstream model's tokenizer to the exact ID sequence (verified against the real Qwen-2 tokenizer fixture under `test/test_bpe.c`).
+
+The companion [`codec_translator`](https://github.com/wdunn001/Codec/blob/main/packages/c/src/translator.c) does cross-vocab handoff (`ids_A → utf-8 → ids_B`) the same way the other Codec clients do &mdash; streaming-safe with word-boundary buffering.
+
+### Optional at build time: opt out for embedded / IoT (~25 KB lighter)
+
+Most embedded / IoT consumers of libcodec only need the decode side: firmware that displays AI responses, IoT endpoints that ship pre-cached IDs via the [`@codecai/tool-kit`](/docs/codec-tool-kit/) pattern, observers / middleware that route raw token streams without BPE. For those callers, the BPE encoder + Translator + pretok runtime + Unicode tables are dead weight.
+
+Build with `-DCODEC_WITH_BPE_ENCODER=OFF` to drop ~25 KB of compiled code + data:
+
+```bash
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=MinSizeRel \
+  -DCODEC_WITH_BPE_ENCODER=OFF
+```
+
+The decode-side API surface (Detokenizer, ToolWatcher, stream decoders, frame codec, compression, safety-policy) is unchanged. The public-API symbols for the dropped surface still link &mdash; `codec_bpe_encoder_new` / `codec_bpe_encode` / `codec_translator_new` / `codec_translator_translate` / `codec_pretok_run_program` and friends return `CODEC_ERR_NOT_BUILT` consistently &mdash; so consumer code doesn't need any `#ifdef` guards.
+
+| Build | `libcodec.a` size (x86-64 Release) |
+|---|---|
+| Default (encoder ON) | 128,278 bytes |
+| `-DCODEC_WITH_BPE_ENCODER=OFF` | **103,178 bytes** (~25 KB lighter) |
+
+Cortex-M / Xtensa / RISC-V cross-compiles save proportionally more after `-Os` strips the Unicode tables.
 
 ## When to use libcodec specifically
 
-- **Embedded / cross-compile targets** &mdash; routers, smart speakers, microcontrollers with enough RAM for a vocab map.
+- **Embedded / cross-compile targets** &mdash; routers, smart speakers, microcontrollers with enough RAM for a vocab map (LoRaWAN / NB-IoT endpoints typically pair with the decode-only build + a [`@codecai/tool-kit`](/docs/codec-tool-kit/) bolt-on for the encode side).
 - **FFI from another runtime** &mdash; Rust crate via `bindgen`, Go via `cgo`, Lua via FFI. The C ABI is the lingua franca.
-- **You want the smallest possible footprint** &mdash; libcodec is < 30 KB stripped. There is no JIT, no GC, no runtime.
+- **You want the smallest possible footprint** &mdash; libcodec is < 30 KB stripped (decode-only) / ~50 KB stripped (full BPE). No JIT, no GC, no runtime.
 
 For day-to-day server work, prefer one of the higher-level bindings.
 
