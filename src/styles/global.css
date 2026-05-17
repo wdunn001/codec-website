@@ -50,6 +50,43 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  /* Prevent any single wide element (table, code block, long URL) from
+     pushing the whole document into horizontal scroll. Individual wide
+     elements get their own overflow handling via the rules below. */
+  overflow-x: hidden;
+}
+
+/* ── Global responsive overflow handling ──────────────────────────────
+   Tables, pre/code blocks, and any wide content rendered from markdown
+   (changelog, docs) needs to scroll WITHIN ITSELF on mobile instead of
+   forcing page-level horizontal scroll. Component-level rules in
+   Benchmarks.astro (.table-scroll) and similar handle in-template
+   tables; these rules cover the markdown-rendered ones plus catch-all
+   safety for anything else.
+
+   `display: block` on a `<table>` makes the table element a block-level
+   container while THEAD/TBODY/TR/TH/TD keep their default
+   table-row / table-cell display values — so the table renders
+   normally inside, but the block parent can carry the scroll behaviour.
+   Same pattern used by GitHub-flavoured-markdown CSS, Bootstrap
+   .table-responsive, etc. */
+@media (max-width: 900px) {
+  /* Catch-all for markdown-rendered tables (changelog, docs).
+     In-template tables wrapped in .table-scroll are unaffected
+     because they're already inside an overflow-x: auto container.
+     A `<table>` that is the direct child of .table-scroll skips
+     this rule via the :not() selector. */
+  table:not(.table-scroll > table) {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+  pre, code {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 a { color: inherit; text-decoration: none; }
