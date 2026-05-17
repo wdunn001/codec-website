@@ -578,6 +578,7 @@ const toolBars = [
       </header>
 
       <div class="agent-loop-wrap">
+        <div class="table-scroll">
         <table class="agent-loop-table">
           <thead>
             <tr>
@@ -608,12 +609,14 @@ const toolBars = [
             </tr>
           </tbody>
         </table>
+        </div>
 
         <div class="agent-leaf-callout">
           <header>
             <span class="agent-leaf-tag">+ MCP leaf-mode &mdash; tool-result-side axis</span>
             <p>Complementary to the rows above (those measure the model-emission side &mdash; ToolWatcher fires on raw IDs in the inference stream). Leaf measures the <em>tool-result</em> hop: a Codec-aware tool ships token IDs in <code>_meta['ai.codec/leaf-tokenization']</code> alongside its text so the consumer reads <code>ids</code> directly instead of re-tokenizing.</p>
           </header>
+          <div class="table-scroll">
           <table class="agent-loop-table agent-loop-table--leaf">
             <thead>
               <tr>
@@ -644,6 +647,7 @@ const toolBars = [
               </tr>
             </tbody>
           </table>
+          </div>
           <p class="agent-loop-note agent-loop-note--block">
             The leaf <code>_meta</code> envelope is a fixed ~210-byte cost per text block; the consumer-CPU savings scale linearly with text length. The wire crossover where leaf&nbsp;&le;&nbsp;plain sits at <strong>~300+ characters per text block</strong> &mdash; timestamps pay a wire tax for the CPU win, while paginated docs / search results / large MCP outputs win on both axes. 20/20 integrity: every leaf sample's <code>ids</code> equal <code>tokenizer.encode(text)</code> under the declared <code>map_id</code>.
           </p>
@@ -1600,8 +1604,18 @@ const toolBars = [
     font-size: 0.85em;
   }
 
+  /* Horizontal-scroll wrapper for wide tables on narrow viewports.
+     Wraps each <table> in <div class="table-scroll">; on mobile the
+     table can be wider than the viewport without forcing a page-level
+     horizontal scroll. */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+
   /* Agent-loop bench card (v0.4.1) — table + leaf-mode callout */
-  .agent-loop-wrap { display: flex; flex-direction: column; gap: 1.25rem; }
+  .agent-loop-wrap { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
   .agent-loop-table {
     width: 100%;
     border-collapse: collapse;
