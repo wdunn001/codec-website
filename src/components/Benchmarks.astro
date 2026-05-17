@@ -880,11 +880,11 @@ const toolBars = [
       </header>
 
       <p class="cost-lede">
-        <strong>JSON-SSE makes AI a rich-country product.</strong> 485&nbsp;KB per 2&nbsp;K-token reply is fine on US fibre; it's a luxury anywhere that mobile data costs $2&ndash;10/GB, a no-show on satellite or weak cell, and a battery-killer on cheap Android. Codec at 291&nbsp;B per reply works in all of those places at the same TTFB &mdash; the wire stops being the gating factor.
+        <strong>JSON-SSE makes AI a rich-country product.</strong> Each real AI request actually moves ~4&nbsp;MB across the wire (~8 wire round-trips &times; bidirectional; the heavy-agent baseline the cost card uses) &mdash; fine on US fibre, a luxury where mobile data costs $2&ndash;10/GB, a no-show on satellite or weak cell. Codec at ~2.4&nbsp;KB per request works in all of those places at the same TTFB.
       </p>
 
-      <h4 class="bench-subhead">Per-reply data cost across the world</h4>
-      <p class="bench-subhead-note">Mobile data retail prices vary &gt;100&times; across countries. Wages don't. AI being "essentially free" or "a day's wages" hangs on the per-reply bytes.</p>
+      <h4 class="bench-subhead">Per-AI-request data cost across the world</h4>
+      <p class="bench-subhead-note">Mobile data retail prices vary &gt;100&times; across countries. Wages don't. The per-request cost is what shows up on a metered customer's bill.</p>
 
       <div class="power-grid">
         <table class="cost-table">
@@ -892,23 +892,25 @@ const toolBars = [
             <tr>
               <th>Region / connection</th>
               <th class="num">$ per GB</th>
-              <th class="num">JSON-SSE / reply</th>
-              <th class="num">Codec / reply</th>
-              <th class="num win">Ratio</th>
+              <th class="num">JSON-SSE / request</th>
+              <th class="num win">Codec / request</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>US, postpaid mobile add'l</td>           <td class="num">~$10</td>    <td class="num">$0.0049</td>  <td class="num">$0.0000029</td> <td class="num win">1,700&times;</td></tr>
-            <tr><td>India, prepaid mobile</td>               <td class="num">~$0.20</td>  <td class="num">$0.0001</td>  <td class="num">$0.00000006</td><td class="num win">1,700&times;</td></tr>
-            <tr><td>Kenya / Sub-Saharan Africa avg</td>      <td class="num">~$2&ndash;5</td><td class="num">$0.001&ndash;0.0024</td><td class="num">~$0.0000007</td><td class="num win">1,700&times;</td></tr>
-            <tr><td><strong>Starlink Roam add'l data</strong></td>           <td class="num">~$2</td>      <td class="num">$0.00097</td>  <td class="num">$0.0000006</td>  <td class="num win">1,700&times;</td></tr>
-            <tr><td><strong>Starlink Mobile Priority overage</strong></td>   <td class="num">~$1&ndash;2</td>   <td class="num">$0.00049&ndash;0.00097</td><td class="num">~$0.0000006</td><td class="num win">1,700&times;</td></tr>
-            <tr><td><strong>Starlink Maritime Mobile Priority</strong></td>  <td class="num">~$10</td>     <td class="num">$0.00485</td>  <td class="num">$0.000003</td>   <td class="num win">1,700&times;</td></tr>
-            <tr><td>In-flight Wi-Fi (Gogo / Viasat)</td>     <td class="num">~$15&ndash;30/hr</td><td class="num">~$0.10</td><td class="num">~$0.00006</td><td class="num win">1,700&times;</td></tr>
-            <tr><td>Iridium satellite (legacy maritime)</td> <td class="num">~$5&ndash;15/MB</td><td class="num"><strong>$2.42&ndash;7.28</strong></td><td class="num">$0.0014&ndash;0.0044</td><td class="num win"><strong>1,700&times;</strong></td></tr>
+            <tr><td>US, postpaid mobile add'l</td>           <td class="num">~$10</td>    <td class="num">$0.040</td>  <td class="num win">$0.000024</td></tr>
+            <tr><td>India, prepaid mobile</td>               <td class="num">~$0.20</td>  <td class="num">$0.0008</td>  <td class="num win">$0.0000005</td></tr>
+            <tr><td>Kenya / Sub-Saharan Africa avg</td>      <td class="num">~$2&ndash;5</td><td class="num">$0.008&ndash;0.020</td><td class="num win">~$0.000005&ndash;0.000012</td></tr>
+            <tr><td><strong>Starlink Roam add'l data</strong></td>           <td class="num">~$2</td>      <td class="num">$0.008</td>  <td class="num win">$0.000005</td></tr>
+            <tr><td><strong>Starlink Mobile Priority overage</strong></td>   <td class="num">~$1&ndash;2</td>   <td class="num">$0.004&ndash;0.008</td><td class="num win">~$0.000005</td></tr>
+            <tr><td><strong>Starlink Maritime Mobile Priority</strong></td>  <td class="num">~$10</td>     <td class="num">$0.040</td>  <td class="num win">$0.000024</td></tr>
+            <tr><td>In-flight Wi-Fi (Gogo / Viasat)</td>     <td class="num">~$15&ndash;30/hr</td><td class="num">~$0.80</td><td class="num win">~$0.0005</td></tr>
+            <tr class="agent-loop-delta"><td><strong>Iridium satellite (legacy maritime)</strong></td> <td class="num">~$5&ndash;15/MB</td><td class="num"><strong>~$20&ndash;60</strong></td><td class="num win"><strong>$0.012&ndash;0.036</strong></td></tr>
           </tbody>
         </table>
       </div>
+      <p class="bench-subhead-note" style="margin-top: 0.75rem;">
+        Bottom row is the dramatic one: at Iridium maritime rates, a single agentic AI request bills <strong>$20&ndash;60 just for envelopes</strong>. Same answer on Codec wire bills under 4 cents. That's not a small efficiency win &mdash; it's the difference between "AI on this connection" and "AI is impossible on this connection."
+      </p>
 
       <h4 class="bench-subhead bench-subhead--secondary">Starlink &mdash; "pay-per-byte AI" at fleet scale</h4>
       <p class="bench-subhead-note">Starlink's metered tiers (Roam add'l, Mobile Priority overage, Maritime Priority) make the per-byte savings show up as a line-item dollar figure on the customer's bill, every month.</p>
@@ -955,40 +957,42 @@ const toolBars = [
           <p class="bench-card__sub">TTFB is unchanged &middot; wire-transfer time scales with link speed &middot; per-response energy &times; fleet scale</p>
         </div>
         <div class="bench-card__hero bench-card__hero--dual">
-          <span class="bench-card__hero-num">9.6&times;</span>
-          <span class="bench-card__hero-cap">wall-clock on 10&nbsp;Mbps mobile</span>
+          <span class="bench-card__hero-num">~3.5&nbsp;s &rarr; ~0.4&nbsp;s</span>
+          <span class="bench-card__hero-cap">per AI request on 10&nbsp;Mbps mobile (heavy-agent baseline)</span>
           <span class="bench-card__hero-sep">·</span>
-          <span class="bench-card__hero-num bench-card__hero-num--alt">~165&times;</span>
-          <span class="bench-card__hero-cap">less non-GPU energy / response</span>
+          <span class="bench-card__hero-num bench-card__hero-num--alt">~9&times;</span>
+          <span class="bench-card__hero-cap">wall-clock; absolute time is what the user feels</span>
         </div>
       </header>
 
       <p class="cost-lede">
-        <strong>TTFB on the same engine is the same on both wires</strong> (codec-sglang lands at ~45&nbsp;ms first body byte whether the response is JSON-SSE or Codec msgpack &mdash; the model still runs first). What changes is what comes <em>after</em> the first byte: 485&nbsp;KB of JSON has to physically arrive at the client, 291&nbsp;B of Codec doesn't. On a datacenter LAN that's invisible; on mobile / edge / satellite links it dominates wall-clock.
+        <strong>Same scope as the cost card: per real AI request, not per single response.</strong> A modern AI call makes ~8 wire round-trips behind the scenes (user&rarr;API, agent-to-agent, tool calls, tool results, sub-agent, synthesis, final response). Each round-trip pays TTFB &mdash; the per-request totals below are the heavy-agent baseline at 8 round-trips. TTFB itself is unchanged by Codec (the model still runs first); what changes is the payload-transfer time at every hop, which goes from "dominates" to "invisible."
       </p>
 
-      <h4 class="bench-subhead">Wall-clock for a 2&nbsp;K-token chat reply, by link speed</h4>
-      <p class="bench-subhead-note">Total = TTFB (~45&nbsp;ms, model-bound, identical on both wires) + payload transfer time at link rate. Numbers from cross-stack matrix wire bytes + arithmetic.</p>
+      <h4 class="bench-subhead">Wall-clock per heavy-agent AI request, by link speed</h4>
+      <p class="bench-subhead-note">~8 round-trips &times; (~45&nbsp;ms TTFB + payload transfer at link rate). Chat-only deployments are ~&frac14; these numbers.</p>
 
       <div class="power-grid">
         <table class="cost-table">
           <thead>
             <tr>
               <th>Link</th>
-              <th class="num">JSON-SSE total</th>
-              <th class="num">Codec total</th>
-              <th class="num">Speedup</th>
+              <th class="num">JSON-SSE per request</th>
+              <th class="num win">Codec per request</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>Datacenter LAN &mdash; 1&nbsp;Gbps</td>      <td class="num">49 ms</td>     <td class="num">45 ms</td>   <td class="num win">1.1&times;</td></tr>
-            <tr><td>Office Wi-Fi &mdash; 100&nbsp;Mbps</td>      <td class="num">84 ms</td>     <td class="num">45 ms</td>   <td class="num win">1.9&times;</td></tr>
-            <tr><td>Mobile 4G &mdash; 10&nbsp;Mbps</td>          <td class="num">433 ms</td>    <td class="num">45 ms</td>   <td class="num win"><strong>9.6&times;</strong></td></tr>
-            <tr><td>Edge / weak mobile &mdash; 1&nbsp;Mbps</td>  <td class="num">3,925 ms</td>  <td class="num">47 ms</td>   <td class="num win"><strong>83&times;</strong></td></tr>
-            <tr><td>Satellite / IoT &mdash; 256&nbsp;Kbps</td>   <td class="num">15.2 s</td>    <td class="num">54 ms</td>   <td class="num win"><strong>281&times;</strong></td></tr>
+            <tr><td>Datacenter LAN &mdash; 1&nbsp;Gbps</td>      <td class="num">~390 ms</td>     <td class="num win">~360 ms</td></tr>
+            <tr><td>Office Wi-Fi &mdash; 100&nbsp;Mbps</td>      <td class="num">~680 ms</td>     <td class="num win">~360 ms</td></tr>
+            <tr><td>Mobile 4G &mdash; 10&nbsp;Mbps</td>          <td class="num"><strong>~3.5 s</strong></td>    <td class="num win"><strong>~0.4 s</strong></td></tr>
+            <tr><td>Edge / weak mobile &mdash; 1&nbsp;Mbps</td>  <td class="num"><strong>~32 s</strong></td>     <td class="num win"><strong>~0.4 s</strong></td></tr>
+            <tr class="agent-loop-delta"><td><strong>Satellite / IoT &mdash; 256&nbsp;Kbps</strong></td><td class="num"><strong>~2 min</strong></td><td class="num win"><strong>~0.5 s</strong></td></tr>
           </tbody>
         </table>
       </div>
+      <p class="bench-subhead-note" style="margin-top: 0.5rem;">
+        The interesting line isn't the speedup ratio &mdash; it's the <em>absolute</em> wall-clock. JSON-SSE on a 1 Mbps edge link takes <strong>half a minute</strong> per agentic AI request. On 256 Kbps satellite it's <strong>2 minutes</strong>. That's unusable. Codec keeps the same workload under half a second on every connection.
+      </p>
 
       <h4 class="bench-subhead bench-subhead--secondary">Agent loop end-to-end &mdash; measured, not extrapolated</h4>
       <p class="bench-subhead-note">From the v0.4.1 agent-loop bench. Wall-clock includes the model emitting the tool call + dispatch + tool result + final answer.</p>
@@ -1012,11 +1016,11 @@ const toolBars = [
         </table>
       </div>
 
-      <h4 class="bench-subhead bench-subhead--secondary">Per-response energy breakdown</h4>
-      <p class="bench-subhead-note">Where the joules go on one response. GPU compute is unchanged; everything else collapses. Fleet-scale aggregation lives in the cost card above (compound multi-round-trip, client-side-blocked doomed prompts, today + 2030 projection).</p>
+      <h4 class="bench-subhead bench-subhead--secondary">Per-AI-request energy breakdown (heavy-agent baseline)</h4>
+      <p class="bench-subhead-note">Same scope as the wall-clock table above and the cost card &mdash; per real AI request (8 wire round-trips). GPU compute is unchanged; everything else collapses.</p>
 
       <p class="cost-cell__body">
-        <strong>GPU compute (~5&ndash;15&nbsp;J on Qwen-2.5 0.5B at 2K tokens): unchanged.</strong> Codec is not an inference accelerator. Everything else collapses by 12&ndash;1,660&times;: server CPU response-serialize <code>10 mJ &rarr; 0.5 mJ</code> (~20&times;), network end-to-end <code>580 mJ &rarr; 0.35 mJ</code> (~1,660&times; at ~150 nJ/bit), client radio on mobile <code>194 mJ &rarr; 0.12 mJ</code> (~1,617&times; at ~50 nJ/bit), client CPU for BPE tokenize + JSON parse <code>50 mJ &rarr; 4 mJ</code> (~12&times;). Total non-GPU per-response: <code>~824 mJ &rarr; ~5 mJ</code> = <strong>~165&times;</strong> less of everything you pay on top of the GPU bill, for <em>one</em> response on <em>one</em> wire hop. In a typical 6-round-trip agent loop, multiply by ~6; with client-side blocked doomed prompts, add ~10 J of GPU compute avoided on the blocked share. See the cost card for the fleet-scale aggregation.
+        <strong>GPU compute on served requests (~5&ndash;15&nbsp;J on Qwen-2.5 0.5B at 2K tokens): unchanged.</strong> Codec is not an inference accelerator. Everything else collapses ~165&times; per round-trip &mdash; server CPU response-serialize, network end-to-end (~150 nJ/bit), client radio on mobile (~50 nJ/bit), client CPU for BPE tokenize + JSON parse. <strong>Per AI request at heavy-agent baseline (8 round-trips): non-GPU energy drops from ~6.6&nbsp;J to ~40&nbsp;mJ</strong> &mdash; ~165&times; per hop, compounded across all 8. Plus the GPU compute itself avoided on the ~10% of requests that client-side safety / format checks refuse before the wire (each blocked prompt = full ~10&nbsp;J GPU pass not run). Fleet-scale aggregation (~400 US cars off the road every year today, ~4,000 by 2030) is in the cost card above.
       </p>
 
       <footer class="bench-card__foot">
