@@ -1,7 +1,7 @@
 ---
 title: v0.5.0 — efficiency, observability, and cohort honesty
 date: "2026-05-18"
-kind: release
+kind: feature
 version: v0.5.0
 summary: Wire-additive over v0.4 (v0.4 → v0.5 happy-path bytes identical). Four new opt-in surfaces — delta-varint stream encoding, discoverable Zstandard dictionaries, GPU-side latent quantize, bolt-on tool dispatcher. 11 client artifacts bumped to 0.5.0 across npm, PyPI, NuGet, crates.io, Maven Central. Engine cohort cut to sglang + vLLM + llama.cpp + ComfyUI + diffusers (TGI dropped). 72/72 wire + 72/72 decode unanimous on the cross-stack matrix; numbers byte-identical to v0.4.1, confirming the wire-additive invariant. Upstream PRs filed at sgl-project/sglang#25544 and vllm-project/vllm#42896, both DCO-signed and through bot review.
 links:
