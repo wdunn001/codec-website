@@ -60,7 +60,12 @@ import Base from "../layouts/Base.astro";
           6 clients, so advertising the full menu is correct on every
           binding now. When <code>Content-Encoding: zstd</code>, the response
           also carries <code>Codec-Zstd-Dict: sha256:&lt;short&gt;</code> so
-          the client picks the right local dict.
+          the client picks the right local dict. The selection rule itself
+          (which encoding wins for a given <code>Accept-Encoding</code> +
+          payload-size + dict-availability tuple) lives in the
+          <a href="/docs/wire-compress/">@codecai/wire-compress</a> companion
+          library, which every Codec server + client uses to keep the
+          decision identical across the six bindings.
         </li>
         <li>
           <strong>Safety-policy enforcement.</strong> Per-deployment opt-on
