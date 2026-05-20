@@ -185,7 +185,7 @@ zstd without a pre-trained dictionary is a trap on Codec streams: its wire-byte 
 }
 ```
 
-A server with a matching dict loaded compresses against it; a client decompresses against the same one (matched by hash). The two formats train against different byte distributions, so dicts are not interchangeable across `msgpack` / `protobuf`. Without a loaded dict, servers MUST fall through to gzip &mdash; the picker enforces this and the wire-compress library refuses to advertise zstd unless a matching dict is in place.
+A server with a matching dict loaded compresses against it; a client decompresses against the same one (matched by hash). The two formats train against different byte distributions, so dicts are not interchangeable across `msgpack` / `protobuf`. Without a loaded dict, servers MUST fall through to gzip &mdash; the picker enforces this and the [`@codecai/wire-compress`](/docs/wire-compress/) library refuses to advertise zstd unless a matching dict is in place.
 
 With a dict, dict-zstd beats gzip by **16&ndash;38%** on bytes ([RESULTS.md §1g](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md)) at +0.13&nbsp;ms streaming TTFB &mdash; sub-millisecond, dwarfed by network. So for a deployment with a dict shipped alongside the model, zstd is the right pick for both interactive and agent traffic.
 

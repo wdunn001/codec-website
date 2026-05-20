@@ -106,6 +106,27 @@
         </ul>
       </article>
     </div>
+
+    <!-- @codecai/wire-compress — companion library called out as a small
+         slim card so it reads as a sibling to (not in competition with)
+         the headline primitives above. Copy leads with what it does, not
+         which version added it. -->
+    <div class="usecases__companion">
+      <a class="uc uc--companion" href="/docs/wire-compress/">
+        <header class="uc__head uc__head--row">
+          <span class="uc__tag uc__tag--companion">companion</span>
+          <h3>Smart HTTP compression picker</h3>
+        </header>
+        <p class="uc__body">
+          <code>@codecai/wire-compress</code> &mdash; <strong>~5&nbsp;KB,
+          zero deps.</strong> Picks gzip / brotli / dict-zstd / identity
+          based on payload size + client support, measured against the
+          Codec v0.4.1 wire benchmark. Drop-in for any streaming HTTP
+          server so you stop relitigating the "always-brotli" rule per
+          deployment.
+        </p>
+      </a>
+    </div>
   </div>
 </section>
 
@@ -226,5 +247,43 @@
     background: color-mix(in srgb, var(--accent) 18%, transparent);
     border-color: color-mix(in srgb, var(--accent) 60%, transparent);
     color: var(--accent);
+  }
+
+  /* @codecai/wire-compress companion card — slim, secondary visual weight
+     relative to the three primitive cards + the latent block above. It's
+     a sibling library, not a fourth primitive, so it gets a subtler frame
+     and stacks horizontally on wide screens (tag chip + heading inline). */
+  .usecases__companion { margin-top: 1rem; }
+  .uc--companion {
+    display: block;
+    padding: 1rem 1.25rem;
+    text-decoration: none;
+    color: var(--fg);
+    transition: border-color 120ms, transform 120ms;
+  }
+  .uc--companion:hover {
+    border-color: color-mix(in srgb, var(--data) 50%, var(--border));
+    transform: translateY(-1px);
+  }
+  .uc--companion .uc__body { font-size: 0.9rem; margin: 0; }
+  .uc--companion code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: var(--fg);
+  }
+  .uc__head--row {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.625rem;
+    margin-bottom: 0.5rem;
+  }
+  .uc__head--row h3 { font-size: 1rem; }
+  .uc__tag--companion {
+    background: color-mix(in srgb, var(--data) 12%, transparent);
+    border-color: color-mix(in srgb, var(--data) 40%, transparent);
+    color: var(--data);
   }
 </style>
