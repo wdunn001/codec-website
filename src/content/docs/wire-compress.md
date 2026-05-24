@@ -143,10 +143,63 @@ This logic is genuinely useful outside Codec. Anywhere you have:
 
 The thresholds were measured for streaming token frames specifically. They generalise to other small-frame streaming workloads (chat APIs, log streams, telemetry) but you may want to recalibrate for your data.
 
+## Polyglot ports — same picker in C# and C
+
+The picker isn&rsquo;t just a TypeScript module. The same Pareto-decision tree ships natively in **Codec.Net** (C#) and **libcodec** (C99), and every release replays the **12,960-vector cross-language conformance suite** to assert all three implementations pick the same encoding for the same input.
+
+| Language | Package | Public API entry | Test target |
+|---|---|---|---|
+| TypeScript | [`@codecai/wire-compress`](https://www.npmjs.com/package/@codecai/wire-compress) | `pick({ ... })` | `npm test` in `packages/wire-compress/` |
+| C# / .NET 8+ | [`Codec.Net`](https://www.nuget.org/packages/Codec.Net) | `Codec.Wire.Picker.Pick(new PickInput { ... })` | `dotnet test` &mdash; `PickerConformanceTests` |
+| C99 | `libcodec` &mdash; CMake `codec::codec` target | `codec_wire_pick(&in, &out)` from `codec/codec_wire_picker.h` | `ctest -R test_wire_picker` |
+
+Same hard rule across all three: **dictless zstd is never chosen.** Same `PickReasonCode` enum (`dict_zstd_default`, `gzip_no_dict`, `per_stack_overrode_zstd`, &hellip;). Same stack profiles (`default`, `sglang`, `llama.cpp`). The conformance suite walks 12,960 inputs &mdash; all 15 standard `Accept-Encoding` shapes &times; 9 payload sizes &times; 4 stack profiles &times; 4 flag combos &times; 2 interactivity modes &times; 3 sample profiles &mdash; and asserts byte-for-byte parity on `(encoding, reason_code)` for every vector. CI gates on it.
+
+### C# &mdash; `Codec.Net`
+
+```csharp
+using Codec.Wire;
+
+var pick = Picker.Pick(new PickInput
+{
+    AcceptEncoding = request.Headers["Accept-Encoding"],
+    EstimatedSize  = 1024,
+    ZstdHasDict    = dictResolved is not null,
+    ZstdEnabled    = streamingZstdConfirmed,
+    StackProfile   = StackProfiles.For("sglang"),
+});
+if (pick.Encoding != Codec.Wire.Encoding.Identity)
+    response.Headers["Content-Encoding"] = Picker.EncodingName(pick.Encoding);
+```
+
+`Codec.Net` targets `net8.0` and ships the picker alongside the existing tokenizer / detokenizer / dict-zstd helpers. Brotli + gzip are built into the BCL (`System.IO.Compression.BrotliStream` / `GZipStream`); zstd is left to the caller&rsquo;s choice of NuGet (`ZstdSharp.Port` is what the test project uses).
+
+### C &mdash; `libcodec`
+
+```c
+#include "codec/codec_wire_picker.h"
+
+codec_wire_pick_input_t in = {
+    .accept_encoding = request_header,
+    .estimated_size  = 1024,
+    .zstd_has_dict   = dict_resolved,
+    .stack_profile   = codec_wire_profile_for("sglang"),
+};
+codec_wire_pick_result_t r;
+codec_wire_pick(&in, &r);
+if (r.encoding != CODEC_WIRE_ENC_IDENTITY)
+    set_header("Content-Encoding", codec_wire_encoding_name(r.encoding));
+```
+
+No malloc, no thread-locals, no external runtime deps &mdash; suitable for ESP32 firmware hot paths and Linux server hot paths alike. Brotli / gzip / zstd link-in is the caller&rsquo;s choice (libbrotli, zlib, libzstd); `libcodec` itself just owns the **decision**.
+
 ## Source &amp; links
 
 - npm: [`@codecai/wire-compress`](https://www.npmjs.com/package/@codecai/wire-compress)
+- NuGet: [`Codec.Net`](https://www.nuget.org/packages/Codec.Net) (picker in `Codec.Wire.Picker`)
+- C: [`packages/c/include/codec/codec_wire_picker.h`](https://github.com/wdunn001/Codec/blob/main/packages/c/include/codec/codec_wire_picker.h)
 - Source: [`packages/wire-compress`](https://github.com/wdunn001/Codec/tree/main/packages/wire-compress)
+- Conformance vectors: [`packages/wire-compress/test/conformance-vectors.json`](https://github.com/wdunn001/Codec/blob/main/packages/wire-compress/test/conformance-vectors.json) (12,960 cases)
 - Crossover chart: [`packages/bench/docs/crossover-summary.png`](https://raw.githubusercontent.com/wdunn001/Codec/main/packages/bench/docs/crossover-summary.png)
 - Benchmark data: [`packages/bench/RESULTS.md`](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md) §1c&ndash;1g
 
