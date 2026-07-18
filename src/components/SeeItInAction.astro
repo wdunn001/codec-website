@@ -23,7 +23,7 @@
     </p>
 
     <div class="see__diagram" role="img"
-         aria-label="A model split into three stages. Stage one holds the tokenizer and layers 0 to 11, stage two holds layers 12 to 23, stage three holds layers 24 to 35 and the output head. Each stage runs in a separate browser tab, and a token-sized hidden state of about 4 kilobytes flows from each stage to the next over the Codec wire.">
+         aria-label="A model split into three stages. Stage one holds the tokenizer and layers 0 to 11, stage two holds layers 12 to 23, stage three holds layers 24 to 35 and the output head. Each stage runs in a separate browser tab, and a token-sized hidden state of about 2 kilobytes flows from each stage to the next over the Codec wire.">
       <svg viewBox="0 0 760 150" width="100%" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
         <defs>
           <marker id="see-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -51,9 +51,9 @@
 
         <!-- Token frame hops -->
         <line x1="210" y1="75" x2="278" y2="75" stroke="var(--control)" stroke-width="1.5" marker-end="url(#see-arrow)" />
-        <text x="244" y="30" text-anchor="middle" fill="var(--control)" font-family="var(--font-mono)" font-size="10">~4 KiB</text>
+        <text x="244" y="30" text-anchor="middle" fill="var(--control)" font-family="var(--font-mono)" font-size="10">~2 KiB</text>
         <line x1="482" y1="75" x2="550" y2="75" stroke="var(--control)" stroke-width="1.5" marker-end="url(#see-arrow)" />
-        <text x="516" y="30" text-anchor="middle" fill="var(--control)" font-family="var(--font-mono)" font-size="10">~4 KiB</text>
+        <text x="516" y="30" text-anchor="middle" fill="var(--control)" font-family="var(--font-mono)" font-size="10">~2 KiB</text>
       </svg>
     </div>
 
