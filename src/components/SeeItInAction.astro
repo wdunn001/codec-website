@@ -1,0 +1,87 @@
+---
+// See it in action: the live proof that the wire carries real work.
+// Legion is a peer-to-peer LLM -- one model cut into layer-stages, each
+// stage running in a browser tab, the stages talking over the Codec wire.
+// Inline SVG only (no raster asset) to stay consistent with the site's
+// zero-JS, diagram-as-SVG approach. Colors map to the same wire-format
+// semantics as the rest of the site: --data (blue) for the model stages,
+// --control (green) for the token frame moving between them.
+---
+<section id="see-it" class="section see">
+  <div class="container">
+    <p class="eyebrow">see it in action</p>
+    <h2 class="see__title">A whole model, running on nobody's data center.</h2>
+    <p class="see__lede">
+      <a href="https://legion.codecai.net" rel="noopener">Unstable Legion</a> is a
+      peer-to-peer language model. One model is cut into contiguous layer
+      stages, each stage runs in an ordinary browser tab, and the stages hand
+      work to each other over the Codec wire. Only a few kilobytes cross
+      between stages per token, so the model does not need to live in one
+      place. Open it, chat, and optionally donate your GPU to host a few
+      layers. It assembles itself across whoever is online and keeps going as
+      peers come and go.
+    </p>
+
+    <div class="see__diagram" role="img"
+         aria-label="A model split into three stages. Stage one holds the tokenizer and layers 0 to 11, stage two holds layers 12 to 23, stage three holds layers 24 to 35 and the output head. Each stage runs in a separate browser tab, and a token-sized hidden state of about 4 kilobytes flows from each stage to the next over the Codec wire.">
+      <svg viewBox="0 0 760 150" width="100%" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <defs>
+          <marker id="see-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="var(--control)" />
+          </marker>
+        </defs>
+
+        <!-- Stage 1 -->
+        <rect x="8" y="40" width="200" height="70" rx="10" fill="var(--bg-elev)" stroke="var(--data)" stroke-width="1.5" />
+        <text x="108" y="66" text-anchor="middle" fill="var(--fg)" font-family="var(--font-mono)" font-size="13" font-weight="700">Stage 1</text>
+        <text x="108" y="86" text-anchor="middle" fill="var(--fg-muted)" font-family="var(--font-mono)" font-size="11">tokenize + layers 0-11</text>
+        <text x="108" y="128" text-anchor="middle" fill="var(--fg-faint)" font-family="var(--font-mono)" font-size="10">browser tab</text>
+
+        <!-- Stage 2 -->
+        <rect x="280" y="40" width="200" height="70" rx="10" fill="var(--bg-elev)" stroke="var(--data)" stroke-width="1.5" />
+        <text x="380" y="66" text-anchor="middle" fill="var(--fg)" font-family="var(--font-mono)" font-size="13" font-weight="700">Stage 2</text>
+        <text x="380" y="86" text-anchor="middle" fill="var(--fg-muted)" font-family="var(--font-mono)" font-size="11">layers 12-23</text>
+        <text x="380" y="128" text-anchor="middle" fill="var(--fg-faint)" font-family="var(--font-mono)" font-size="10">browser tab</text>
+
+        <!-- Stage 3 -->
+        <rect x="552" y="40" width="200" height="70" rx="10" fill="var(--bg-elev)" stroke="var(--data)" stroke-width="1.5" />
+        <text x="652" y="66" text-anchor="middle" fill="var(--fg)" font-family="var(--font-mono)" font-size="13" font-weight="700">Stage 3</text>
+        <text x="652" y="86" text-anchor="middle" fill="var(--fg-muted)" font-family="var(--font-mono)" font-size="11">layers 24-35 + head</text>
+        <text x="652" y="128" text-anchor="middle" fill="var(--fg-faint)" font-family="var(--font-mono)" font-size="10">browser tab</text>
+
+        <!-- Token frame hops -->
+        <line x1="210" y1="75" x2="278" y2="75" stroke="var(--control)" stroke-width="1.5" marker-end="url(#see-arrow)" />
+        <text x="244" y="30" text-anchor="middle" fill="var(--control)" font-family="var(--font-mono)" font-size="10">~4 KiB</text>
+        <line x1="482" y1="75" x2="550" y2="75" stroke="var(--control)" stroke-width="1.5" marker-end="url(#see-arrow)" />
+        <text x="516" y="30" text-anchor="middle" fill="var(--control)" font-family="var(--font-mono)" font-size="10">~4 KiB</text>
+      </svg>
+    </div>
+
+    <div class="see__buttons">
+      <a class="btn btn--primary" href="https://legion.codecai.net" rel="noopener">Open the live demo</a>
+      <a class="btn" href="https://themildtake.com/articles/2026-07-17-unstable-legion-p2p-chatgpt/" rel="noopener">How it works</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .see__title { max-width: 22ch; }
+  .see__lede { max-width: 64ch; margin-bottom: 1.75rem; }
+  .see__lede a { color: var(--data); border-bottom: 1px dotted var(--border-strong); }
+  .see__lede a:hover { border-bottom-color: var(--data); }
+
+  .see__diagram {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: clamp(1rem, 3vw, 1.75rem);
+    background:
+      radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--data) 10%, transparent), transparent 60%),
+      radial-gradient(120% 140% at 100% 100%, color-mix(in srgb, var(--control) 8%, transparent), transparent 55%),
+      var(--bg-elev);
+    overflow-x: auto;
+    margin-bottom: 1.75rem;
+  }
+  .see__diagram svg { min-width: 520px; display: block; margin: 0 auto; }
+
+  .see__buttons { display: inline-flex; flex-wrap: wrap; gap: 0.625rem; }
+</style>
