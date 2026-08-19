@@ -1,17 +1,17 @@
 ---
-title: TypeScript / Node — @codecai/web
+title: TypeScript / Node (@codecai/web)
 description: The canonical reference implementation. Install, decode a stream, encode a request, watch for tool calls, translate across vocabs.
 section: Frameworks
 order: 1
 ---
 
-`@codecai/web` is the reference TypeScript binding. It runs in modern browsers, Node 20+, and Bun without polyfills. The package ships ESM, the public API is fully typed, and the build output is tree-shakable &mdash; if you only use the decoder, you don't pay for the encoder.
+`@codecai/web` is the reference TypeScript binding. It runs in modern browsers, Node 20+, and Bun without polyfills. The package ships ESM, the public API is fully typed, and the build output is tree-shakable. If you only use the decoder, you don't pay for the encoder.
 
 ## Install
 
 ```bash
 npm install @codecai/web
-# or pnpm / bun / yarn — same thing
+# or pnpm / bun / yarn, same thing
 ```
 
 ## The four-step shape
@@ -38,10 +38,10 @@ const map = await loadMap({
 `loadMap` does three things:
 
 - Fetches the URL.
-- Verifies the bytes against the supplied `hash` (mismatch throws &mdash; this is your supply-chain check).
+- Verifies the bytes against the supplied `hash` (mismatch throws; this is your supply-chain check).
 - Caches the parsed map by hash so subsequent loads are free.
 
-[codec-maps](https://github.com/wdunn001/codec-maps) ships pre-generated maps for a starter set (Llama, Qwen, Mistral, Phi, Gemma, DeepSeek, etc.) with hashes pinned in its README. For anything not in that list &mdash; a fine-tune, a private model, a brand-new release &mdash; install [`@codecai/maps-cli`](https://www.npmjs.com/package/@codecai/maps-cli) and run `codec-maps generate <tokenizer.json>` to produce your own map locally. Same format, same `loadMap` call.
+[codec-maps](https://github.com/wdunn001/codec-maps) ships pre-generated maps for a starter set (Llama, Qwen, Mistral, Phi, Gemma, DeepSeek, etc.) with hashes pinned in its README. For anything not in that list (a fine-tune, a private model, a brand-new release), install [`@codecai/maps-cli`](https://www.npmjs.com/package/@codecai/maps-cli) and run `codec-maps generate <tokenizer.json>` to produce your own map locally. Same format, same `loadMap` call.
 
 If the vendor publishes their own map under [`/.well-known/codec/`](/docs/discovery/), you can skip the URL/hash entirely and resolve from `(origin, id)`:
 
@@ -72,7 +72,7 @@ const resp = await fetch("http://localhost:8000/v1/completions", {
 });
 ```
 
-The server's response will carry `Codec-Tokenizer-Map`, `Codec-Zstd-Dict` (when `Content-Encoding: zstd`), and v0.4 `Codec-Safety-Policy-{Id,Hash}` headers &mdash; read those to verify the wire before decoding (`Codec-Tokenizer-Map` hash MUST match your loaded map; mismatch is a fail-fast condition).
+The server's response will carry `Codec-Tokenizer-Map`, `Codec-Zstd-Dict` (when `Content-Encoding: zstd`), and v0.4 `Codec-Safety-Policy-{Id,Hash}` headers. Read those to verify the wire before decoding (`Codec-Tokenizer-Map` hash MUST match your loaded map; mismatch is a fail-fast condition).
 
 > **Why msgpack over protobuf?** Both work and produce identical semantics. Pick **msgpack** if you want zero schema toolchain. Pick **protobuf** if you already have `protoc` set up or you need stricter typing across polyglot teams. Performance is within noise; the wire bytes match within 1%.
 
@@ -107,7 +107,7 @@ for await (const frame of decodeStream(resp.body!, "msgpack")) {
 
 ## Encoding (sending IDs, not text)
 
-If you already have token IDs &mdash; for example, the *previous* response in an agent loop &mdash; skip the server's tokenizer:
+If you already have token IDs (for example, the *previous* response in an agent loop), skip the server's tokenizer:
 
 ```ts
 import { BPETokenizer } from "@codecai/web";
@@ -120,14 +120,14 @@ const resp = await fetch("http://localhost:8000/v1/completions", {
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     model: "Qwen/Qwen2.5-7B-Instruct",
-    prompt: Array.from(ids),  // uint32[] — the prompt is now token IDs
+    prompt: Array.from(ids),  // uint32[], the prompt is now token IDs
     stream_format: "msgpack",
     max_tokens: 256,
   }),
 });
 ```
 
-`BPETokenizer.encode()` is bit-identical to the upstream model's tokenizer (verified across all reference bindings). If the server's BPE produces different IDs from yours, [open an issue](https://github.com/wdunn001/Codec/issues) &mdash; the map is wrong.
+`BPETokenizer.encode()` is bit-identical to the upstream model's tokenizer (verified across all reference bindings). If the server's BPE produces different IDs from yours, [open an issue](https://github.com/wdunn001/Codec/issues). The map is wrong.
 
 ## Watching for tool calls
 
@@ -142,7 +142,7 @@ for await (const frame of decodeStream(resp.body!, "msgpack")) {
       // Stream these IDs to the user / next agent
       forward(ev.ids);
     } else {
-      // ev.kind === "captured" — these are the tool-call body
+      // ev.kind === "captured", these are the tool-call body
       const text = detok.render(ev.ids);
       const { tool, args } = parseToolCall(text);
       dispatch(tool, args);
@@ -151,7 +151,7 @@ for await (const frame of decodeStream(resp.body!, "msgpack")) {
 }
 ```
 
-ToolWatcher does its work with a single `uint32` compare per token. It does **not** detokenize. On a 1&nbsp;M-token stream the v0.4.1 lab measurement on EPYC 8124P + gcc:13 is **2.08&nbsp;ms** (481&nbsp;Mtok/s) vs **55.42&nbsp;ms** (18&nbsp;Mtok/s) for detokenize+regex &mdash; **26.7&times; faster** on that host. The speedup ratio stays in ToolWatcher's favour by ~26&ndash;100&times; depending on host; see [Benchmarks](/#benchmarks).
+ToolWatcher does its work with a single `uint32` compare per token. It does **not** detokenize. On a 1&nbsp;M-token stream the v0.4.1 lab measurement on EPYC 8124P + gcc:13 is **2.08&nbsp;ms** (481&nbsp;Mtok/s) vs **55.42&nbsp;ms** (18&nbsp;Mtok/s) for detokenize+regex, **26.7&times; faster** on that host. The speedup ratio stays in ToolWatcher's favour by ~26-100&times; depending on host; see [Benchmarks](/#benchmarks).
 
 Full reference: [Tool calling](/docs/tool-calling/).
 
@@ -183,15 +183,15 @@ Full reference: [Translator](/docs/translator/).
 
 ## Production checklist
 
-- **Pin the map hash.** Never call `loadMap({ url, hash: undefined })` &mdash; the hash is the supply-chain seal.
-- **Set `Accept-Encoding: gzip, identity`.** Streaming-safe and ~5&times; smaller than identity. zstd is supported but only when the server has a pre-trained dictionary loaded for the request &mdash; see [Protocol &raquo; Compression](/docs/protocol/#zstd-is-dict-only). Without a dict, advertising `zstd` is a no-op (server falls through to gzip).
+- **Pin the map hash.** Never call `loadMap({ url, hash: undefined })`. The hash is the supply-chain seal.
+- **Set `Accept-Encoding: gzip, identity`.** Streaming-safe and ~5&times; smaller than identity. zstd is supported but only when the server has a pre-trained dictionary loaded for the request. See [Protocol &raquo; Compression](/docs/protocol/#zstd-is-dict-only). Without a dict, advertising `zstd` is a no-op (server falls through to gzip).
 - **Reuse `Detokenizer` and `Tokenizer` instances** across requests. Both are reusable; only `decodeStream` is per-response.
 - **Detokenize at the edge.** If you're forwarding the stream to another agent or to a server-side tool dispatcher, leave the IDs as IDs.
 
 ## See also
 
-- [Browser safety](/docs/web-safety/) &mdash; the optional `@codecai/web-safety` sibling. Catches secrets, PII, jailbreak templates, destructive commands, and host-blocked patterns before the prompt reaches the wire. New in v0.4.
-- [Tool calling](/docs/tool-calling/) &mdash; deeper dive on `ToolWatcher`.
-- [Translator](/docs/translator/) &mdash; cross-vocab handoff details.
-- [@codecai/web on npm](https://www.npmjs.com/package/@codecai/web) &mdash; the package readme has additional examples.
-- [packages/web/ on GitHub](https://github.com/wdunn001/Codec/tree/main/packages/web) &mdash; source.
+- [Browser safety](/docs/web-safety/), the optional `@codecai/web-safety` sibling. Catches secrets, PII, jailbreak templates, destructive commands, and host-blocked patterns before the prompt reaches the wire. New in v0.4.
+- [Tool calling](/docs/tool-calling/), deeper dive on `ToolWatcher`.
+- [Translator](/docs/translator/), cross-vocab handoff details.
+- [@codecai/web on npm](https://www.npmjs.com/package/@codecai/web), the package readme has additional examples.
+- [packages/web/ on GitHub](https://github.com/wdunn001/Codec/tree/main/packages/web), source.

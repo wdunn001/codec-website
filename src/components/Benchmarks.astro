@@ -2,14 +2,14 @@
 // Benchmarks section: real measurements from the live cross-stack matrix.
 // Source: github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-15T20-00-00Z/MATRIX.md
 //
-// All numbers are measured this session — no projections, no theoreticals.
+// All numbers are measured this session, no projections, no theoreticals.
 // Hardware: NVIDIA RTX 3090 / Qwen2.5-0.5B-Instruct.
 // Engines: sglang nightly, vllm nightly (PR #41765), llama.cpp PR #22757.
 // Six client languages (C, .NET, Java, Python, Rust, TS/Node) report
 // byte-identical Codec frames on every cell across all three engines
-// (24/24 unanimous per engine — see MATRIX.md §2). v0.4 refresh kept
+// (24/24 unanimous per engine, see MATRIX.md §2). v0.4 refresh kept
 // the same payload shape as v0.3.x, so the wire numbers are unchanged
-// from the prior cut — v0.4 is wire-additive (safety-policy negotiation
+// from the prior cut, v0.4 is wire-additive (safety-policy negotiation
 // + per-language tokenize/detok timing) and doesn't alter the
 // in-frame bytes the wire bench measures.
 
@@ -22,11 +22,11 @@ type Series = {
 
 // All numbers below are from MATRIX.md §3 (Python row, sglang). Other
 // 5 client languages (TS/.NET/C/Rust/Java) agree byte-identically on
-// every Codec cell — see the cross-stack panel further down.
+// every Codec cell, see the cross-stack panel further down.
 //
 // X coordinates: data points at 90 / 380 / 600 (was 680). The shift
 // inward gives ~110 px of right margin for the end-of-line value
-// labels — earlier "485.2 KB" overflowed the 720-unit viewBox.
+// labels, earlier "485.2 KB" overflowed the 720-unit viewBox.
 const series: Series[] = [
   {
     label: "JSON-SSE",
@@ -60,7 +60,7 @@ const series: Series[] = [
 // TTFB at 2 K tokens for the same sglang server, msgpack + gzip path,
 // from MATRIX.md §4 body-byte cohort. Pinned next to the rightmost
 // data points so the chart never reads as "smaller wire, hidden
-// latency cost" — it's the same ~45 ms either way on sglang.
+// latency cost", it's the same ~45 ms either way on sglang.
 const ttfbAnnotations = [
   { x: 600, label: "JSON-SSE: ~45 ms TTFB", className: "ttfb-pin ttfb-pin--json" },
   { x: 600, label: "Codec gzip: 44.7 ms TTFB", className: "ttfb-pin ttfb-pin--codec" },
@@ -79,7 +79,7 @@ const linePath = (s: Series) =>
 
 // ============== CHART 2: cross-stack reduction ==
 // Three engines, same prompt, same model, same client. Shows that
-// Codec is not an sglang trick — it slots into vllm and llama.cpp too.
+// Codec is not an sglang trick, it slots into vllm and llama.cpp too.
 // Numbers from MATRIX.md §1 headline table (Python row, 2,048 tokens,
 // best Codec encoding for each engine).
 type EngineRow = {
@@ -90,7 +90,7 @@ type EngineRow = {
   bestKind: string;
   ratio: string;
   // ttftMs is paired with each engine's reduction so the chart never reads
-  // as "tiny payload, but at what latency cost?" — it's the same Codec
+  // as "tiny payload, but at what latency cost?", it's the same Codec
   // msgpack + gzip first-body-byte median used in chart 3 below.
   ttftMs: string;
 };
@@ -129,7 +129,7 @@ const engineRows: EngineRow[] = [
 // from MATRIX.md §4 body-byte cohort (Python httpx aiter_raw definition).
 //
 // Plot layout coordinates (shared with chart 4 below): label column
-// 0–128, bar column 140–520, value column 532+. SVG viewBox is 720
+// 0-128, bar column 140-520, value column 532+. SVG viewBox is 720
 // wide so a "60.4 ms" right-edge value fits comfortably without
 // overflowing.
 const ttfbBars = [
@@ -175,7 +175,7 @@ const xvocPlotW  = 380;
 // ============== CHART 5: tool-call detection ==
 //
 // `lines` is an array of label rows so wide labels wrap into multiple
-// tspans within a single SVG <text> — SVG doesn't auto-wrap and a
+// tspans within a single SVG <text>, SVG doesn't auto-wrap and a
 // long label like "Detokenize + regex" overflowed the 128-unit label
 // column on its own line.
 // v0.4.1 lab measurement on AMD EPYC 8124P + gcc:13 (libcodec C99).
@@ -199,7 +199,7 @@ const toolBars = [
     <p class="eyebrow">receipts</p>
     <h2>What falls out when the inference layer stays token-native.</h2>
     <p class="bench__lede">
-      Compression isn't the headline &mdash; the primitives are. But once
+      Compression isn't the headline. The primitives are. But once
       every hop runs on raw <code>uint32</code> token IDs, the wire reduction
       and the tool-call latency floor are measurable byproducts. Numbers
       below are from the cross-stack benchmark matrix: same prompt, same
@@ -212,8 +212,8 @@ const toolBars = [
     <article class="bench-card bench-card--v03">
       <header class="bench-card__head">
         <div>
-          <h3 class="bench-card__title">Lab run &mdash; all three pathways measured</h3>
-          <p class="bench-card__sub">vinez@192.168.1.88 &middot; 2&times; RTX 3090 &middot; v0.4.1 cut, 2026-05-15 (wire numbers unchanged from v0.3.x &mdash; v0.4.x is wire-additive; v0.4.1 ships dict-zstd across all 6 clients + br&nbsp;+&nbsp;zstd on llama.cpp)</p>
+          <h3 class="bench-card__title">Lab run (all three pathways measured)</h3>
+          <p class="bench-card__sub">vinez@192.168.1.88 &middot; 2&times; RTX 3090 &middot; v0.4.1 cut, 2026-05-15 (wire numbers unchanged from v0.3.x since v0.4.x is wire-additive; v0.4.1 ships dict-zstd across all 6 clients + br&nbsp;+&nbsp;zstd on llama.cpp)</p>
         </div>
         <div class="bench-card__hero">
           <span class="bench-card__hero-num">3.9&times;</span>
@@ -235,7 +235,7 @@ const toolBars = [
           <p class="v03-cell__foot">
             <code>[Codec][leaf]</code> log fires end-to-end on
             <a href="https://hub.docker.com/r/wdunn001/codec-time-leaf" rel="noopener">codec-time-leaf</a>
-            tool calls &mdash; gateway becomes a transparent ID pipe.
+            tool calls. The gateway becomes a transparent ID pipe.
           </p>
         </div>
 
@@ -251,7 +251,7 @@ const toolBars = [
             </tbody>
           </table>
           <p class="v03-cell__foot">
-            For comparison: same image as a JPEG ~80&ndash;150&nbsp;KB; raw fp16 pixels 1.5&nbsp;MB.
+            For comparison: same image as a JPEG ~80-150&nbsp;KB; raw fp16 pixels 1.5&nbsp;MB.
             int4 = <strong>~10&times; smaller than JPEG</strong>, ~180&times; vs raw pixels.
           </p>
         </div>
@@ -353,7 +353,7 @@ const toolBars = [
         At 2&nbsp;K tokens the JSON-SSE stream ships <strong>485&nbsp;KB</strong>;
         Codec msgpack with dict-zstd ships <strong>291&nbsp;bytes</strong>.
         That's <strong>237&nbsp;B/token &rarr; 0.14&nbsp;B/token</strong>
-        at the <strong>same TTFB</strong> &mdash; first-body-byte lands
+        at the <strong>same TTFB</strong>. First-body-byte lands
         at ~45&nbsp;ms either way on the same sglang server. The wire
         reduction is essentially free in latency.
       </footer>
@@ -449,7 +449,7 @@ const toolBars = [
       <footer class="bench-card__foot">
         Codec doesn't trade latency for size. <strong>llama.cpp 40.7&nbsp;ms</strong>,
         <strong>sglang 45.6&nbsp;ms</strong>, and <strong>vllm 67.3&nbsp;ms</strong>
-        from POST to first body byte at 2&nbsp;K tokens &mdash; the JSON-SSE
+        from POST to first body byte at 2&nbsp;K tokens, the JSON-SSE
         baseline against the same engines is within 1&nbsp;ms either way. The
         decode-side payoff (no UTF-8 reparse, no JSON.parse on every chunk)
         is pure cost reduction on the client.
@@ -460,7 +460,7 @@ const toolBars = [
     <article class="bench-card">
       <header class="bench-card__head">
         <div>
-          <h3 class="bench-card__title">Cross-vocab handoff &mdash; Llama-3 &rarr; Qwen-2</h3>
+          <h3 class="bench-card__title">Cross-vocab handoff (Llama-3 &rarr; Qwen-2)</h3>
           <p class="bench-card__sub">Same source IDs, two wire paths &middot; gzip on both &middot; bridge produces byte-identical Qwen-2 output</p>
         </div>
         <div class="bench-card__hero bench-card__hero--dual">
@@ -472,8 +472,8 @@ const toolBars = [
         </div>
       </header>
 
-      <h4 class="bench-subhead">Bridge response time &mdash; the latency the next agent waits on</h4>
-      <p class="bench-subhead-note">CPU cost to turn the inbound stream into Qwen-2 IDs ready for agent B. Lower is better &mdash; this is the wall-clock the handoff blocks on, before agent B's first new token.</p>
+      <h4 class="bench-subhead">Bridge response time (the latency the next agent waits on)</h4>
+      <p class="bench-subhead-note">CPU cost to turn the inbound stream into Qwen-2 IDs ready for agent B. Lower is better. This is the wall-clock the handoff blocks on, before agent B's first new token.</p>
 
       <div class="bench-chart">
         <svg viewBox="0 0 720 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart: bridge CPU at 64, 512, and 2048 tokens. JSON-SSE 1.2, 4.8, 10.9 ms; Codec msgpack 1.2, 3.9, 7.6 ms.">
@@ -489,9 +489,9 @@ const toolBars = [
             // Astro's JSX-in-expression parser treats `<=` as the start
             // of a fragment tag, so invert: ratio > 5 means a savings
             // visible above the rep-to-rep noise on a microbench at
-            // this CPU duration. Below that, both paths read "tied" —
+            // this CPU duration. Below that, both paths read "tied",
             // matches what you'd see in a profiler trace.
-            const cpuRatioStr = cpuRatio > 5 ? `−${cpuRatio}%` : "tied";
+            const cpuRatioStr = cpuRatio > 5 ? `-${cpuRatio}%` : "tied";
             return (
               <g class="xvoc-group">
                 <text x={xvocCpuPlotX0 - 14} y={yGroup + 32} text-anchor="end" class="bar-label">
@@ -515,7 +515,7 @@ const toolBars = [
         </svg>
       </div>
 
-      <h4 class="bench-subhead bench-subhead--secondary">Wire bytes &mdash; the bandwidth the bridge has to ingest</h4>
+      <h4 class="bench-subhead bench-subhead--secondary">Wire bytes (the bandwidth the bridge has to ingest)</h4>
       <p class="bench-subhead-note">What the bridge has to receive before any translation can run. Network-bound: the slower the link, the more this dominates response time on top of the bridge CPU above.</p>
 
       <div class="bench-chart">
@@ -553,7 +553,7 @@ const toolBars = [
         (<strong>10.9&nbsp;ms &rarr; 7.7&nbsp;ms</strong>, ~30% less CPU)
         and ingests <strong>15&times;</strong> fewer wire bytes
         (<strong>10.4&nbsp;KB &rarr; 709&nbsp;B</strong>) along the way.
-        The CPU win is the irreducible cost &mdash; the bridge skips
+        The CPU win is the irreducible cost. The bridge skips
         JSON-SSE parsing and BPE-from-scratch, and runs Translator's
         word-boundary-buffered re-tokenize instead. The wire win
         compounds it on slow links: on a 10&nbsp;Mbps mobile uplink
@@ -568,11 +568,11 @@ const toolBars = [
     <article class="bench-card">
       <header class="bench-card__head">
         <div>
-          <h3 class="bench-card__title">Agent loops &mdash; end-to-end tool dispatch</h3>
+          <h3 class="bench-card__title">Agent loops (end-to-end tool dispatch)</h3>
           <p class="bench-card__sub">codec-sglang:v0.5.0 &middot; Qwen2.5-0.5B &middot; prompt &rarr; model emits tool call &rarr; real dispatch &rarr; tool result &rarr; final answer</p>
         </div>
         <div class="bench-card__hero">
-          <span class="bench-card__hero-num">16.9&ndash;18.0&times;</span>
+          <span class="bench-card__hero-num">16.9-18.0&times;</span>
           <span class="bench-card__hero-cap">wire reduction across three tool surfaces</span>
         </div>
       </header>
@@ -613,8 +613,8 @@ const toolBars = [
 
         <div class="agent-leaf-callout">
           <header>
-            <span class="agent-leaf-tag">+ MCP leaf-mode &mdash; tool-result-side axis</span>
-            <p>Complementary to the rows above (those measure the model-emission side &mdash; ToolWatcher fires on raw IDs in the inference stream). Leaf measures the <em>tool-result</em> hop: a Codec-aware tool ships token IDs in <code>_meta['ai.codec/leaf-tokenization']</code> alongside its text so the consumer reads <code>ids</code> directly instead of re-tokenizing.</p>
+            <span class="agent-leaf-tag">+ MCP leaf-mode (tool-result-side axis)</span>
+            <p>Complementary to the rows above (those measure the model-emission side; ToolWatcher fires on raw IDs in the inference stream). Leaf measures the <em>tool-result</em> hop: a Codec-aware tool ships token IDs in <code>_meta['ai.codec/leaf-tokenization']</code> alongside its text so the consumer reads <code>ids</code> directly instead of re-tokenizing.</p>
           </header>
           <div class="table-scroll">
           <table class="agent-loop-table agent-loop-table--leaf">
@@ -643,13 +643,13 @@ const toolBars = [
                 <td><strong>delta</strong></td>
                 <td class="num"><strong>+211 bytes</strong><br/><span class="agent-loop-note">leaf 3&times; larger on wire</span></td>
                 <td class="num win"><strong>12.4&times; faster</strong></td>
-                <td class="num">&mdash;</td>
+                <td class="num">n/a</td>
               </tr>
             </tbody>
           </table>
           </div>
           <p class="agent-loop-note agent-loop-note--block">
-            The leaf <code>_meta</code> envelope is a fixed ~210-byte cost per text block; the consumer-CPU savings scale linearly with text length. The wire crossover where leaf&nbsp;&le;&nbsp;plain sits at <strong>~300+ characters per text block</strong> &mdash; timestamps pay a wire tax for the CPU win, while paginated docs / search results / large MCP outputs win on both axes. 20/20 integrity: every leaf sample's <code>ids</code> equal <code>tokenizer.encode(text)</code> under the declared <code>map_id</code>.
+            The leaf <code>_meta</code> envelope is a fixed ~210-byte cost per text block; the consumer-CPU savings scale linearly with text length. The wire crossover where leaf&nbsp;&le;&nbsp;plain sits at <strong>~300+ characters per text block</strong>. Timestamps pay a wire tax for the CPU win, while paginated docs / search results / large MCP outputs win on both axes. 20/20 integrity: every leaf sample's <code>ids</code> equal <code>tokenizer.encode(text)</code> under the declared <code>map_id</code>.
           </p>
         </div>
       </div>
@@ -704,7 +704,7 @@ const toolBars = [
       </div>
 
       <footer class="bench-card__foot">
-        ToolWatcher matches reserved control IDs in the token stream with a single 32-bit compare per token. The text path has to detokenize back to UTF-8 first &mdash; the same work the model just did in reverse, every chunk. <strong>26.7&times;</strong> on this lab box; prior README claim of <strong>~100&times;</strong> was from an undocumented CPU/compiler combination &mdash; the speedup ratio remains in ToolWatcher's favour by <strong>~26&ndash;100&times;</strong> depending on the host, which is the marketing-relevant range. Same advantage shows up in agent loops: a sub-millisecond in-band signal beats a multi-millisecond out-of-band parse on every single tool boundary.
+        ToolWatcher matches reserved control IDs in the token stream with a single 32-bit compare per token. The text path has to detokenize back to UTF-8 first, the same work the model just did in reverse, every chunk. <strong>26.7&times;</strong> on this lab box; prior README claim of <strong>~100&times;</strong> was from an undocumented CPU/compiler combination. The speedup ratio remains in ToolWatcher's favour by <strong>~26-100&times;</strong> depending on the host, which is the marketing-relevant range. Same advantage shows up in agent loops: a sub-millisecond in-band signal beats a multi-millisecond out-of-band parse on every single tool boundary.
       </footer>
     </article>
 
@@ -712,12 +712,12 @@ const toolBars = [
     <article class="bench-card bench-card--cost">
       <header class="bench-card__head">
         <div>
-          <h3 class="bench-card__title">What the bench numbers cost &mdash; in dollars and watts</h3>
+          <h3 class="bench-card__title">What the bench numbers cost, in dollars and watts</h3>
           <p class="bench-card__sub">honest translations from the measured wire/CPU numbers above &middot; public egress rates &middot; published per-platform reply volumes (ChatGPT 2.5B, Claude 900M, Gemini 600M, &hellip;)</p>
         </div>
         <div class="bench-card__hero">
           <span class="bench-card__hero-num">~$400M+/yr</span>
-          <span class="bench-card__hero-cap">cloud egress + Starlink + GPU-on-blocked-prompts saved at worldwide AI scale (heavy-agent baseline &mdash; tool-use + A2A is now default across Claude, ChatGPT, Gemini)</span>
+          <span class="bench-card__hero-cap">cloud egress + Starlink + GPU-on-blocked-prompts saved at worldwide AI scale (heavy-agent baseline; tool-use + A2A is now default across Claude, ChatGPT, Gemini)</span>
         </div>
       </header>
 
@@ -735,10 +735,10 @@ const toolBars = [
         <section class="cost-cell">
           <header class="cost-cell__head">
             <span class="cost-cell__tag">cloud egress</span>
-            <h4>AWS S3 outbound @ $0.09/GB &mdash; compound rate</h4>
+            <h4>AWS S3 outbound @ $0.09/GB (compound rate)</h4>
           </header>
           <p class="cost-cell__body">
-            A 2K-token chat reply ships 485&nbsp;KB JSON-SSE vs 291&nbsp;B Codec on sglang &mdash; but per visible user reply, real bytes-out are <strong>~4&times;</strong> that because every major AI platform now defaults to tool-use + agent-to-agent: initial response + final response + 2&ndash;3 tool requests/results + sub-agent handoffs that span regions. The "single chat reply" era is over &mdash; Claude Code, ChatGPT-with-tools, Gemini-Agentic are all multi-hop by design.
+            A 2K-token chat reply ships 485&nbsp;KB JSON-SSE vs 291&nbsp;B Codec on sglang, but per visible user reply, real bytes-out are <strong>~4&times;</strong> that because every major AI platform now defaults to tool-use + agent-to-agent: initial response + final response + 2-3 tool requests/results + sub-agent handoffs that span regions. The "single chat reply" era is over. Claude Code, ChatGPT-with-tools, and Gemini-Agentic are all multi-hop by design.
           </p>
           <table class="cost-table">
             <thead><tr><th>Scope</th><th class="num">Replies/day</th><th class="num">Chat-only floor</th><th class="num win">Heavy-agent baseline (~4&times;)</th></tr></thead>
@@ -751,7 +751,7 @@ const toolBars = [
             </tbody>
           </table>
           <p class="cost-cell__foot">
-            Chat-only floor: 485&nbsp;KB JSON-SSE per reply &times; replies/day &times; $0.09/GB AWS S3. Heavy-agent baseline multiplies by ~4&times; for the topology that's now default at every major provider &mdash; multi-tool dispatch, A2A handoffs, sub-agent invocations, RAG context retrieval all crossing egress. Extreme deep-research / sub-agent-heavy flows push to 6-8&times; ($480-640M/yr); only legacy chat-only deployments hit the floor. GCP + Azure egress are in the same ballpark ($0.08-$0.12/GB).
+            Chat-only floor: 485&nbsp;KB JSON-SSE per reply &times; replies/day &times; $0.09/GB AWS S3. Heavy-agent baseline multiplies by ~4&times; for the topology that's now default at every major provider (multi-tool dispatch, A2A handoffs, sub-agent invocations, and RAG context retrieval all crossing egress). Extreme deep-research / sub-agent-heavy flows push to 6-8&times; ($480-640M/yr); only legacy chat-only deployments hit the floor. GCP + Azure egress are in the same ballpark ($0.08-$0.12/GB).
           </p>
         </section>
 
@@ -773,7 +773,7 @@ const toolBars = [
             </tbody>
           </table>
           <p class="cost-cell__foot">
-            Per-response cost is tiny on a phone; the unit you can intuit comes from multiplying by the user base. <strong>~20M Claude users &times; ~50 mobile chat replies/day each</strong> &asymp; 1B replies/day across a mobile fleet: ~194&nbsp;MJ vs ~0.12&nbsp;MJ on radio links &mdash; <strong>~54&nbsp;kWh/day</strong> saved at the airlink alone, about <strong>~1.8 average US households' daily electricity</strong> (EIA ~30&nbsp;kWh/household-day), plus the per-user battery + data-cap relief. The full non-GPU energy delta (radio + network + client CPU) is bigger &mdash; see the power+latency card below.
+            Per-response cost is tiny on a phone; the unit you can intuit comes from multiplying by the user base. <strong>~20M Claude users &times; ~50 mobile chat replies/day each</strong> &asymp; 1B replies/day across a mobile fleet: ~194&nbsp;MJ vs ~0.12&nbsp;MJ on radio links, <strong>~54&nbsp;kWh/day</strong> saved at the airlink alone, about <strong>~1.8 average US households' daily electricity</strong> (EIA ~30&nbsp;kWh/household-day), plus the per-user battery + data-cap relief. The full non-GPU energy delta (radio + network + client CPU) is bigger. See the power+latency card below.
           </p>
         </section>
 
@@ -787,8 +787,8 @@ const toolBars = [
             Two measured points from the bench section above, both worth real CPU on the consumer side:
           </p>
           <ul class="cost-bullets">
-            <li><strong>ToolWatcher</strong> &mdash; <code>2.08 ns/token</code> (single 32-bit compare) vs <code>55.42 ns/token</code> for detokenize+regex match. <strong>26.7&times;</strong> less CPU on every tool-detection pass.</li>
-            <li><strong>mcp-leaf</strong> &mdash; <code>0.004 ms</code> meta-read vs <code>0.052 ms</code> BPE tokenize per tool result. <strong>12.4&times;</strong> less CPU per tool call where the result includes <code>_meta['ai.codec/leaf-tokenization']</code>.</li>
+            <li><strong>ToolWatcher</strong>, <code>2.08 ns/token</code> (single 32-bit compare) vs <code>55.42 ns/token</code> for detokenize+regex match. <strong>26.7&times;</strong> less CPU on every tool-detection pass.</li>
+            <li><strong>mcp-leaf</strong>, <code>0.004 ms</code> meta-read vs <code>0.052 ms</code> BPE tokenize per tool result. <strong>12.4&times;</strong> less CPU per tool call where the result includes <code>_meta['ai.codec/leaf-tokenization']</code>.</li>
           </ul>
           <p class="cost-cell__foot">
             Per call it's microseconds. At fleet scale (100M consumers &times; 100 tool-bearing turns/day) the agent-mesh saves on the order of <strong>~1,000 CPU-hours/day</strong> across the consumer fleet. On a single laptop running an agent loop locally: less fan noise, longer battery.
@@ -802,7 +802,7 @@ const toolBars = [
             <h4>The one place Codec actually saves GPU $</h4>
           </header>
           <p class="cost-cell__body">
-            Codec-aware clients with <a href="/docs/web-safety/">web-safety</a> enabled refuse doomed prompts locally &mdash; policy violations, safety-policy mismatches, malformed payloads &mdash; before any wire round-trip. Those requests never reach the GPU. At ~10% client-side block rate on ~5B daily requests = ~500M GPU requests/day avoided.
+            Codec-aware clients with <a href="/docs/web-safety/">web-safety</a> enabled refuse doomed prompts locally (policy violations, safety-policy mismatches, malformed payloads) before any wire round-trip. Those requests never reach the GPU. At ~10% client-side block rate on ~5B daily requests = ~500M GPU requests/day avoided.
           </p>
           <table class="cost-table" style="margin-bottom: 0.5rem;">
             <thead><tr><th>Assumption</th><th class="num">Per call</th><th class="num win">At 500M blocks/day</th></tr></thead>
@@ -813,7 +813,7 @@ const toolBars = [
             </tbody>
           </table>
           <p class="cost-cell__foot">
-            This is the <em>only</em> place Codec actually reduces GPU dollars &mdash; not because the model runs faster, but because the request never runs at all. On the ~90% of requests that DO reach the GPU, compute is unchanged. ~$50&ndash;100M/yr is the defensible range at 10% block rate; more aggressive client-side dedup / safety / format-validation pushes it higher.
+            This is the <em>only</em> place Codec actually reduces GPU dollars, not because the model runs faster, but because the request never runs at all. On the ~90% of requests that DO reach the GPU, compute is unchanged. ~$50-100M/yr is the defensible range at 10% block rate; more aggressive client-side dedup / safety / format-validation pushes it higher.
           </p>
         </section>
 
@@ -827,20 +827,20 @@ const toolBars = [
             The model still runs at the same TPS. Codec doesn't accelerate token generation, doesn't change weights, doesn't change KV-cache footprint. <strong>If you're GPU-bound, Codec is invisible to your $/token.</strong>
           </p>
           <p class="cost-cell__body">
-            What it DOES reduce on the server: response-side <em>serialize</em> + UTF-8 encode + per-token JSON envelope. That's typically 1&ndash;5% of server CPU on a busy node and dominates only at high concurrency. The practical effect is the <em>concurrent-request ceiling per GPU</em> moves up &mdash; lab measurements on sglang show ~5&ndash;10% more sustained concurrent streams before TTFB degrades, because the response-builder thread isn't UTF-8-encoding every token. That translates to fewer GPUs needed to hit the same QPS target, not faster individual responses.
+            What it DOES reduce on the server: response-side <em>serialize</em> + UTF-8 encode + per-token JSON envelope. That's typically 1-5% of server CPU on a busy node and dominates only at high concurrency. The practical effect is the <em>concurrent-request ceiling per GPU</em> moves up. Lab measurements on sglang show ~5-10% more sustained concurrent streams before TTFB degrades, because the response-builder thread isn't UTF-8-encoding every token. That translates to fewer GPUs needed to hit the same QPS target, not faster individual responses.
           </p>
           <p class="cost-cell__foot cost-cell__foot--caveat">
-            Caveat: this is observation from the bench rig, not a controlled GPU-utilisation A/B against vanilla. Treat as directional &mdash; the safe claim is "Codec doesn't slow down inference and removes a known serialize bottleneck at concurrency." We do NOT claim a $/token reduction on the model itself.
+            Caveat: this is observation from the bench rig, not a controlled GPU-utilisation A/B against vanilla. Treat as directional. The safe claim is "Codec doesn't slow down inference and removes a known serialize bottleneck at concurrency." We do NOT claim a $/token reduction on the model itself.
           </p>
         </section>
       </div>
 
       <p class="cost-cell__body" style="margin-top: 1.5rem;">
-        <strong>What about the energy / CO&#8322; story?</strong> Codec does reduce non-GPU CPU + network electricity at every detokenize/retokenize/parse cycle that gets eliminated. At realistic heavy-agent workflow assumptions the savings work out to roughly <strong>60-200 cars-equivalent of CO&#8322; per year today, ~250-800 by 2030</strong> &mdash; real but small compared to the dollar + accessibility + IoT framings above. We don't lead with this; the methodology + reproducible harness live at <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/docs/ENERGY_METHODOLOGY.md"><code>packages/bench/docs/ENERGY_METHODOLOGY.md</code></a> + <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/scripts/energy_bench.py"><code>packages/bench/scripts/energy_bench.py</code></a> for anyone who wants to plug in their own conversion-event count, per-byte tokenizer cost, and blocked-prompt rate.
+        <strong>What about the energy / CO&#8322; story?</strong> Codec does reduce non-GPU CPU + network electricity at every detokenize/retokenize/parse cycle that gets eliminated. At realistic heavy-agent workflow assumptions the savings work out to roughly <strong>60-200 cars-equivalent of CO&#8322; per year today, ~250-800 by 2030</strong>, real but small compared to the dollar + accessibility + IoT framings above. We don't lead with this; the methodology + reproducible harness live at <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/docs/ENERGY_METHODOLOGY.md"><code>packages/bench/docs/ENERGY_METHODOLOGY.md</code></a> + <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/scripts/energy_bench.py"><code>packages/bench/scripts/energy_bench.py</code></a> for anyone who wants to plug in their own conversion-event count, per-byte tokenizer cost, and blocked-prompt rate.
       </p>
 
       <footer class="bench-card__foot">
-        Source numbers: cross-stack matrix (wire bytes), <code>leaf-live.ts</code> (consumer CPU), <code>bench_watcher.c</code> (ToolWatcher ns/token). Egress rates: <a href="https://aws.amazon.com/s3/pricing/" rel="noopener">AWS S3 standard tier</a>; <a href="https://cloud.google.com/storage/pricing#network-egress" rel="noopener">GCP equivalent</a>. All cost translations are back-of-envelope from public rates &times; measured bytes &mdash; production deployments should re-run with their own egress contract + traffic mix.
+        Source numbers: cross-stack matrix (wire bytes), <code>leaf-live.ts</code> (consumer CPU), <code>bench_watcher.c</code> (ToolWatcher ns/token). Egress rates: <a href="https://aws.amazon.com/s3/pricing/" rel="noopener">AWS S3 standard tier</a>; <a href="https://cloud.google.com/storage/pricing#network-egress" rel="noopener">GCP equivalent</a>. All cost translations are back-of-envelope from public rates &times; measured bytes. Production deployments should re-run with their own egress contract + traffic mix.
       </footer>
     </article>
 
@@ -848,7 +848,7 @@ const toolBars = [
     <article class="bench-card bench-card--access">
       <header class="bench-card__head">
         <div>
-          <h3 class="bench-card__title">Accessibility &mdash; who can use AI when the wire shrinks 1,000&times;</h3>
+          <h3 class="bench-card__title">Accessibility (who can use AI when the wire shrinks 1,000&times;)</h3>
           <p class="bench-card__sub">AI as utility vs AI as luxury &middot; the populations Codec brings inside the door</p>
         </div>
         <div class="bench-card__hero">
@@ -858,7 +858,7 @@ const toolBars = [
       </header>
 
       <p class="cost-lede">
-        <strong>JSON-SSE makes AI a rich-country product.</strong> Each real AI request actually moves ~4&nbsp;MB across the wire (~8 wire round-trips &times; bidirectional; the heavy-agent baseline the cost card uses) &mdash; fine on US fibre, a luxury where mobile data costs $2&ndash;10/GB, a no-show on satellite or weak cell. Codec at ~2.4&nbsp;KB per request works in all of those places at the same TTFB.
+        <strong>JSON-SSE makes AI a rich-country product.</strong> Each real AI request actually moves ~4&nbsp;MB across the wire (~8 wire round-trips &times; bidirectional; the heavy-agent baseline the cost card uses), fine on US fibre, a luxury where mobile data costs $2-10/GB, a no-show on satellite or weak cell. Codec at ~2.4&nbsp;KB per request works in all of those places at the same TTFB.
       </p>
 
       <h4 class="bench-subhead">Per-AI-request data cost across the world</h4>
@@ -877,20 +877,20 @@ const toolBars = [
           <tbody>
             <tr><td>US, postpaid mobile add'l</td>           <td class="num">~$10</td>    <td class="num">$0.040</td>  <td class="num win">$0.000024</td></tr>
             <tr><td>India, prepaid mobile</td>               <td class="num">~$0.20</td>  <td class="num">$0.0008</td>  <td class="num win">$0.0000005</td></tr>
-            <tr><td>Kenya / Sub-Saharan Africa avg</td>      <td class="num">~$2&ndash;5</td><td class="num">$0.008&ndash;0.020</td><td class="num win">~$0.000005&ndash;0.000012</td></tr>
+            <tr><td>Kenya / Sub-Saharan Africa avg</td>      <td class="num">~$2-5</td><td class="num">$0.008-0.020</td><td class="num win">~$0.000005-0.000012</td></tr>
             <tr><td><strong>Starlink Roam add'l data</strong></td>           <td class="num">~$2</td>      <td class="num">$0.008</td>  <td class="num win">$0.000005</td></tr>
-            <tr><td><strong>Starlink Mobile Priority overage</strong></td>   <td class="num">~$1&ndash;2</td>   <td class="num">$0.004&ndash;0.008</td><td class="num win">~$0.000005</td></tr>
+            <tr><td><strong>Starlink Mobile Priority overage</strong></td>   <td class="num">~$1-2</td>   <td class="num">$0.004-0.008</td><td class="num win">~$0.000005</td></tr>
             <tr><td><strong>Starlink Maritime Mobile Priority</strong></td>  <td class="num">~$10</td>     <td class="num">$0.040</td>  <td class="num win">$0.000024</td></tr>
-            <tr><td>In-flight Wi-Fi (Gogo / Viasat)</td>     <td class="num">~$15&ndash;30/hr</td><td class="num">~$0.80</td><td class="num win">~$0.0005</td></tr>
-            <tr class="agent-loop-delta"><td><strong>Iridium satellite (legacy maritime)</strong></td> <td class="num">~$5&ndash;15/MB</td><td class="num"><strong>~$20&ndash;60</strong></td><td class="num win"><strong>$0.012&ndash;0.036</strong></td></tr>
+            <tr><td>In-flight Wi-Fi (Gogo / Viasat)</td>     <td class="num">~$15-30/hr</td><td class="num">~$0.80</td><td class="num win">~$0.0005</td></tr>
+            <tr class="agent-loop-delta"><td><strong>Iridium satellite (legacy maritime)</strong></td> <td class="num">~$5-15/MB</td><td class="num"><strong>~$20-60</strong></td><td class="num win"><strong>$0.012-0.036</strong></td></tr>
           </tbody>
         </table>
       </div>
       <p class="bench-subhead-note" style="margin-top: 0.75rem;">
-        Bottom row is the dramatic one: at Iridium maritime rates, a single agentic AI request bills <strong>$20&ndash;60 just for envelopes</strong>. Same answer on Codec wire bills under 4 cents. That's not a small efficiency win &mdash; it's the difference between "AI on this connection" and "AI is impossible on this connection."
+        Bottom row is the dramatic one: at Iridium maritime rates, a single agentic AI request bills <strong>$20-60 just for envelopes</strong>. Same answer on Codec wire bills under 4 cents. That's not a small efficiency win. It's the difference between "AI on this connection" and "AI is impossible on this connection."
       </p>
 
-      <h4 class="bench-subhead bench-subhead--secondary">Starlink &mdash; "pay-per-byte AI" at fleet scale</h4>
+      <h4 class="bench-subhead bench-subhead--secondary">Starlink ("pay-per-byte AI" at fleet scale)</h4>
       <p class="bench-subhead-note">Starlink's metered tiers (Roam add'l, Mobile Priority overage, Maritime Priority) make the per-byte savings show up as a line-item dollar figure on the customer's bill, every month.</p>
 
       <div class="power-grid">
@@ -909,21 +909,21 @@ const toolBars = [
             <tr><td>Remote homestead remote-work (300 requests/day)</td>       <td class="num">~9K</td>     <td class="num">Roam $2/GB</td>      <td class="num">$72/mo</td>      <td class="num win">~$72/mo / ~$865/yr</td></tr>
             <tr><td>Offshore vessel, 20-crew running AI agents (~1K req/day)</td><td class="num">~30K</td> <td class="num">Maritime $10/GB</td> <td class="num">$1,200/mo</td>   <td class="num win"><strong>~$1.2K/mo / ~$14.4K/yr per vessel</strong></td></tr>
             <tr><td>Mining / oil-rig field ops, 100 users (~5K req/day)</td>   <td class="num">~150K</td>   <td class="num">Maritime $10/GB</td> <td class="num">$6,000/mo</td>   <td class="num win"><strong>~$6K/mo / ~$72K/yr per site</strong></td></tr>
-            <tr class="agent-loop-delta"><td><strong>Starlink fleet estimate &mdash; ~1M subs on metered tiers running heavy-agent AI</strong></td><td class="num"><strong>~3B</strong></td><td class="num"><strong>blended ~$2&ndash;3/GB</strong></td><td class="num"><strong>~$12M/mo</strong></td><td class="num win"><strong>~$150M+/yr Starlink bandwidth saved</strong></td></tr>
+            <tr class="agent-loop-delta"><td><strong>Starlink fleet estimate (~1M subs on metered tiers running heavy-agent AI)</strong></td><td class="num"><strong>~3B</strong></td><td class="num"><strong>blended ~$2-3/GB</strong></td><td class="num"><strong>~$12M/mo</strong></td><td class="num win"><strong>~$150M+/yr Starlink bandwidth saved</strong></td></tr>
           </tbody>
         </table>
       </div>
 
       <p class="cost-cell__body" style="margin-top: 1rem;">
-        <strong>The big number isn't consumer Starlink &mdash; it's fleet deployments.</strong> An offshore vessel running heavy-agent AI tools through Starlink Maritime at $10/GB now pays ~$1,200/month <em>just for the JSON-SSE round-trip overhead</em> on a 20-crew, 1K-request/day workload. Drop that to Codec wire and the same workload bills out under $1/month &mdash; a $14K/year line item per vessel that goes away. A maritime operator running 100 vessels: <strong>$1.4M/year</strong> of Starlink Maritime bandwidth invoiced for envelopes. Aviation customers ($2K&ndash;25K/month all-in plans) don't see a per-GB line item but get many more concurrent AI sessions on the same priority pool. <a href="https://www.starlink.com/business" rel="noopener">Starlink Business / Maritime / Aviation</a> tariffs are public. Numbers scale with the multi-round-trip multiplier &mdash; chat-only deployments are 4&times; smaller, deep-research / sub-agent-heavy flows push higher.
+        <strong>The big number isn't consumer Starlink. It's fleet deployments.</strong> An offshore vessel running heavy-agent AI tools through Starlink Maritime at $10/GB now pays ~$1,200/month <em>just for the JSON-SSE round-trip overhead</em> on a 20-crew, 1K-request/day workload. Drop that to Codec wire and the same workload bills out under $1/month, a $14K/year line item per vessel that goes away. A maritime operator running 100 vessels: <strong>$1.4M/year</strong> of Starlink Maritime bandwidth invoiced for envelopes. Aviation customers ($2K-25K/month all-in plans) don't see a per-GB line item but get many more concurrent AI sessions on the same priority pool. <a href="https://www.starlink.com/business" rel="noopener">Starlink Business / Maritime / Aviation</a> tariffs are public. Numbers scale with the multi-round-trip multiplier. Chat-only deployments are 4&times; smaller, deep-research / sub-agent-heavy flows push higher.
       </p>
 
       <p class="cost-cell__body" style="margin-top: 1.25rem;">
-        <strong>Who this brings inside the door:</strong> the <a href="https://www.itu.int/itu-d/reports/statistics/facts-figures-2024/" rel="noopener">ITU's 2024 Facts &amp; Figures</a> puts ~2.6 billion people offline entirely and another ~2&ndash;3 billion online via slow or expensive mobile-only connections; <a href="https://a4ai.org/" rel="noopener">A4AI's affordability index</a> flags 1&nbsp;GB of mobile data as costing &gt;5% of monthly income across most of sub-Saharan Africa and parts of Asia. JSON-SSE at ~4&nbsp;MB per heavy-agent AI request (the actual real-world transaction size, both directions, all round-trips) prices those users out; Codec at ~2.4&nbsp;KB per request pushes per-request cost into rounding error in any region, on any connection, on any device. The Response Time card below shows where JSON-SSE crosses from "sluggish" to "unusable" while Codec keeps working &mdash; mobile 4G to 2G/EDGE to satellite voice link, all viable. Plus: $50 Android phones can run agent loops on Codec frames where JSON-SSE parse + re-tokenize would burn the battery.
+        <strong>Who this brings inside the door:</strong> the <a href="https://www.itu.int/itu-d/reports/statistics/facts-figures-2024/" rel="noopener">ITU's 2024 Facts &amp; Figures</a> puts ~2.6 billion people offline entirely and another ~2-3 billion online via slow or expensive mobile-only connections; <a href="https://a4ai.org/" rel="noopener">A4AI's affordability index</a> flags 1&nbsp;GB of mobile data as costing &gt;5% of monthly income across most of sub-Saharan Africa and parts of Asia. JSON-SSE at ~4&nbsp;MB per heavy-agent AI request (the actual real-world transaction size, both directions, all round-trips) prices those users out; Codec at ~2.4&nbsp;KB per request pushes per-request cost into rounding error in any region, on any connection, on any device. The Response Time card below shows where JSON-SSE crosses from "sluggish" to "unusable" while Codec keeps working, mobile 4G to 2G/EDGE to satellite voice link, all viable. Plus: $50 Android phones can run agent loops on Codec frames where JSON-SSE parse + re-tokenize would burn the battery.
       </p>
 
-      <h4 class="bench-subhead bench-subhead--secondary" style="margin-top: 1.75rem;">And then there's everything that isn't a phone &mdash; IoT &amp; low-bandwidth networks</h4>
-      <p class="bench-subhead-note">There are entire device categories that <em>physically can't fit</em> a JSON-SSE AI conversation in their network budget. Not "too expensive" &mdash; impossible. Codec brings AI to them for the first time.</p>
+      <h4 class="bench-subhead bench-subhead--secondary" style="margin-top: 1.75rem;">And then there's everything that isn't a phone (IoT &amp; low-bandwidth networks)</h4>
+      <p class="bench-subhead-note">There are entire device categories that <em>physically can't fit</em> a JSON-SSE AI conversation in their network budget. Not "too expensive", impossible. Codec brings AI to them for the first time.</p>
 
       <div class="power-grid">
         <table class="cost-table">
@@ -936,26 +936,26 @@ const toolBars = [
             </tr>
           </thead>
           <tbody>
-            <tr><td><strong>LoRaWAN</strong> sensors / smart meters / asset trackers</td>           <td class="num">11&ndash;242 B per uplink, ~handful/day</td>      <td class="num">~20,000&times; too big</td>            <td class="num win"><strong>fits in 1&ndash;2 packets</strong></td></tr>
+            <tr><td><strong>LoRaWAN</strong> sensors / smart meters / asset trackers</td>           <td class="num">11-242 B per uplink, ~handful/day</td>      <td class="num">~20,000&times; too big</td>            <td class="num win"><strong>fits in 1-2 packets</strong></td></tr>
             <tr><td><strong>NB-IoT / LTE-M</strong> meters, telematics, wearables, industrial</td>  <td class="num">~hundreds of KB/day total</td>             <td class="num">can't fit one request</td>            <td class="num win"><strong>hundreds of requests/day</strong></td></tr>
             <tr><td><strong>Sigfox</strong> endpoints</td>                                          <td class="num">12 B/msg, 140 msgs/day</td>                <td class="num">doesn't start</td>                    <td class="num win">control-frame responses fit</td></tr>
-            <tr><td><strong>Satellite IoT</strong> &mdash; Iridium SBD, Swarm, Astrocast</td>       <td class="num">$/byte; tens-hundreds of B per msg</td>   <td class="num">economically nonsensical</td>         <td class="num win">inside the cost envelope</td></tr>
-            <tr><td><strong>Mesh</strong> &mdash; Meshtastic, Helium, Reticulum, tactical mesh</td><td class="num">tens to hundreds of bps</td>                <td class="num">unavailable</td>                       <td class="num win">viable</td></tr>
-            <tr><td><strong>Industrial bus</strong> &mdash; Modbus / CAN / BACnet gateways</td>     <td class="num">tight gateway uplink windows</td>          <td class="num">doesn't fit</td>                       <td class="num win">rides through</td></tr>
+            <tr><td><strong>Satellite IoT</strong> (Iridium SBD, Swarm, Astrocast)</td>       <td class="num">$/byte; tens-hundreds of B per msg</td>   <td class="num">economically nonsensical</td>         <td class="num win">inside the cost envelope</td></tr>
+            <tr><td><strong>Mesh</strong> (Meshtastic, Helium, Reticulum, tactical mesh)</td><td class="num">tens to hundreds of bps</td>                <td class="num">unavailable</td>                       <td class="num win">viable</td></tr>
+            <tr><td><strong>Industrial bus</strong> (Modbus / CAN / BACnet gateways)</td>     <td class="num">tight gateway uplink windows</td>          <td class="num">doesn't fit</td>                       <td class="num win">rides through</td></tr>
           </tbody>
         </table>
       </div>
 
       <p class="cost-cell__body" style="margin-top: 0.75rem;">
-        <strong>What this opens up:</strong> smart agriculture with AI-derived irrigation recommendations on a daily LoRaWAN uplink; wildlife / anti-poaching collars with on-the-fly classification over satellite; cold-chain logistics with AI anomaly alerts en route instead of at port arrival; disaster response + field medicine on degraded networks; pipeline / grid / remote-infrastructure predictive maintenance; maritime, aviation, and expedition AI advisories on the satellite link that previously could only carry position pings; smart-city endpoints (parking / lighting / water / waste) running adaptive AI on the same NB-IoT links they already use. These are <strong>massive markets the AI industry has treated as out of scope</strong> &mdash; not because AI can't help them, because <em>JSON envelopes can't reach them</em>.
+        <strong>What this opens up:</strong> smart agriculture with AI-derived irrigation recommendations on a daily LoRaWAN uplink; wildlife / anti-poaching collars with on-the-fly classification over satellite; cold-chain logistics with AI anomaly alerts en route instead of at port arrival; disaster response + field medicine on degraded networks; pipeline / grid / remote-infrastructure predictive maintenance; maritime, aviation, and expedition AI advisories on the satellite link that previously could only carry position pings; smart-city endpoints (parking / lighting / water / waste) running adaptive AI on the same NB-IoT links they already use. These are <strong>massive markets the AI industry has treated as out of scope</strong>, not because AI can't help them, because <em>JSON envelopes can't reach them</em>.
       </p>
 
       <p class="cost-cell__body" style="margin-top: 0.75rem;">
-        The Codec C99 library is small enough for microcontrollers. Six client packages (TypeScript, Python, Rust, Java, .NET, C) cover everything from a phone browser down to a battery-budget LoRaWAN endpoint. <strong>For the first time, AI is something a sensor can call &mdash; not just something the cloud can do <em>to</em> a sensor's data.</strong>
+        The Codec C99 library is small enough for microcontrollers. Six client packages (TypeScript, Python, Rust, Java, .NET, C) cover everything from a phone browser down to a battery-budget LoRaWAN endpoint. <strong>For the first time, AI is something a sensor can call, not just something the cloud can do <em>to</em> a sensor's data.</strong>
       </p>
 
       <footer class="bench-card__foot">
-        Mobile data retail rates: 2024 averages from <a href="https://www.cable.co.uk/mobiles/worldwide-data-pricing/" rel="noopener">cable.co.uk worldwide mobile data pricing</a> (227 countries, public dataset). Satellite + in-flight + Starlink tariffs: published carrier rate cards (Starlink Roam / Mobile Priority / Maritime / Business / Aviation tiers as of 2026). Per-request costs use the <strong>heavy-agent baseline</strong> &mdash; ~8 wire round-trips per visible request &times; bidirectional bytes (request side ~5&ndash;50&nbsp;KB + response side ~485&nbsp;KB JSON-SSE, ~310&nbsp;B Codec at sglang best case) = ~4&nbsp;MB JSON-SSE / ~2.4&nbsp;KB Codec per visible AI request. Same scope as the cost card's compound math. Chat-only deployments hit ~&frac14; these numbers; deep-research / sub-agent-heavy flows go higher. Fleet-scale Starlink estimate assumes ~1M of ~5M total subs on metered tiers running heavy-agent AI at ~100 requests/day blended. The accessibility angle is structural, not contingent on which engine you use.
+        Mobile data retail rates: 2024 averages from <a href="https://www.cable.co.uk/mobiles/worldwide-data-pricing/" rel="noopener">cable.co.uk worldwide mobile data pricing</a> (227 countries, public dataset). Satellite + in-flight + Starlink tariffs: published carrier rate cards (Starlink Roam / Mobile Priority / Maritime / Business / Aviation tiers as of 2026). Per-request costs use the <strong>heavy-agent baseline</strong>, ~8 wire round-trips per visible request &times; bidirectional bytes (request side ~5-50&nbsp;KB + response side ~485&nbsp;KB JSON-SSE, ~310&nbsp;B Codec at sglang best case) = ~4&nbsp;MB JSON-SSE / ~2.4&nbsp;KB Codec per visible AI request. Same scope as the cost card's compound math. Chat-only deployments hit ~&frac14; these numbers; deep-research / sub-agent-heavy flows go higher. Fleet-scale Starlink estimate assumes ~1M of ~5M total subs on metered tiers running heavy-agent AI at ~100 requests/day blended. The accessibility angle is structural, not contingent on which engine you use.
       </footer>
     </article>
 
@@ -963,7 +963,7 @@ const toolBars = [
     <article class="bench-card bench-card--power">
       <header class="bench-card__head">
         <div>
-          <h3 class="bench-card__title">Response time &mdash; what the user feels</h3>
+          <h3 class="bench-card__title">Response time (what the user feels)</h3>
           <p class="bench-card__sub">TTFB unchanged &middot; wire-transfer time goes from dominant to invisible as link speed drops</p>
         </div>
         <div class="bench-card__hero">
@@ -973,7 +973,7 @@ const toolBars = [
       </header>
 
       <p class="cost-lede">
-        <strong>Same scope as the cost card: per real AI request, not per single response.</strong> A modern AI call makes ~8 wire round-trips behind the scenes (user&rarr;API, agent-to-agent, tool calls, tool results, sub-agent, synthesis, final response). Each round-trip pays TTFB &mdash; the per-request totals below are the heavy-agent baseline at 8 round-trips. TTFB itself is unchanged by Codec (the model still runs first); what changes is the payload-transfer time at every hop, which goes from "dominates" to "invisible."
+        <strong>Same scope as the cost card: per real AI request, not per single response.</strong> A modern AI call makes ~8 wire round-trips behind the scenes (user&rarr;API, agent-to-agent, tool calls, tool results, sub-agent, synthesis, final response). Each round-trip pays TTFB. The per-request totals below are the heavy-agent baseline at 8 round-trips. TTFB itself is unchanged by Codec (the model still runs first); what changes is the payload-transfer time at every hop, which goes from "dominates" to "invisible."
       </p>
 
       <h4 class="bench-subhead">Wall-clock per heavy-agent AI request, by link speed</h4>
@@ -989,19 +989,19 @@ const toolBars = [
             </tr>
           </thead>
           <tbody>
-            <tr><td>Datacenter LAN &mdash; 1&nbsp;Gbps</td>      <td class="num">~390 ms</td>     <td class="num win">~360 ms</td></tr>
-            <tr><td>Office Wi-Fi &mdash; 100&nbsp;Mbps</td>      <td class="num">~680 ms</td>     <td class="num win">~360 ms</td></tr>
-            <tr><td>Mobile 4G &mdash; 10&nbsp;Mbps</td>          <td class="num"><strong>~3.5 s</strong></td>    <td class="num win"><strong>~0.4 s</strong></td></tr>
-            <tr><td>Edge / weak mobile &mdash; 1&nbsp;Mbps</td>  <td class="num"><strong>~32 s</strong></td>     <td class="num win"><strong>~0.4 s</strong></td></tr>
-            <tr class="agent-loop-delta"><td><strong>Satellite / IoT &mdash; 256&nbsp;Kbps</strong></td><td class="num"><strong>~2 min</strong></td><td class="num win"><strong>~0.5 s</strong></td></tr>
+            <tr><td>Datacenter LAN (1&nbsp;Gbps)</td>      <td class="num">~390 ms</td>     <td class="num win">~360 ms</td></tr>
+            <tr><td>Office Wi-Fi (100&nbsp;Mbps)</td>      <td class="num">~680 ms</td>     <td class="num win">~360 ms</td></tr>
+            <tr><td>Mobile 4G (10&nbsp;Mbps)</td>          <td class="num"><strong>~3.5 s</strong></td>    <td class="num win"><strong>~0.4 s</strong></td></tr>
+            <tr><td>Edge / weak mobile (1&nbsp;Mbps)</td>  <td class="num"><strong>~32 s</strong></td>     <td class="num win"><strong>~0.4 s</strong></td></tr>
+            <tr class="agent-loop-delta"><td><strong>Satellite / IoT (256&nbsp;Kbps)</strong></td><td class="num"><strong>~2 min</strong></td><td class="num win"><strong>~0.5 s</strong></td></tr>
           </tbody>
         </table>
       </div>
       <p class="bench-subhead-note" style="margin-top: 0.5rem;">
-        The interesting line isn't the speedup ratio &mdash; it's the <em>absolute</em> wall-clock. JSON-SSE on a 1 Mbps edge link takes <strong>half a minute</strong> per agentic AI request. On 256 Kbps satellite it's <strong>2 minutes</strong>. That's unusable. Codec keeps the same workload under half a second on every connection.
+        The interesting line isn't the speedup ratio. It's the <em>absolute</em> wall-clock. JSON-SSE on a 1 Mbps edge link takes <strong>half a minute</strong> per agentic AI request. On 256 Kbps satellite it's <strong>2 minutes</strong>. That's unusable. Codec keeps the same workload under half a second on every connection.
       </p>
 
-      <h4 class="bench-subhead bench-subhead--secondary">Agent loop end-to-end &mdash; measured, not extrapolated</h4>
+      <h4 class="bench-subhead bench-subhead--secondary">Agent loop end-to-end (measured, not extrapolated)</h4>
       <p class="bench-subhead-note">From the v0.4.1 agent-loop bench. Wall-clock includes the model emitting the tool call + dispatch + tool result + final answer.</p>
 
       <div class="power-grid">
@@ -1024,7 +1024,7 @@ const toolBars = [
       </div>
 
       <footer class="bench-card__foot">
-        TTFB numbers from MATRIX.md §4 (Python httpx <code>aiter_raw</code> first-body-byte median). Agent-loop wall-clock from <code>results/2026-05-15T20-00-00Z/agent-loop/</code> &mdash; wire numbers measured, not extrapolated; speedups are real wall-clock from POST to final answer. Per-AI-request totals assume the heavy-agent baseline of ~8 wire round-trips per visible request. Energy and dollar aggregation across the fleet (network electricity, datacenter pressure, cars-off-road equivalence) live in the cost card above &mdash; this card is just about the wall-clock one user feels.
+        TTFB numbers from MATRIX.md §4 (Python httpx <code>aiter_raw</code> first-body-byte median). Agent-loop wall-clock from <code>results/2026-05-15T20-00-00Z/agent-loop/</code>, wire numbers measured, not extrapolated; speedups are real wall-clock from POST to final answer. Per-AI-request totals assume the heavy-agent baseline of ~8 wire round-trips per visible request. Energy and dollar aggregation across the fleet (network electricity, datacenter pressure, cars-off-road equivalence) live in the cost card above. This card is just about the wall-clock one user feels.
       </footer>
     </article>
 
@@ -1251,7 +1251,7 @@ const toolBars = [
   .swatch--codec-gz .swatch__label { color: color-mix(in srgb, var(--control) 80%, var(--fg-muted)); }
   .swatch__sub { color: var(--fg-faint); font-size: 0.85em; }
 
-  /* Chart 1 TTFB pin block — top-right of the chart, paired with the
+  /* Chart 1 TTFB pin block, top-right of the chart, paired with the
      line endpoints so a viewer doesn't mistake the wire collapse for
      a latency tradeoff. */
   .ttfb-pin-bg {
@@ -1283,7 +1283,7 @@ const toolBars = [
      row width; the Codec line is a thin marker bar followed by its label
      OUTSIDE the bar, because at 1,707× the Codec sliver is too tiny to
      hold any text inline. The empty space to the right of the marker bar
-     IS the visualization — that's what 1,707× looks like. */
+     IS the visualization, that's what 1,707× looks like. */
   .bench-engines {
     display: flex;
     flex-direction: column;
@@ -1339,7 +1339,7 @@ const toolBars = [
     border: 1px solid color-mix(in srgb, #6B7280 50%, var(--border));
   }
   .engine-bar--codec {
-    /* Marker bar — no text inside, label sits to the right */
+    /* Marker bar, no text inside, label sits to the right */
     background: var(--control);
     border: 1px solid var(--control);
     height: 1.5rem;
@@ -1614,7 +1614,7 @@ const toolBars = [
     max-width: 100%;
   }
 
-  /* Agent-loop bench card (v0.4.1) — table + leaf-mode callout */
+  /* Agent-loop bench card (v0.4.1), table + leaf-mode callout */
   .agent-loop-wrap { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
   .agent-loop-table {
     width: 100%;

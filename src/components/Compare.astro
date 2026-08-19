@@ -30,10 +30,10 @@ content-type: application/codec`;
     <p class="eyebrow">on the wire</p>
     <h2>Same payload. Different planet.</h2>
     <p class="compare__lede">
-      An LLM doesn't read words &mdash; it reads token IDs. The JSON envelope,
+      An LLM doesn't read words. It reads token IDs. The JSON envelope,
       the UTF-8 string, the per-character escaping: that's all shipping bytes
       the model immediately throws away. Codec ships what the model actually
-      speaks &mdash; whether the sender is a human typing a prompt or
+      speaks, whether the sender is a human typing a prompt or
       another model handing off a context.
     </p>
 
@@ -64,32 +64,32 @@ content-type: application/codec`;
 ))}</code></pre>
         <footer class="card__foot">
           Token IDs that the model already speaks. One control word at the
-          head names the vocab and message role &mdash; that's the only
+          head names the vocab and message role. That's the only
           framing.
         </footer>
       </article>
     </div>
 
     <p class="compare__split-note">
-      v0.4.1 separates two numbers that prior cuts conflated. <strong>§1 protocol-only</strong> is the synthetic-stream bench &mdash; known token-ID corpora run through Codec's encoder + compression libs locally, no engine, no model. <strong>§1b engine-output</strong> is what each engine actually emits at temperature&nbsp;0; ratios depend on what the model decides to generate, not just the protocol. Both numbers are real; they answer different questions.
+      v0.4.1 separates two numbers that prior cuts conflated. <strong>§1 protocol-only</strong> is the synthetic-stream bench (known token-ID corpora run through Codec's encoder + compression libs locally, no engine, no model). <strong>§1b engine-output</strong> is what each engine actually emits at temperature&nbsp;0; ratios depend on what the model decides to generate, not just the protocol. Both numbers are real; they answer different questions.
     </p>
 
     <ul class="compare__bullets">
       <li>
-        <span class="bullet-num">4.8&times;<br/>&ndash;&thinsp;392&times;</span>
+        <span class="bullet-num">4.8&times;<br/>to&thinsp;392&times;</span>
         <span class="bullet-body">
-          <strong>§1 protocol-only</strong> &mdash; synthetic-stream wire reduction at 2&nbsp;K msgpack across token-distribution profiles:
+          <strong>§1 protocol-only</strong>, synthetic-stream wire reduction at 2&nbsp;K msgpack across token-distribution profiles:
           <strong>4.8&times;</strong> on uniform random (worst case),
           <strong>16.6&times;</strong> on low-entropy 50-unique-IDs,
           <strong>392&times;</strong> on cyclic period-10 (best case).
-          Same library, no engine in the loop &mdash; this is the protocol's contribution alone.
+          Same library, no engine in the loop. This is the protocol's contribution alone.
           <a href="https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-15T20-00-00Z/synthetic/wire.json" rel="noopener">wire.json &rarr;</a>
         </span>
       </li>
       <li>
         <span class="bullet-num">1,707&times;<br/>3,868&times;</span>
         <span class="bullet-body">
-          <strong>§1b engine-output</strong> at 2&nbsp;K msgpack+dict-zstd &mdash; what each engine actually produces:
+          <strong>§1b engine-output</strong> at 2&nbsp;K msgpack+dict-zstd, what each engine actually produces:
           <strong>1,707&times;</strong> sglang, <strong>137&times;</strong> vllm, <strong>3,868&times;</strong> llama.cpp fp16. Ratios scale with how compressible the engine's emitted token sequence is at temp&nbsp;0; vllm's sampler emits less compressible output, hence the lower number despite the same protocol.
           <a href="#benchmarks">Receipts &rarr;</a>
         </span>

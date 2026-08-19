@@ -8,11 +8,11 @@
 
 'codec-llamacpp' is the easy way to stand up a Codec-speaking inference server on top of llama.cpp. It's a pre-built Docker image bundling:
 
-• `!'llama-server'`! — statically-linked CUDA binary built from the Codec fork (token-native binary transport on the OpenAI-compatible server, plus server-side ToolWatcher, streaming gzip + brotli + dict-zstd compression, 'Codec-Zstd-Dict' header negotiation, and '/codec/schema' endpoint).
-• `!codec-supervisor`! — the same FastAPI admin sidecar as `[codec-sglang`:/page/codecai/docs/codec-sglang.mu], handling model uploads, Hugging Face pulls, hot-swaps, and reverse-proxying the llama-server backend.
-• `!Static linking`! ('GGML_BACKEND_DL=OFF', 'BUILD_SHARED_LIBS=OFF') — the CUDA backend is compiled into the binary, no '.so' plugins to load at runtime, no 'LD_LIBRARY_PATH' config.
+• `!'llama-server'`!, statically-linked CUDA binary built from the Codec fork (token-native binary transport on the OpenAI-compatible server, plus server-side ToolWatcher, streaming gzip + brotli + dict-zstd compression, 'Codec-Zstd-Dict' header negotiation, and '/codec/schema' endpoint).
+• `!codec-supervisor`!, the same FastAPI admin sidecar as `[codec-sglang`:/page/codecai/docs/codec-sglang.mu], handling model uploads, Hugging Face pulls, hot-swaps, and reverse-proxying the llama-server backend.
+• `!Static linking`! ('GGML_BACKEND_DL=OFF', 'BUILD_SHARED_LIBS=OFF'). The CUDA backend is compiled into the binary, no '.so' plugins to load at runtime, no 'LD_LIBRARY_PATH' config.
 
-This image is `!~3.6 GB`! — an order of magnitude smaller than codec-sglang or codec-vllm because llama.cpp doesn't ship a heavy ML Python stack.
+This image is `!~3.6 GB`!, an order of magnitude smaller than codec-sglang or codec-vllm because llama.cpp doesn't ship a heavy ML Python stack.
 
 >>>Quick start
 
@@ -42,7 +42,7 @@ curl http://localhost:8080/v1/completions \
   -d '{"model":"x","prompt":"Hello","max_tokens":20,"stream":true,"stream_format":"msgpack"}'
 `=
 
-The negotiator honors the spec preference order 'zstd > br > gzip > identity' and picks the smallest. On Qwen2.5-0.5B-Instruct fp16 at 2 K tokens, the dict-zstd path lands at `!140 B`! — `!3,868×`! smaller than the JSON-SSE baseline (529 KB), with TTFB ~40.8 ms (within ~1 ms of the JSON path on the same server).
+The negotiator honors the spec preference order 'zstd > br > gzip > identity' and picks the smallest. On Qwen2.5-0.5B-Instruct fp16 at 2 K tokens, the dict-zstd path lands at `!140 B`!, `!3,868×`! smaller than the JSON-SSE baseline (529 KB), with TTFB ~40.8 ms (within ~1 ms of the JSON path on the same server).
 
 llama-server ignores the 'model' field for routing (single-model-per-process), so '"x"' is fine.
 
@@ -123,8 +123,8 @@ Identical to `[codec-sglang`:/page/codecai/docs/codec-sglang.mu].
 
 >>>See also
 
-• `[codec-sglang`:/page/codecai/docs/codec-sglang.mu] — same image story, sglang backend (best throughput on supported models).
-• `[codec-vllm`:/page/codecai/docs/codec-vllm.mu] — same image story, vLLM backend.
+• `[codec-sglang`:/page/codecai/docs/codec-sglang.mu], same image story, sglang backend (best throughput on supported models).
+• `[codec-vllm`:/page/codecai/docs/codec-vllm.mu], same image story, vLLM backend.
 
 -
 

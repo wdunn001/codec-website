@@ -13,7 +13,7 @@ const docs = defineCollection({
 });
 
 // Customer-facing "What's new" feed. One entry per release-worthy change.
-// The deeper engineering changelog lives in GitHub Releases — every entry
+// The deeper engineering changelog lives in GitHub Releases, every entry
 // here SHOULD link out to the corresponding release for the full commit
 // list, fork SHAs, and image digests.
 //
@@ -23,7 +23,7 @@ const changelog = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/changelog" }),
   schema: z.object({
     title: z.string(),
-    /** ISO date (YYYY-MM-DD). Sort key — newest first. */
+    /** ISO date (YYYY-MM-DD). Sort key, newest first. */
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "date must be ISO YYYY-MM-DD"),
     /** Visual chip on the entry card. */
     kind: z.enum(["feature", "improvement", "fix"]),
@@ -35,7 +35,7 @@ const changelog = defineCollection({
      */
     version: z.string().optional(),
     /**
-     * Outbound links — at least one SHOULD point to the corresponding
+     * Outbound links, at least one SHOULD point to the corresponding
      * GitHub Release (engineering-grade changelog). Optional spec / docs
      * anchors for deep dives.
      */

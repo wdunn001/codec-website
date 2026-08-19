@@ -1,4 +1,4 @@
-`F6cf`!Python — codecai`!`f
+`F6cf`!Python (codecai)`!`f
 
 `F999Async-first binding for Python 3.10+. Decode streams, encode IDs, watch tool calls, translate across vocabs.`f
 
@@ -75,7 +75,7 @@ async with httpx.AsyncClient() as client:
         ...
 `=
 
-`F999┃ `!Why 'client.stream' over 'client.post'?`! 'stream' doesn't buffer the response body — you want each chunk to flow through the decoder as it arrives.`f
+`F999┃ `!Why 'client.stream' over 'client.post'?`! 'stream' doesn't buffer the response body. You want each chunk to flow through the decoder as it arrives.`f
 
 >>>>3. Decode the binary stream
 
@@ -101,7 +101,7 @@ async for frame in decode_msgpack_stream(resp.aiter_raw()):
     print(text, end="", flush=True)
 `=
 
-'Detokenizer' is stateful and `!stream-safe`! — it buffers split UTF-8 sequences across 'render' calls. Pass 'partial=True' while the stream is open; the final call (or any call where you know the stream is done) should be 'partial=False' so the buffer flushes.
+'Detokenizer' is stateful and `!stream-safe`!. It buffers split UTF-8 sequences across 'render' calls. Pass 'partial=True' while the stream is open; the final call (or any call where you know the stream is done) should be 'partial=False' so the buffer flushes.
 
 >>>Encoding (sending IDs, not text)
 
@@ -146,7 +146,7 @@ async for frame in decode_msgpack_stream(resp.aiter_raw()):
             await dispatch(tool, args)
 `=
 
-The watcher matches reserved control IDs with a single 'uint32' compare per token. It never detokenizes — that's the whole point. See `[Tool calling`:/page/codecai/docs/tool-calling.mu] for the agentic-loop pattern.
+The watcher matches reserved control IDs with a single 'uint32' compare per token. It never detokenizes. That's the whole point. See `[Tool calling`:/page/codecai/docs/tool-calling.mu] for the agentic-loop pattern.
 
 >>>Negotiating zstd-with-dict
 
@@ -160,7 +160,7 @@ from codecai import (
     select_zstd_dict_for_response,
 )
 
-# 1. Load whatever dicts you trust — typically fetched from the
+# 1. Load whatever dicts you trust, typically fetched from the
 #    tokenizer map's zstd_dictionaries[] entry, hash-verified.
 with open("qwen2.5-msgpack-v1.dict", "rb") as f:
     msgpack_dict = f.read()
@@ -188,25 +188,25 @@ async with httpx.AsyncClient() as http:
                 resp.headers, loaded_dicts=loaded_dicts,
             )
         except CodecZstdDictError as e:
-            # Server used a dict we don't have — fetch it from the map's
+            # Server used a dict we don't have, fetch it from the map's
             # zstd_dictionaries[] entry whose hash matches, or retry with
             # Accept-Encoding: gzip. Don't try to decompress a guess.
             raise
 
         if zdict_bytes is None:
-            # Not zstd — httpx auto-decompresses gzip/br. Decode normally.
+            # Not zstd, httpx auto-decompresses gzip/br. Decode normally.
             async for frame in decode_msgpack_stream(resp.aiter_raw()):
                 ...
         else:
-            # zstd-with-dict — use a streaming zstd decoder seeded with
+            # zstd-with-dict, use a streaming zstd decoder seeded with
             # the right dict bytes, then feed its output to the codec
             # frame decoder.
             ...
 `=
 
-'select_zstd_dict_for_response' returns the matching dict bytes when the response is 'Content-Encoding: zstd' and the server's 'Codec-Zstd-Dict' header points at a dict you've loaded. Returns 'None' when the response isn't zstd (so your normal gzip / identity path stays untouched). Raises 'CodecZstdDictError' on any of: missing header on a zstd response, malformed 'sha256:' value, hash unknown to your local registry. Wrong-dict zstd produces garbage bytes — failing fast is the only safe option.
+'select_zstd_dict_for_response' returns the matching dict bytes when the response is 'Content-Encoding: zstd' and the server's 'Codec-Zstd-Dict' header points at a dict you've loaded. Returns 'None' when the response isn't zstd (so your normal gzip / identity path stays untouched). Raises 'CodecZstdDictError' on any of: missing header on a zstd response, malformed 'sha256:' value, hash unknown to your local registry. Wrong-dict zstd produces garbage bytes. Failing fast is the only safe option.
 
-The matching server-side helper in sglang and vLLM is 'set_zstd_dict(stream_format, dict_bytes)' — see `[sglang » zstd, with a dict`:/page/codecai/docs/sglang.mu].
+The matching server-side helper in sglang and vLLM is 'set_zstd_dict(stream_format, dict_bytes)'. See `[sglang » zstd, with a dict`:/page/codecai/docs/sglang.mu].
 
 >>>Translating across vocabularies
 
@@ -266,7 +266,7 @@ Yields '("text", str)' for normal output and '("tool", str)' when the model emit
 • `!Pin the map hash.`! Mismatch = supply-chain alarm.
 • `!Use 'client.stream', not 'client.post'.`! Otherwise the entire response buffers in memory.
 • `!Reuse 'Detokenizer' and 'BPETokenizer'`! across requests; both are stateless across-stream (the detokenizer's buffer resets at each new stream).
-• `!Async ergonomics.`! Wrap the decode loop in a 'try/finally' if you need to clean up — 'aiter_raw()' doesn't auto-close.
+• `!Async ergonomics.`! Wrap the decode loop in a 'try/finally' if you need to clean up. 'aiter_raw()' doesn't auto-close.
 
 >>>See also
 

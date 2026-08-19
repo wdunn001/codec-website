@@ -10,9 +10,9 @@ Servers advertise the active zstd dict on the wire; clients fetch it once and de
 
 The pre-trained zstd dictionary mechanism just got the missing piece: a 'Codec-Zstd-Dict: sha256:…' response header so a client can verify the dict it loaded matches what the server compressed against.
 
-A maintainer publishes 'zstd_dictionaries[]' entries on their tokenizer map — keyed by wire format (msgpack / protobuf) for text streams, or by '(format, pipeline)' for v0.3 latent streams. A client loads the matching dict once at session open and reuses it for every frame. Mismatched dict ID is a fail-closed wire error.
+A maintainer publishes 'zstd_dictionaries[]' entries on their tokenizer map, keyed by wire format (msgpack / protobuf) for text streams, or by '(format, pipeline)' for v0.3 latent streams. A client loads the matching dict once at session open and reuses it for every frame. Mismatched dict ID is a fail-closed wire error.
 
-Latent dicts are keyed by '(format, pipeline)' because the byte distribution of 'int8' latents is wildly different from 'delta+int8' residuals — a single dict can't compress both. The map schema enforces this; servers MUST NOT respond with 'Content-Encoding: zstd' unless they have a dict whose '(format, pipeline)' matches the response.
+Latent dicts are keyed by '(format, pipeline)' because the byte distribution of 'int8' latents is wildly different from 'delta+int8' residuals. A single dict can't compress both. The map schema enforces this; servers MUST NOT respond with 'Content-Encoding: zstd' unless they have a dict whose '(format, pipeline)' matches the response.
 
 -
 

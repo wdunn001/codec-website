@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
-  Codec protocol map — three negotiation pathways side-by-side.
+  Codec protocol map, three negotiation pathways side-by-side.
   Source of truth: spec/PROTOCOL.md § "Negotiation pathways at a glance"
   (the same diagram in Mermaid form). When updating either, update both.
 -->
@@ -49,7 +49,7 @@
   <rect class="bg" width="1280" height="820" />
 
   <!-- Title -->
-  <text class="lane" x="640" y="40" text-anchor="middle">Codec — three negotiation pathways</text>
+  <text class="lane" x="640" y="40" text-anchor="middle">Codec, three negotiation pathways</text>
   <text class="legend" x="640" y="62" text-anchor="middle">
     Same client/gateway/engine triangle. Wire frames + response headers differ per pathway.
   </text>
@@ -112,7 +112,7 @@
     <text class="node-text" x="640" y="106">codec-metamcp</text>
     <text class="node-sub"  x="640" y="124">leaf bypass · MCP zstd dict</text>
 
-    <!-- Two downstream tools — pulled apart vertically -->
+    <!-- Two downstream tools, pulled apart vertically -->
     <rect class="node" x="980" y="0"  width="220" height="64" />
     <text class="node-text" x="1090" y="26">Codec-aware tool</text>
     <text class="node-sub"  x="1090" y="44">wrapToolCall(result, meta)</text>

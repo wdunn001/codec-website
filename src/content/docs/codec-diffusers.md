@@ -5,9 +5,9 @@ section: Server
 order: 6
 ---
 
-`codec-diffusers` is a pre-built Docker image of the [HuggingFace diffusers](https://github.com/huggingface/diffusers) reference path with the Codec v0.3 latent transport patch applied. It exposes the same `/v1/images/generations` and `/v1/videos/generations` endpoints as [codec-comfyui](/docs/codec-comfyui/) — the wire shape is byte-identical — but on top of `diffusers` instead of ComfyUI's workflow engine.
+`codec-diffusers` is a pre-built Docker image of the [HuggingFace diffusers](https://github.com/huggingface/diffusers) reference path with the Codec v0.3 latent transport patch applied. It exposes the same `/v1/images/generations` and `/v1/videos/generations` endpoints as [codec-comfyui](/docs/codec-comfyui/), and the wire shape is byte-identical, but it sits on top of `diffusers` instead of ComfyUI's workflow engine.
 
-This image **doubles as the bench/golden perceptual-conformance reference**. The `torch` + `diffusers` + `transformers` versions pinned in this image define the SSIM / PSNR / LPIPS contract every latent bench cell resolves against. Bumping any of them re-pins the perceptual contract — operators tracking conformance across runs MUST pin to a specific image digest, not `:latest`.
+This image **doubles as the bench/golden perceptual-conformance reference**. The `torch` + `diffusers` + `transformers` versions pinned in this image define the SSIM / PSNR / LPIPS contract every latent bench cell resolves against. Bumping any of them re-pins the perceptual contract. Operators tracking conformance across runs MUST pin to a specific image digest, not `:latest`.
 
 The patch is built from the [`wdunn001/diffusers` fork](https://github.com/wdunn001/diffusers/tree/feat/codec-latent-transport) at branch `feat/codec-latent-transport`. `diffusers` is a *library*, not a server, so the fork adds an `examples/codec_server/` FastAPI wrapper that loads any `StableDiffusionPipeline` / `StableVideoDiffusionPipeline` / etc. and serves Codec latent streams.
 
@@ -44,7 +44,7 @@ Response carries the same headers as codec-comfyui: `Codec-Latent-Map`, `Codec-Z
 
 ## Why two latent servers
 
-`codec-comfyui` and `codec-diffusers` are siblings — same wire, same pipelines, same registry. Pick by use case:
+`codec-comfyui` and `codec-diffusers` are siblings, same wire, same pipelines, same registry. Pick by use case:
 
 | Need                                                  | Image            |
 |-------------------------------------------------------|------------------|
@@ -53,7 +53,7 @@ Response carries the same headers as codec-comfyui: `Codec-Latent-Map`, `Codec-Z
 | Custom pipeline (e.g. ControlNet variants, LoRA stacks) easier to script | `codec-diffusers` |
 | Pre-built node graph + queue + visual editor          | `codec-comfyui`  |
 
-The wire format is **identical** between the two — a Codec client can switch upstream without code changes.
+The wire format is **identical** between the two. A Codec client can switch upstream without code changes.
 
 ## Measured wire numbers (2026-05-09 lab run)
 
@@ -64,19 +64,19 @@ First end-to-end latent run against `codec-diffusers:v0.3.4` running SD-1.5 on a
 | 256×256 (4×32×32)  |  8.4 KB |  4.4 KB |  2.4 KB |    **1.9×** |    **3.5×** |
 | 512×512 (4×64×64)  | 32.4 KB | 16.4 KB |  8.4 KB |    **2.0×** |    **3.9×** |
 
-The 512 latent at int8 (16.4 KB) is **~5–10× smaller than JPEG** (web quality 85) and **~90× smaller than raw fp16 pixels** (1.5 MB). Per-pipeline zstd dicts aren't loaded yet — that adds another ~25–40% on top once trained; tracked as the next concrete step. See the [full results](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-09T13-01-55Z/latent) for the methodology.
+The 512 latent at int8 (16.4 KB) is **~5-10× smaller than JPEG** (web quality 85) and **~90× smaller than raw fp16 pixels** (1.5 MB). Per-pipeline zstd dicts aren't loaded yet. That adds another ~25-40% on top once trained; tracked as the next concrete step. See the [full results](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-09T13-01-55Z/latent) for the methodology.
 
 ## Bench / golden role
 
 When the [Codec bench harness](https://github.com/wdunn001/Codec/tree/main/packages/bench) computes perceptual quality (SSIM / PSNR / LPIPS) for a given `(latent_space_id, pipeline)` cell, the reference pixels come from this image, executed against a pinned image digest (the `decoder.canonical_image` field in the [latent-space-map schema](https://github.com/wdunn001/Codec/blob/main/spec/latent-space-map.schema.json)).
 
-Operators reporting bench results MUST pin to the same digest — `wdunn001/codec-diffusers@sha256:…` — that the published latent map references. `:latest` drift is the difference between "we beat last quarter's SSIM" and "we measured a noisier reference."
+Operators reporting bench results MUST pin to the same digest, `wdunn001/codec-diffusers@sha256:…`, that the published latent map references. `:latest` drift is the difference between "we beat last quarter's SSIM" and "we measured a noisier reference."
 
 The `golden-builder` Dockerfile in the Codec repo bumps in lockstep with this image; bumping `torch` or `diffusers` here without bumping `packages/bench/golden-builder/Dockerfile` breaks the conformance gate.
 
 ## Pointing a Codec client at it
 
-Same code as [codec-comfyui's section](/docs/codec-comfyui/#pointing-a-codec-client-at-it) — a single `LatentStreamDecoder` works against either server.
+Same as [codec-comfyui's section](/docs/codec-comfyui/#pointing-a-codec-client-at-it), where a single `LatentStreamDecoder` works against either server.
 
 ## Source &amp; links
 
@@ -87,6 +87,6 @@ Same code as [codec-comfyui's section](/docs/codec-comfyui/#pointing-a-codec-cli
 
 ## See also
 
-- [codec-comfyui](/docs/codec-comfyui/) — workflow-oriented sibling.
-- [codec-metamcp](/docs/codec-metamcp/) — gateway in front of latent + text + tool servers.
-- [Protocol overview](/docs/protocol/) — the wire format spec.
+- [codec-comfyui](/docs/codec-comfyui/), workflow-oriented sibling.
+- [codec-metamcp](/docs/codec-metamcp/), gateway in front of latent + text + tool servers.
+- [Protocol overview](/docs/protocol/), the wire format spec.

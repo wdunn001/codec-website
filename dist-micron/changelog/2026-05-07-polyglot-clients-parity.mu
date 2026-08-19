@@ -17,7 +17,7 @@ The Codec polyglot client matrix is feature-complete. Every client (TypeScript v
 • Translator (cross-vocab agent handoff)
 • MapLoader (sha256-verified, well-known discovery)
 
-The cross-stack benchmark matrix runs all six clients against all three text engines (sglang, vLLM, llama.cpp) at three prompt sizes — `!6 × 3 × 3 = 54 cells`!, all byte-identical. A single tokenizer-map registry; one wire shape; six languages.
+The cross-stack benchmark matrix runs all six clients against all three text engines (sglang, vLLM, llama.cpp) at three prompt sizes, `!6 × 3 × 3 = 54 cells`!, all byte-identical. A single tokenizer-map registry; one wire shape; six languages.
 
 -
 

@@ -1,19 +1,19 @@
 ---
-title: Tool calling — ToolWatcher
-description: Detect tool-call regions in token-ID streams without detokenizing. 26.7× faster than detokenize+regex on the v0.4.1 lab box (EPYC 8124P / gcc:13); ~26–100× depending on host.
+title: Tool calling (ToolWatcher)
+description: Detect tool-call regions in token-ID streams without detokenizing. 26.7× faster than detokenize+regex on the v0.4.1 lab box (EPYC 8124P / gcc:13); ~26-100× depending on host.
 section: Reference
 order: 1
 ---
 
 The standard "regex-match `<tool_call>...</tool_call>` in the streaming text" approach has a problem: every chunk that arrives over the wire has to be detokenized to UTF-8 first, which means decoding bytes the model just produced as integers, just to scan them as text, just to dispatch on the result.
 
-`ToolWatcher` skips the detokenization. It matches on the **token IDs** of the delimiters &mdash; a single `uint32` compare per token &mdash; and yields events directly from the binary stream.
+`ToolWatcher` skips the detokenization. It matches on the **token IDs** of the delimiters (a single `uint32` compare per token) and yields events directly from the binary stream.
 
 ## How it works
 
 A tokenizer's special tokens (`<tool_call>`, `</tool_call>`, `<|im_start|>`, etc.) have **reserved IDs** that don't appear in any normal text. When the model emits the start delimiter, exactly one ID flows by; ditto the end delimiter. Watching for those IDs is O(1) per token with an integer comparison.
 
-The text-path equivalent has to: pull bytes off the wire, msgpack-decode the IDs, look up each ID in the vocab, concatenate the bytes, parse them as UTF-8, run a regex against the cumulative text, and only then dispatch. That's a lot of work for every chunk that *isn't* a tool call &mdash; which is most of them.
+The text-path equivalent has to: pull bytes off the wire, msgpack-decode the IDs, look up each ID in the vocab, concatenate the bytes, parse them as UTF-8, run a regex against the cumulative text, and only then dispatch. That's a lot of work for every chunk that *isn't* a tool call, which is most of them.
 
 ## The events ToolWatcher yields
 
@@ -23,7 +23,7 @@ type WatcherEvent =
   | { kind: "captured";    ids: Uint32Array };  // contents of a tool-call region
 ```
 
-`passthrough` events are the IDs you forward to the user (or to the next agent). `captured` events are the body of a `<tool_call>...</tool_call>` region with the delimiters stripped &mdash; that's what you detokenize and parse.
+`passthrough` events are the IDs you forward to the user (or to the next agent). `captured` events are the body of a `<tool_call>...</tool_call>` region with the delimiters stripped. That's what you detokenize and parse.
 
 A region that spans multiple frames produces one `captured` event when the closing delimiter arrives, with all the body IDs concatenated.
 
@@ -58,7 +58,7 @@ for await (const frame of decodeStream(resp.body!, "msgpack")) {
       // Forward IDs to the next hop (or detokenize for a human).
       forward(ev.ids);
     } else {
-      // ev.kind === "captured" — the tool body.
+      // ev.kind === "captured", the tool body.
       const body = detok.render(ev.ids);
       const { tool, args } = JSON.parse(body);   // or your tool-format of choice
       const result = await dispatch(tool, args);
@@ -72,7 +72,7 @@ Python looks the same with `watcher.feed(frame.ids)` returning a list of events;
 
 ## When the server pre-segments
 
-If your server runs the [in-server ToolWatcher](/docs/sglang/#server-side-toolwatcher), the server emits Codec frames where tool-call regions are already marked with reserved control IDs. Client-side `ToolWatcher.feed()` still works the same way &mdash; it picks up the server's markers instead of doing the matching itself. Strictly faster, but you don't write different client code.
+If your server runs the [in-server ToolWatcher](/docs/sglang/#server-side-toolwatcher), the server emits Codec frames where tool-call regions are already marked with reserved control IDs. Client-side `ToolWatcher.feed()` still works the same way. It picks up the server's markers instead of doing the matching itself. Strictly faster, but you don't write different client code.
 
 ## Performance
 
@@ -83,7 +83,7 @@ From [RESULTS.md §7](https://github.com/wdunn001/Codec/blob/main/RESULTS.md), `
 | ToolWatcher (uint32 compare)    | **0.61** | 1,648 |
 | Detokenize + regex (text path)  |   60.4   |  16.6 |
 
-**26.7&times; faster** on the v0.4.1 lab box (EPYC 8124P / gcc:13) running [`packages/c/examples/bench_watcher`](https://github.com/wdunn001/Codec/blob/main/packages/c/examples/bench_watcher.c) &mdash; `codec_tool_watcher_feed` at 481&nbsp;Mtok/s vs `codec_detokenizer_render` at 18&nbsp;Mtok/s on a 1&nbsp;M-token stream with 5% region density. Prior README claim of `~100×` was from an undocumented CPU/compiler combination; the speedup remains in ToolWatcher's favour by `~26–100×` depending on host. End-to-end agent benchmarks in [`packages/bench/results/2026-05-15T20-00-00Z/agent-loop/`](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-15T20-00-00Z/agent-loop) show **16.9&ndash;18.0&times; wire-byte reduction** and total speedups from 8.8&times; (in-process tool) to ~neutral (tool-latency-dominated) on real two-turn dispatch loops.
+**26.7&times; faster** on the v0.4.1 lab box (EPYC 8124P / gcc:13) running [`packages/c/examples/bench_watcher`](https://github.com/wdunn001/Codec/blob/main/packages/c/examples/bench_watcher.c), `codec_tool_watcher_feed` at 481&nbsp;Mtok/s vs `codec_detokenizer_render` at 18&nbsp;Mtok/s on a 1&nbsp;M-token stream with 5% region density. Prior README claim of `~100×` was from an undocumented CPU/compiler combination; the speedup remains in ToolWatcher's favour by `~26-100×` depending on host. End-to-end agent benchmarks in [`packages/bench/results/2026-05-15T20-00-00Z/agent-loop/`](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-15T20-00-00Z/agent-loop) show **16.9-18.0&times; wire-byte reduction** and total speedups from 8.8&times; (in-process tool) to ~neutral (tool-latency-dominated) on real two-turn dispatch loops.
 
 ## Custom delimiters
 
@@ -93,10 +93,10 @@ From [RESULTS.md §7](https://github.com/wdunn001/Codec/blob/main/RESULTS.md), `
 const watcher = new ToolWatcher(map, "<json_args>", "</json_args>");
 ```
 
-If the strings don't tokenize to single IDs in your map, the constructor throws &mdash; multi-token delimiters aren't supported (and don't really make sense, since the whole point is one comparison per token).
+If the strings don't tokenize to single IDs in your map, the constructor throws. Multi-token delimiters aren't supported (and don't really make sense, since the whole point is one comparison per token).
 
 ## See also
 
-- [Server — sglang](/docs/sglang/) &mdash; server-side pre-segmentation.
-- [TypeScript](/docs/typescript/) / [Python](/docs/python/) / [.NET](/docs/dotnet/) / [C](/docs/c/) &mdash; ToolWatcher in each binding.
-- [bench_watcher.c](https://github.com/wdunn001/Codec/blob/main/packages/c/examples/bench_watcher.c) &mdash; the microbench harness.
+- [Server (sglang)](/docs/sglang/), server-side pre-segmentation.
+- [TypeScript](/docs/typescript/) / [Python](/docs/python/) / [.NET](/docs/dotnet/) / [C](/docs/c/), ToolWatcher in each binding.
+- [bench_watcher.c](https://github.com/wdunn001/Codec/blob/main/packages/c/examples/bench_watcher.c), the microbench harness.

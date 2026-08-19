@@ -1,20 +1,20 @@
-`F6cf`!v0.5.0 — efficiency, observability, and cohort honesty`!`f
+`F6cf`!v0.5.0 (efficiency, observability, and cohort honesty)`!`f
 
 `F9992026-05-18 - v0.5.0 - feature`f
 
 -
 
-Wire-additive over v0.4 (v0.4 → v0.5 happy-path bytes identical). Four new opt-in surfaces — delta-varint stream encoding, discoverable Zstandard dictionaries, GPU-side latent quantize, bolt-on tool dispatcher. 11 client artifacts bumped to 0.5.0 across npm, PyPI, NuGet, crates.io, Maven Central. Engine cohort cut to sglang + vLLM + llama.cpp + ComfyUI + diffusers (TGI dropped). 72/72 wire + 72/72 decode unanimous on the cross-stack matrix; numbers byte-identical to v0.4.1, confirming the wire-additive invariant. Upstream PRs filed at sgl-project/sglang#25544 and vllm-project/vllm#42896, both DCO-signed and through bot review.
+Wire-additive over v0.4 (v0.4 → v0.5 happy-path bytes identical). Four new opt-in surfaces (delta-varint stream encoding, discoverable Zstandard dictionaries, GPU-side latent quantize, bolt-on tool dispatcher). 11 client artifacts bumped to 0.5.0 across npm, PyPI, NuGet, crates.io, Maven Central. Engine cohort cut to sglang + vLLM + llama.cpp + ComfyUI + diffusers (TGI dropped). 72/72 wire + 72/72 decode unanimous on the cross-stack matrix; numbers byte-identical to v0.4.1, confirming the wire-additive invariant. Upstream PRs filed at sgl-project/sglang#25544 and vllm-project/vllm#42896, both DCO-signed and through bot review.
 
 -
 
-v0.5.0 ships four new wire surfaces — all opt-in — without changing the v0.4 happy path. Every existing v0.4 client decodes a v0.5 server byte-for-byte unless it explicitly negotiates a new surface via 'stream_format', 'Accept-Encoding', or a new env var.
+v0.5.0 ships four new wire surfaces, all opt-in, without changing the v0.4 happy path. Every existing v0.4 client decodes a v0.5 server byte-for-byte unless it explicitly negotiates a new surface via 'stream_format', 'Accept-Encoding', or a new env var.
 
 >>>Four new opt-in wire surfaces
 
-`!Delta-varint stream encoding.`! New 'stream_format' values '"msgpack-delta"' and '"protobuf-delta"'. Frames carry 'base_id' plus zigzag-encoded deltas against the prior frame's last identifier; stateless framing preserved. ~10–15% wire reduction pre-zstd, ~3–5% post-zstd. Python reference impl; engine-side emit pending in v0.5.x.
+`!Delta-varint stream encoding.`! New 'stream_format' values '"msgpack-delta"' and '"protobuf-delta"'. Frames carry 'base_id' plus zigzag-encoded deltas against the prior frame's last identifier; stateless framing preserved. ~10-15% wire reduction pre-zstd, ~3-5% post-zstd. Python reference impl; engine-side emit pending in v0.5.x.
 
-`!Discoverable Zstandard dictionaries.`! Engines now publish their pre-trained dicts at '<origin>/.well-known/codec/dicts/<sha256>.zstd'. Hash-pinned: the client MUST verify the bytes hash to the URL component. Closes the v0.4.1 silent-COPY-dicts-drop regression class — dictionary drift now fails loudly (404 or hash-mismatch) instead of falling back silently to identity bytes. Release-checklist §1.7 codifies a four-sub-gate audit; the v0.5 cut actually caught a llama.cpp regression where 'master' was vanilla upstream without the codec patches and the engine was silently serving identity-encoded msgpack.
+`!Discoverable Zstandard dictionaries.`! Engines now publish their pre-trained dicts at '<origin>/.well-known/codec/dicts/<sha256>.zstd'. Hash-pinned: the client MUST verify the bytes hash to the URL component. Closes the v0.4.1 silent-COPY-dicts-drop regression class. Dictionary drift now fails loudly (404 or hash-mismatch) instead of falling back silently to identity bytes. Release-checklist §1.7 codifies a four-sub-gate audit; the v0.5 cut actually caught a llama.cpp regression where 'master' was vanilla upstream without the codec patches and the engine was silently serving identity-encoded msgpack.
 
 `!GPU-side latent quantize fast path.`! 'LatentStreamEncoderOptions.gpu_quantize=True' accepts a CUDA 'torch.Tensor', quantizes on-device, and transfers the int4/int8 result instead of the fp16 latent. ~75% PCIe reduction on int4 SDXL; smaller wins at SD-1.5.
 
@@ -36,11 +36,11 @@ New cross-cohort surfaces: content-aware + per-stack-aware compression picker re
 
 Upstream PRs filed at sgl-project/sglang#25544 (https://github.com/sgl-project/sglang/pull/25544) and vllm-project/vllm#42896 (https://github.com/vllm-project/vllm/pull/42896). Both DCO-signed; both through five gemini-code-assist bot review-fix iterations (struct.unpack bytes path, hardened '_decode_varint' shift-cap, async dispatch, cached registry, manifest dict-shape guard).
 
-'wdunn001/codec-tgi' is `!dropped`! — TGI treated as a dead project; the cohort is now five engines.
+'wdunn001/codec-tgi' is `!dropped`!, TGI treated as a dead project; the cohort is now five engines.
 
 >>>Bench: byte-identical to v0.4.1
 
-The §1 + §1b numbers are unchanged from v0.4.1 — which is exactly what wire-additive is supposed to mean. The §1.7 and §1.9 gates added in this release exist to guarantee that, not change it.
+The §1 + §1b numbers are unchanged from v0.4.1, which is exactly what wire-additive is supposed to mean. The §1.7 and §1.9 gates added in this release exist to guarantee that, not change it.
 
 `!§1b engine-output @ 2K tokens, Codec msgpack + dict-zstd:`!
 
@@ -52,7 +52,7 @@ The §1 + §1b numbers are unchanged from v0.4.1 — which is exactly what wire-
 │ vllm      │ 517.8 KB │     3.9 KB │      `!137×`! │
 └───────────┴──────────┴────────────┴───────────┘
 
-`!§2 cross-language interop:`! `!72/72 wire-unanimous + 72/72 decode-unanimous`! across three engines and six client languages. vllm required 'REPS=4' to median out its documented ~10–20% scheduler variance at T=0; ran clean on the second pass.
+`!§2 cross-language interop:`! `!72/72 wire-unanimous + 72/72 decode-unanimous`! across three engines and six client languages. vllm required 'REPS=4' to median out its documented ~10-20% scheduler variance at T=0; ran clean on the second pass.
 
 >>>IETF Internet-Draft
 
@@ -60,7 +60,7 @@ The §1 + §1b numbers are unchanged from v0.4.1 — which is exactly what wire-
 
 >>>Migration
 
-v0.4.1 → v0.5.0 is non-breaking. Bump the package version; nothing else changes for existing v0.4 consumers. To opt into new surfaces, set the appropriate env var or request field — see the CHANGELOG entry (https://github.com/wdunn001/Codec/blob/main/CHANGELOG.md#v050--2026-05-18) for the per-surface opt-in matrix.
+v0.4.1 → v0.5.0 is non-breaking. Bump the package version; nothing else changes for existing v0.4 consumers. To opt into new surfaces, set the appropriate env var or request field. See the CHANGELOG entry (https://github.com/wdunn001/Codec/blob/main/CHANGELOG.md#v050--2026-05-18) for the per-surface opt-in matrix.
 
 -
 

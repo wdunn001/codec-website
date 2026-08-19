@@ -11,7 +11,7 @@ interface Props {
 }
 
 const { title, description, slug, status = "ready", editUrl } = Astro.props;
-const pageTitle = `${title} — Codec docs`;
+const pageTitle = `${title} | Codec docs`;
 ---
 <Base title={pageTitle} description={description}>
   <div class="docs-shell container">

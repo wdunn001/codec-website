@@ -1,10 +1,10 @@
 ---
-// UseCases — three columns showing where Codec wins, framed by who's
+// UseCases, three columns showing where Codec wins, framed by who's
 // at each end of the wire. Pulled from the cross-stack matrix in
 // packages/bench/results/2026-05-08T01-15-02Z/MATRIX.md.
 //
 // The dict-zstd numbers (354 B at 2 K tokens on sglang) are model-to-model
-// territory — humans never see the bytes, the dict is pre-shared once,
+// territory, humans never see the bytes, the dict is pre-shared once,
 // and msgpack frames compress to a control byte and a delta.
 ---
 
@@ -27,10 +27,10 @@
           <h3>Tokens all the way down</h3>
         </header>
         <p class="uc__body">
-          Models think in tokens. Every middleware in your stack &mdash; gateway, router, log sink &mdash; speaks text, so it detokenizes, JSON-wraps, ships, parses, re-tokenizes &mdash; once per hop, burning CPU and risking KV-cache drift. Codec keeps token IDs as the wire format <em>end-to-end</em>; UTF-8 happens once, at the edge that actually displays text. Same compression options on top (gzip / brotli / dict-zstd). Same framing on every engine; six client languages decode byte-identically.
+          Models think in tokens. Every middleware in your stack (gateway, router, log sink) speaks text, so it detokenizes, JSON-wraps, ships, parses, and re-tokenizes, all once per hop, burning CPU and risking KV-cache drift. Codec keeps token IDs as the wire format <em>end-to-end</em>; UTF-8 happens once, at the edge that actually displays text. Same compression options on top (gzip / brotli / dict-zstd). Same framing on every engine; six client languages decode byte-identically.
         </p>
         <ul class="uc__metrics">
-          <li><span class="uc__num">16&ndash;1700&times;</span><span>less wire (workload-dep.)</span></li>
+          <li><span class="uc__num">16-1700&times;</span><span>less wire (workload-dep.)</span></li>
           <li><span class="uc__num">3</span><span>engines, one wire</span></li>
         </ul>
       </article>
@@ -46,7 +46,7 @@
           attaches token IDs to its result via
           <code>_meta['ai.codec/leaf-tokenization']</code>; the
           <a href="/docs/codec-metamcp/">codec-metamcp gateway</a> forwards them
-          verbatim &mdash; <code>[Codec][leaf]</code> fires, the gateway becomes
+          verbatim. <code>[Codec][leaf]</code> fires, the gateway becomes
           a transparent ID pipe, and the consumer skips its BPE re-tokenize.
           <strong>tools/list</strong> across a 40-tool namespace:
           <strong>21.4&nbsp;KB &rarr; 5.9&nbsp;KB (3.6&times;)</strong>.
@@ -82,7 +82,7 @@
       </article>
     </div>
 
-    <!-- v0.3 latent modality — VAE latents on the wire. -->
+    <!-- v0.3 latent modality, VAE latents on the wire. -->
     <div class="usecases__latent">
       <article class="uc uc--latent">
         <header class="uc__head">
@@ -95,7 +95,7 @@
           instead of decoded pixels. The client runs <code>vae_decode</code>
           locally; pixels never touch the wire. Measured on the lab against
           codec-diffusers running SD-1.5: a 512&times;512 latent at int8 packs
-          to <strong>16.4&nbsp;KB</strong> (~5&ndash;10&times; smaller than
+          to <strong>16.4&nbsp;KB</strong> (~5-10&times; smaller than
           JPEG, ~90&times; smaller than raw fp16 pixels). The int4 pipeline
           halves it again. Pipeline math validates byte-for-byte against
           <a href="https://github.com/wdunn001/Codec/blob/main/spec/PIPELINES.md" rel="noopener">spec/PIPELINES.md</a>.
@@ -107,7 +107,7 @@
       </article>
     </div>
 
-    <!-- @codecai/wire-compress — companion library called out as a small
+    <!-- @codecai/wire-compress, companion library called out as a small
          slim card so it reads as a sibling to (not in competition with)
          the headline primitives above. Copy leads with what it does, not
          which version added it. -->
@@ -118,7 +118,7 @@
           <h3>Smart HTTP compression picker</h3>
         </header>
         <p class="uc__body">
-          <code>@codecai/wire-compress</code> &mdash; <strong>~5&nbsp;KB,
+          <code>@codecai/wire-compress</code>, <strong>~5&nbsp;KB,
           zero deps.</strong> Picks gzip / brotli / dict-zstd / identity
           based on payload size + client support, measured against the
           Codec v0.4.1 wire benchmark. Drop-in for any streaming HTTP
@@ -154,7 +154,7 @@
     gap: 1rem;
   }
   .uc--m2m {
-    /* model-to-model is the headline use case — give it the accent border */
+    /* model-to-model is the headline use case, give it the accent border */
     border-color: color-mix(in srgb, var(--data) 50%, var(--border));
     background:
       radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--data) 8%, transparent), transparent 65%),
@@ -231,7 +231,7 @@
   }
   .uc--m2m .uc__num { color: var(--control); }
 
-  /* v0.3 latent modality block — sits below the three-column grid as a
+  /* v0.3 latent modality block, sits below the three-column grid as a
      full-width call-out, since the latent pathway is the v0.3 headline
      story and deserves its own visual weight rather than being squeezed
      into a 4th column. */
@@ -249,7 +249,7 @@
     color: var(--accent);
   }
 
-  /* @codecai/wire-compress companion card — slim, secondary visual weight
+  /* @codecai/wire-compress companion card, slim, secondary visual weight
      relative to the three primitive cards + the latent block above. It's
      a sibling library, not a fourth primitive, so it gets a subtler frame
      and stacks horizontally on wide screens (tag chip + heading inline). */

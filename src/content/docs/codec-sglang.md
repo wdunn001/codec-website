@@ -1,17 +1,17 @@
 ---
 title: codec-sglang (Docker)
-description: The turnkey path — a pre-built SGLang server with the Codec patches applied and a control plane bolted on, in one GPU container. OpenAI-compatible.
+description: The turnkey path, a pre-built SGLang server with the Codec patches applied and a control plane bolted on, in one GPU container. OpenAI-compatible.
 section: Server
 order: 1
 ---
 
 `codec-sglang` is the easy way to stand up a Codec-speaking inference server. It's a pre-built Docker image bundling:
 
-- **SGLang** with the Codec patches already applied &mdash; token-native binary transport on `/v1/completions`, a server-side ToolWatcher that emits tool-call boundaries on the ID stream, and the full compression stack (gzip + brotli + dict-zstd) negotiated via `Accept-Encoding` per the spec preference order `zstd > br > gzip > identity`.
-- **codec-supervisor** &mdash; a FastAPI admin sidecar that handles model uploads, Hugging Face pulls, hot-swaps, and reverse-proxies the inference backend.
-- All upstream sglang kernels (flash-attn, sgl_kernel, triton) intact &mdash; the patches are applied as an editable overlay.
+- **SGLang** with the Codec patches already applied, token-native binary transport on `/v1/completions`, a server-side ToolWatcher that emits tool-call boundaries on the ID stream, and the full compression stack (gzip + brotli + dict-zstd) negotiated via `Accept-Encoding` per the spec preference order `zstd > br > gzip > identity`.
+- **codec-supervisor**, a FastAPI admin sidecar that handles model uploads, Hugging Face pulls, hot-swaps, and reverse-proxies the inference backend.
+- All upstream sglang kernels (flash-attn, sgl_kernel, triton) intact, the patches are applied as an editable overlay.
 
-If you'd rather build sglang yourself from upstream and apply the Codec patches by hand, see [sglang &mdash; vanilla setup](/docs/sglang/).
+If you'd rather build sglang yourself from upstream and apply the Codec patches by hand, see [sglang vanilla setup](/docs/sglang/).
 
 ## Quick start
 
@@ -39,15 +39,15 @@ curl http://localhost:8080/v1/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"x","prompt":"Hello","max_tokens":20}'
 
-# Codec wire format — msgpack frames of token IDs (with dict-zstd if a dict is loaded)
+# Codec wire format, msgpack frames of token IDs (with dict-zstd if a dict is loaded)
 curl http://localhost:8080/v1/completions \
   -H "Accept-Encoding: zstd, br, gzip" \
   -d '{"model":"x","prompt":"Hello","max_tokens":20,"stream":true,"stream_format":"msgpack"}'
 ```
 
-The full Codec stack on Qwen2.5-0.5B-Instruct at 2&nbsp;K tokens lands at **291&nbsp;bytes** &mdash; **1,707&times;** smaller than the 485&nbsp;KB JSON-SSE baseline, at the same ~45&nbsp;ms TTFB. The wire reduction is essentially free in latency.
+The full Codec stack on Qwen2.5-0.5B-Instruct at 2&nbsp;K tokens lands at **291&nbsp;bytes**, **1,707&times;** smaller than the 485&nbsp;KB JSON-SSE baseline, at the same ~45&nbsp;ms TTFB. The wire reduction is essentially free in latency.
 
-The `model` field is ignored when only one model is loaded at a time &mdash; the supervisor proxies whichever model is currently loaded. Use `/admin/load` to swap.
+The `model` field is ignored when only one model is loaded at a time. The supervisor proxies whichever model is currently loaded. Use `/admin/load` to swap.
 
 ## Running your own models
 
@@ -55,7 +55,7 @@ Three ways to point the image at any model you like, progressively more "self-se
 
 ### 1. Override `CODEC_INITIAL_MODEL` at `docker run` time
 
-Any Hugging Face repo id (or any path inside the container) &mdash; the supervisor downloads + boots on first start and caches in the volume.
+Any Hugging Face repo id works here, or any path inside the container. The supervisor downloads + boots on first start and caches in the volume.
 
 ```bash
 docker run --gpus all -p 8080:8080 \
@@ -69,7 +69,7 @@ docker run --gpus all -p 8080:8080 \
 
 ### 2. Mount a local model directory
 
-For checkpoints or fine-tunes you don't want to upload to HF &mdash; bind-mount the directory and point `CODEC_INITIAL_MODEL` at the in-container path:
+For checkpoints or fine-tunes you don't want to upload to HF, bind-mount the directory and point `CODEC_INITIAL_MODEL` at the in-container path:
 
 ```bash
 docker run --gpus all -p 8080:8080 \
@@ -82,7 +82,7 @@ The mount is read-only inside the container, so the supervisor can't mutate your
 
 ### 3. Hot-swap via the admin API after boot
 
-This is what the supervisor adds on top of stock sglang &mdash; the container stays up, only the model process swaps. See the [Admin endpoints](#admin-endpoints) section below for the full surface; the short version:
+This is what the supervisor adds on top of stock sglang. The container stays up, only the model process swaps. See the [Admin endpoints](#admin-endpoints) section below for the full surface; the short version:
 
 ```bash
 # Pull from HF into the persistent registry
@@ -108,7 +108,7 @@ curl -X POST http://localhost:8080/admin/load \
 
 Pass `CODEC_BACKEND_ARGS` to tune sglang per-model (`--tp 2 --quantization fp8 --mem-fraction-static 0.9`, etc.); for per-load tuning, add `extra_args` to the `/admin/load` body to override the supervisor's default for that single load.
 
-> **Hot-swap caveat**: there's a few-second gap during the swap (terminate child &rarr; fork new &rarr; poll `/health`). For zero-downtime multi-model serving, run multiple containers behind a router &mdash; the supervisor is single-model-per-container by design.
+> **Hot-swap caveat**: there's a few-second gap during the swap (terminate child &rarr; fork new &rarr; poll `/health`). For zero-downtime multi-model serving, run multiple containers behind a router. The supervisor is single-model-per-container by design.
 
 ## Volumes and persistence
 
@@ -198,10 +198,10 @@ The tarball is extracted into `/models/<name>/` (path-traversal-safe; symlinks a
 
 ## Pointing a Codec client at it
 
-Once running, point any of the language bindings at `http://your-host:8080/v1/completions` &mdash; that's the same endpoint pattern the language walkthroughs already document. The Codec client decides per-request whether to ask for `stream_format: "msgpack"` (binary frames) or omit the field (JSON-SSE).
+Once running, point any of the language bindings at `http://your-host:8080/v1/completions`. That's the same endpoint pattern the language walkthroughs already document. The Codec client decides per-request whether to ask for `stream_format: "msgpack"` (binary frames) or omit the field (JSON-SSE).
 
 ```ts
-// TypeScript example — same as the sglang walkthrough, just a different host
+// TypeScript example, same as the sglang walkthrough, just a different host
 import { loadMap, Detokenizer, decodeStream } from "@codecai/web";
 
 const map = await loadMap({
@@ -234,7 +234,7 @@ for await (const frame of decodeStream(resp.body!, "msgpack")) {
 }
 ```
 
-The same code works against vanilla sglang too &mdash; codec-sglang's wire format is bit-identical to upstream-sglang-with-the-PRs.
+The same code works against vanilla sglang too. codec-sglang's wire format is bit-identical to upstream-sglang-with-the-PRs.
 
 ## When to use this vs vanilla sglang
 
@@ -254,6 +254,6 @@ The bundled SGLang itself is unchanged from upstream and remains under Apache-2.
 
 ## See also
 
-- [sglang &mdash; vanilla setup](/docs/sglang/) for the DIY path.
-- [TypeScript](/docs/typescript/), [Python](/docs/python/), [.NET](/docs/dotnet/), [C](/docs/c/), [Rust](/docs/rust/), [Java](/docs/java/) walkthroughs &mdash; client-side patterns.
-- [Tool calling](/docs/tool-calling/) &mdash; ToolWatcher events from the server-side detector.
+- [sglang vanilla setup](/docs/sglang/) for the DIY path.
+- [TypeScript](/docs/typescript/), [Python](/docs/python/), [.NET](/docs/dotnet/), [C](/docs/c/), [Rust](/docs/rust/), [Java](/docs/java/) walkthroughs, client-side patterns.
+- [Tool calling](/docs/tool-calling/), ToolWatcher events from the server-side detector.

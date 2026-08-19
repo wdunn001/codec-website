@@ -1,10 +1,10 @@
 ---
-title: v0.4 — safety-policy negotiation as a TLS-style capability axis
+title: v0.4, safety-policy negotiation as a TLS-style capability axis
 date: "2026-05-11"
 kind: feature
 version: v0.4
 summary: |
-  Codec gains a sixth negotiation axis on the HELLO/READY handshake — a sanitized, hash-anchored `safety_policy` descriptor that lets servers advertise enforcement (categories, actions, classifier family) without leaking operator-internal banned-id lists or thresholds. Adds an optional `@codecai/web-safety` client package (prefilter + classifier registry), full operator-side enforcement in codec-supervisor (logits processor, multi-token matcher, classifier registry with three v1 implementations), and per-language tokenize/detok benchmarks across all six client libs. Wire numbers unchanged from v0.3.x — v0.4 is wire-additive.
+  Codec gains a sixth negotiation axis on the HELLO/READY handshake, a sanitized, hash-anchored `safety_policy` descriptor that lets servers advertise enforcement (categories, actions, classifier family) without leaking operator-internal banned-id lists or thresholds. Adds an optional `@codecai/web-safety` client package (prefilter + classifier registry), full operator-side enforcement in codec-supervisor (logits processor, multi-token matcher, classifier registry with three v1 implementations), and per-language tokenize/detok benchmarks across all six client libs. Wire numbers unchanged from v0.3.x. v0.4 is wire-additive.
 links:
   - label: CHANGELOG.md
     url: https://github.com/wdunn001/Codec/blob/main/CHANGELOG.md
@@ -20,13 +20,13 @@ links:
 
 Three new fields on the existing handshake, all optional / additive:
 
-- **`HELLO.accept_safety_policies`** — clients declare which policy
+- **`HELLO.accept_safety_policies`.** Clients declare which policy
   IDs (or `"*"`) they're willing to talk to.
-- **`READY.safety_policy_id`** + **`READY.safety_policy_hash`** —
+- **`READY.safety_policy_id`** + **`READY.safety_policy_hash`**,
   server declares the sanitized policy it's enforcing, hash-anchored
   so the client can fetch `.well-known/codec/policies/<id>.json`
   out-of-band and verify the bytes against what the server reports.
-- **`finish_reason: "policy_violation"`** — new enum value on the
+- **`finish_reason: "policy_violation"`**, a new enum value on the
   streaming completion frame, surfacing when a server-side action
   fires.
 
@@ -38,16 +38,16 @@ enforcement", which is exactly the same posture v0.3 had.
 ## The "publishable descriptor" boundary
 
 The big design call: operators publish a **sanitized** policy
-descriptor at `.well-known/codec/policies/<id>.json` — categories,
-action types per category, classifier family — but **never**
+descriptor at `.well-known/codec/policies/<id>.json`, categories,
+action types per category, classifier family, but **never**
 banned-token-ID lists, classifier thresholds, or model weights.
 Disclosing the *shape* of enforcement is fine; disclosing
 `["banned_token_id": 81727]` is an enumeration map for attackers.
 
 Hash interop across the six client libs (TS, Python, Rust, .NET,
 Java, C) is bit-identical because canonical-bytes JSON uses the
-same encoding rule on every stack — 2-space indent, trailing
-newline, null-omitted — verified by spot-checks on a canonical
+same encoding rule on every stack, 2-space indent, trailing
+newline, null-omitted, verified by spot-checks on a canonical
 descriptor.
 
 ## The optional `@codecai/web-safety` client
@@ -72,7 +72,7 @@ framework-free `SafetyGate`.
   (server, token-space) → streaming classifier (server, embedding
   or text-space) → per-category action policy
   (`stop` / `redact` / `regenerate` / `flag`).
-- `BannedTokenLogitsProcessor` — vLLM-compatible.
+- `BannedTokenLogitsProcessor`, vLLM-compatible.
 - Multi-token banned-pattern matcher: Aho-Corasick over int
   alphabets so multi-token banned strings (slurs, secret-shaped
   patterns) match during generation without per-step regex.
@@ -99,17 +99,17 @@ framework-free `SafetyGate`.
   emitting the single atomic vocab ID. Visible because Qwen-2.5-0.5B
   is small enough that wrong tokenization produces incoherent
   replies.
-- **`(?i:...)` desugar** in `@codecai/web/bpe.ts` — GPT-2-family
+- **`(?i:...)` desugar** in `@codecai/web/bpe.ts`, GPT-2-family
   pre-tokenizer patterns use the ES2025 RegExp Pattern Modifiers
   inline-flag group that throws on Chrome <125, iOS Safari <18,
   Firefox <132, Node <23. The encoder now rewrites
   `(?i:abc)` → `(?:[aA][bB][cC])` as the third fallback, so BPE
   encoding works on every shipped mobile-leaning runtime.
-- **`pre_tokenizer_program` runtime port to Rust** — `codec-rs`
+- **`pre_tokenizer_program` runtime port to Rust**, `codec-rs`
   BPE now works against Qwen-2 / Llama-3 / Phi-4 / cl100k_base
   maps for the first time (the `regex` crate doesn't support
   `(?i:...)` or `\s+(?!\S)`).
-- **convert-tiktoken merge derivation fix** — the previous
+- **convert-tiktoken merge derivation fix**, the previous
   `max(rank(left), rank(right))` heuristic picked splits that
   aren't reachable via greedy BPE from initial bytes. Vocab tokens
   like `Hello` on o200k_base encoded as `["H", "ello"]` instead of
@@ -124,7 +124,7 @@ framework-free `SafetyGate`.
   `spec/versions/v0.{2,3,4}.md` with frozen wire-text blocks plus
   LIVING `## Open questions (v0.X)` sections that evolve across
   releases.
-- `docs/RELEASE_CHECKLIST.md` (12 phases) — formalises the gate
+- `docs/RELEASE_CHECKLIST.md` (12 phases), formalises the gate
   between feature work and a published cut. Binding from v0.4
   forward.
 - **Versioning policy codified** in `spec/versions/v0.4.md`:
@@ -141,7 +141,7 @@ framework-free `SafetyGate`.
   encode + decode time over a fixed golden corpus per language.
   Output aggregated into `MATRIX.md` §X.
 - `aggregate.py.fmt_bytes` now emits explicit `b` (byte) suffix on
-  bare numeric values — reviewer feedback after the
+  bare numeric values, reviewer feedback after the
   2026-05-09T17-09-35Z run flagged unsuffixed integers as
   confusing.
 - Coverage tooling wired across all 9 stacks (first time): c8 for
@@ -149,7 +149,7 @@ framework-free `SafetyGate`.
   coverlet for .NET, JaCoCo for Java, gcovr for libcodec.
   Baselines in each `packages/*/COVERAGE.md`.
 
-## Numbers (unchanged — v0.4 is wire-additive)
+## Numbers (unchanged, v0.4 is wire-additive)
 
 |  Engine   |   JSON-SSE  | Best Codec   | Reduction  |
 |-----------|------------:|-------------:|-----------:|

@@ -1,4 +1,4 @@
-`F6cf`!.NET — Codec.Net`!`f
+`F6cf`!.NET (Codec.Net)`!`f
 
 `F999ASP.NET / console-friendly binding. .NET 8+, IAsyncEnumerable streams, full nullability, AOT-friendly.`f
 
@@ -69,7 +69,7 @@ using var resp = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersR
 resp.EnsureSuccessStatusCode();
 `=
 
-'HttpCompletionOption.ResponseHeadersRead' is the .NET equivalent of "don't buffer the body" — without it, 'HttpClient' will read the entire response into memory before handing it to you.
+'HttpCompletionOption.ResponseHeadersRead' is the .NET equivalent of "don't buffer the body". Without it, 'HttpClient' will read the entire response into memory before handing it to you.
 
 >>>>3. Decode the binary stream
 
@@ -98,7 +98,7 @@ await foreach (var frame in StreamDecoder.DecodeMsgpackStreamAsync(body)) {
 }
 `=
 
-'Detokenizer' is `!stateful`! — the same instance persists UTF-8 buffer state across calls so split sequences render correctly. Set 'Partial = true' while the stream is open.
+'Detokenizer' is `!stateful`!. The same instance persists UTF-8 buffer state across calls so split sequences render correctly. Set 'Partial = true' while the stream is open.
 
 >>>Encoding (sending IDs, not text)
 
@@ -110,7 +110,7 @@ int[] ids = tok.Encode("System: be concise.\nUser: what's BPE?");
 using var req = new HttpRequestMessage(HttpMethod.Post, "http://localhost:8000/v1/completions") {
     Content = JsonContent.Create(new {
         model = "Qwen/Qwen2.5-7B-Instruct",
-        prompt = ids,            // int[] — server reads as token IDs
+        prompt = ids,            // int[], server reads as token IDs
         stream_format = "msgpack",
         max_tokens = 256,
     }),
@@ -166,7 +166,7 @@ See `[Translator`:/page/codecai/docs/translator.mu].
 
 >>>ASP.NET integration
 
-A typical pattern: an ASP.NET endpoint proxies a Codec stream from an internal model server out to a browser as SSE for a chat UI — doing the detokenization at the edge.
+A typical pattern: an ASP.NET endpoint proxies a Codec stream from an internal model server out to a browser as SSE for a chat UI, doing the detokenization at the edge.
 
 `F999`*code (csharp):`*`f
 `=
@@ -195,8 +195,8 @@ app.MapPost("/chat", async (HttpContext ctx, ChatRequest req, IHttpClientFactory
 >>>Production checklist
 
 • `!Pin the map hash.`!
-• `!'HttpCompletionOption.ResponseHeadersRead'`! — without it, 'HttpClient' buffers the whole response. Bypasses streaming entirely.
-• `!Reuse 'HttpClient' and 'Detokenizer'`! — both are designed for reuse. New 'Detokenizer' per stream isn't required, but its buffer should be reset at stream boundaries (call 'Reset()' between streams when reusing).
+• `!'HttpCompletionOption.ResponseHeadersRead'`!. Without it, 'HttpClient' buffers the whole response. Bypasses streaming entirely.
+• `!Reuse 'HttpClient' and 'Detokenizer'`!. Both are designed for reuse. New 'Detokenizer' per stream isn't required, but its buffer should be reset at stream boundaries (call 'Reset()' between streams when reusing).
 • `!Cancellation tokens.`! All async APIs accept 'CancellationToken'; pass yours through so timeouts and disposal propagate cleanly.
 
 >>>See also

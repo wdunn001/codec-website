@@ -8,9 +8,9 @@
 
 'codec-vllm' is the easy way to stand up a Codec-speaking inference server on top of vLLM. It's a pre-built Docker image bundling:
 
-• `!vLLM`! with the Codec patches already applied — token-native binary transport on '/v1/completions' and '/v1/chat/completions'.
-• `!codec-supervisor`! — the same FastAPI admin sidecar as `[codec-sglang`:/page/codecai/docs/codec-sglang.mu], handling model uploads, Hugging Face pulls, hot-swaps, and reverse-proxying the vLLM backend.
-• All upstream vLLM kernels (compiled '_C.abi3.so', '_flashmla_C.abi3.so', '_moe_C.abi3.so', etc.) intact — the codec patches are a surgical file overlay (9 changed '.py' files), not a recompile.
+• `!vLLM`! with the Codec patches already applied, token-native binary transport on '/v1/completions' and '/v1/chat/completions'.
+• `!codec-supervisor`!, the same FastAPI admin sidecar as `[codec-sglang`:/page/codecai/docs/codec-sglang.mu], handling model uploads, Hugging Face pulls, hot-swaps, and reverse-proxying the vLLM backend.
+• All upstream vLLM kernels (compiled '_C.abi3.so', '_flashmla_C.abi3.so', '_moe_C.abi3.so', etc.) intact, the codec patches are a surgical file overlay (9 changed '.py' files), not a recompile.
 
 `F999┃ `!Why this base image?`! The codec routes need vLLM's per-endpoint module split (the post-refactor layout where '/v1/completions' and '/v1/chat/completions' are their own modules). The image is built on top of a vLLM build that has it.`f
 
@@ -47,9 +47,9 @@ curl http://localhost:8080/v1/completions \
   -d '{"model":"Qwen/Qwen2.5-0.5B-Instruct","prompt":"Hello","max_tokens":20,"stream":true,"stream_format":"msgpack"}'
 `=
 
-Unlike sglang, vLLM `!strictly validates the 'model' field`! — pass the loaded model id, not a placeholder. Use '/admin/status' to check the current model.
+Unlike sglang, vLLM `!strictly validates the 'model' field`!. Pass the loaded model id, not a placeholder. Use '/admin/status' to check the current model.
 
-The codec patches on vLLM ship the full compression stack (gzip + brotli + dict-zstd) and negotiate via 'Accept-Encoding' per the spec preference order 'zstd > br > gzip > identity'. All 6 Codec clients (TS/Web, Python, .NET, Rust, Java, C) decode every encoding byte-identically. On Qwen2.5-0.5B-Instruct at 2 K tokens the dict-zstd path lands at `!3.9 KB`! (~`!137×`! smaller than the 518 KB JSON-SSE baseline; the ratio is content-bound at this engine because vLLM's sampler emits less compressible output at temp 0 — see the synthetic-stream cells for the protocol-only headline).
+The codec patches on vLLM ship the full compression stack (gzip + brotli + dict-zstd) and negotiate via 'Accept-Encoding' per the spec preference order 'zstd > br > gzip > identity'. All 6 Codec clients (TS/Web, Python, .NET, Rust, Java, C) decode every encoding byte-identically. On Qwen2.5-0.5B-Instruct at 2 K tokens the dict-zstd path lands at `!3.9 KB`! (~`!137×`! smaller than the 518 KB JSON-SSE baseline; the ratio is content-bound at this engine because vLLM's sampler emits less compressible output at temp 0; see the synthetic-stream cells for the protocol-only headline).
 
 >>>Run your own model
 
@@ -123,7 +123,7 @@ Pass 'CODEC_BACKEND_ARGS' to tune vLLM ('--gpu-memory-utilization 0.9 --max-mode
 
 >>>Admin API
 
-Identical to `[codec-sglang`:/page/codecai/docs/codec-sglang.mu] — the supervisor is backend-agnostic. '/health', '/admin/status', '/admin/models', '/admin/models/pull', '/admin/models/upload', '/admin/load', '/admin/stop'. Anything not under '/admin' proxies to vLLM.
+Identical to `[codec-sglang`:/page/codecai/docs/codec-sglang.mu], the supervisor is backend-agnostic. '/health', '/admin/status', '/admin/models', '/admin/models/pull', '/admin/models/upload', '/admin/load', '/admin/stop'. Anything not under '/admin' proxies to vLLM.
 
 >>>Source & links
 
@@ -132,9 +132,9 @@ Identical to `[codec-sglang`:/page/codecai/docs/codec-sglang.mu] — the supervi
 
 >>>See also
 
-• `[codec-sglang`:/page/codecai/docs/codec-sglang.mu] — same image story, sglang backend.
-• `[codec-llamacpp`:/page/codecai/docs/codec-llamacpp.mu] — same image story, llama.cpp backend.
-• `[TypeScript`:/page/codecai/docs/typescript.mu], `[Python`:/page/codecai/docs/python.mu], `[.NET`:/page/codecai/docs/dotnet.mu], `[C`:/page/codecai/docs/c.mu], `[Rust`:/page/codecai/docs/rust.mu], `[Java`:/page/codecai/docs/java.mu] walkthroughs — client-side patterns.
+• `[codec-sglang`:/page/codecai/docs/codec-sglang.mu], same image story, sglang backend.
+• `[codec-llamacpp`:/page/codecai/docs/codec-llamacpp.mu], same image story, llama.cpp backend.
+• `[TypeScript`:/page/codecai/docs/typescript.mu], `[Python`:/page/codecai/docs/python.mu], `[.NET`:/page/codecai/docs/dotnet.mu], `[C`:/page/codecai/docs/c.mu], `[Rust`:/page/codecai/docs/rust.mu], `[Java`:/page/codecai/docs/java.mu] walkthroughs, client-side patterns.
 
 -
 

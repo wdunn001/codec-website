@@ -5,7 +5,7 @@
 // without having to scrape /changelog.
 //
 // The deeper engineering changelog (commit lists, fork SHAs, image digests)
-// stays in GitHub Releases — every <item> SHOULD include at least one
+// stays in GitHub Releases, every <item> SHOULD include at least one
 // <link>-equivalent in the body that points to the corresponding release.
 
 import rss from "@astrojs/rss";
@@ -17,7 +17,7 @@ export async function GET(context: APIContext) {
   const sorted = entries.sort((a, b) => b.data.date.localeCompare(a.data.date));
 
   return rss({
-    title: "Codec — What's new",
+    title: "Codec | What's new",
     description:
       "Customer-facing release notes for Codec, the token-native binary transport protocol for AI APIs.",
     site: context.site ?? "https://codecai.net",
@@ -45,7 +45,7 @@ export async function GET(context: APIContext) {
       };
     }),
     // The customXMLData hook would let us add Atom self-link / language /
-    // ttl, but @astrojs/rss already emits a sensible default — keep this
+    // ttl, but @astrojs/rss already emits a sensible default, keep this
     // file lean and let the package handle the boilerplate.
     customData: `<language>en-us</language>`,
   });

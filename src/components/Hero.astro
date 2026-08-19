@@ -1,11 +1,11 @@
 ---
-// Hero — proportional byte-collapse figure.
+// Hero, proportional byte-collapse figure.
 //
 // Top row: 142 small grey cells representing JSON wire bytes (one per char).
 // Funnel: a subtle wedge that visually narrows from JSON-row width down to
 //         Codec-row width.
 // Bottom row: 32 same-sized cells (8 token groups of 4), but rendered in
-//             the *same scale* as the top — so the contrast in TOTAL WIDTH
+//             the *same scale* as the top, so the contrast in TOTAL WIDTH
 //             reads at a glance as "4× shorter".
 // Compression sweep: a thin horizontal line travels top→bottom through the
 //                    funnel every few seconds, suggesting active flow.
@@ -21,7 +21,7 @@ const jsonByteH = 18;
 const jsonRowY = 80;
 const jsonRowHeight = jsonByteH;
 const jsonRowWidth = jsonByteCount * jsonByteW; // 852
-const jsonRowX = (1080 - jsonRowWidth) / 2;     // = 114 — centered on viewBox
+const jsonRowX = (1080 - jsonRowWidth) / 2;     // = 114, centered on viewBox
 
 // Codec row geometry: same per-byte width as JSON so the totals are
 // directly comparable. Group of 4 bytes per token, 4px gap between groups.
@@ -35,7 +35,7 @@ const codecGapBetweenGroups = 4;
 const codecGroupWidth = 4 * codecByteW; // 24
 const codecRowWidth =
   codecTokenCount * codecGroupWidth + (codecTokenCount - 1) * codecGapBetweenGroups; // 220
-const codecRowX = (1080 - codecRowWidth) / 2; // = 430 — centered on viewBox
+const codecRowX = (1080 - codecRowWidth) / 2; // = 430, centered on viewBox
 
 // Funnel: from full JSON width down to Codec row width
 const funnelTopY = 102;
@@ -70,12 +70,12 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
     </h1>
     <p class="hero__lede">
       <strong>AI inference is burning megawatts of GPU power and datacenter
-      buildout is racing to keep up &mdash; meanwhile your inference stack
+      buildout is racing to keep up. Meanwhile your inference stack
       is paying again at every hop on top of the GPU bill.</strong> Models
       think in tokens, but the rest of the stack speaks text. Every gateway,
       router, tool dispatcher, and middleware in the path does the same
       ritual: detokenize the model's IDs to text, encode as UTF-8, wrap in
-      JSON, ship it, parse it, decode UTF-8, re-tokenize back to IDs &mdash;
+      JSON, ship it, parse it, decode UTF-8, re-tokenize back to IDs,
       burning CPU, memory, and latency on lossy conversions the AI never
       asked for, and risking KV-cache corruption when the re-tokenize
       doesn't round-trip cleanly. Codec is a drop-in upgrade that keeps
@@ -84,13 +84,13 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       translate vocabularies in-process. Same model, same prompts, same
       answers; <strong>typically 16&times; less data on the wire on real
       agent traffic, up to ~1,700&times; when the content compresses
-      well</strong> &mdash; how big the win is depends on what your AI
+      well</strong>. How big the win is depends on what your AI
       generates, full receipts below. On mobile: snappier app, lighter
       cloud bill. At fleet scale: megawatt-hours of network energy <em>and
       middleware CPU</em> not burned on bytes nobody reads. Plug-in
       libraries for TypeScript, Python, Rust, Java, .NET, and C work with
       the AI servers you already use (sglang, vllm, llama.cpp). Your code
-      doesn't change. We can't make the model smaller &mdash; the waste,
+      doesn't change. We can't make the model smaller, but the waste,
       we can. And by shrinking the wire 1,000+&times;, Codec opens AI
       access to the <strong>~5&nbsp;billion people</strong> on slow,
       expensive, or metered connections that JSON-SSE prices out of
@@ -103,11 +103,11 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       <a href="https://github.com/wdunn001/Codec" rel="noopener" class="btn">github / wdunn001/Codec</a>
     </div>
 
-    <ul class="hero__metrics" aria-label="Headline savings — measured ranges, honest framing">
+    <ul class="hero__metrics" aria-label="Headline savings, measured ranges, honest framing">
       <li class="hero-metric hero-metric--wire">
         <span class="hero-metric__num">~$400M+/yr</span>
         <span class="hero-metric__label">total wire + GPU savings worldwide</span>
-        <span class="hero-metric__sub">~$320M cloud egress (heavy-agent baseline &mdash; tool-use + A2A is default at Claude/ChatGPT/Gemini) + ~$50M GPU on blocked prompts + ~$35M Starlink; sub-agent-heavy flows push to $500&ndash;700M/yr</span>
+        <span class="hero-metric__sub">~$320M cloud egress (heavy-agent baseline; tool-use + A2A is default at Claude/ChatGPT/Gemini) + ~$50M GPU on blocked prompts + ~$35M Starlink; sub-agent-heavy flows push to $500-700M/yr</span>
       </li>
       <li class="hero-metric hero-metric--mobile">
         <span class="hero-metric__num">up to 10&times;</span>
@@ -117,19 +117,19 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
       <li class="hero-metric hero-metric--access">
         <span class="hero-metric__num">~5B people</span>
         <span class="hero-metric__label">AI accessible where it wasn't</span>
-        <span class="hero-metric__sub">2.6B offline + 2&ndash;3B on slow / expensive mobile (ITU 2024)</span>
+        <span class="hero-metric__sub">2.6B offline + 2-3B on slow / expensive mobile (ITU 2024)</span>
       </li>
     </ul>
 
-    <figure class="wire" aria-label="Diagram: a 142-byte JSON wire stream collapses through a funnel into a 32-byte Codec stream — about 4× shorter on the wire.">
+    <figure class="wire" aria-label="Diagram: a 142-byte JSON wire stream collapses through a funnel into a 32-byte Codec stream, about 4× shorter on the wire.">
       <svg viewBox="0 0 1080 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
         <defs>
           <!-- Symmetric gentle fade on both sides: bytes ease in on the
                left at the JSON label and ease out on the right at the
                142-bytes label. The masked group contains TWO copies of
                the byte row (for the drift loop), so its objectBoundingBox
-               is twice the visible width — pin the gradient + mask to
-               userSpaceOnUse so 0–100 % maps to the visible row and the
+               is twice the visible width, pin the gradient + mask to
+               userSpaceOnUse so 0-100 % maps to the visible row and the
                right fade actually lands on the visible right edge instead
                of being clipped off the side. -->
           <linearGradient id="fade"
@@ -174,7 +174,7 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
              the labels, with a gentle fade mask alongside the clip for
              soft edges that mirror each other on both sides. Both clip
              and mask sit on the SAME outer group so they see the SVG
-             user-space directly — putting the mask on the inner
+             user-space directly, putting the mask on the inner
              translated group would have the mask's userSpaceOnUse
              coordinates clash with the translate. -->
         <g clip-path="url(#jsonRowClip)" mask="url(#fadeMask)">
@@ -252,7 +252,7 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
 
       <figcaption class="wire__caption">
         Token IDs straight on the wire. Tool-call dispatch, observability,
-        cross-vocab handoff &mdash; all the things you'd want to do at the
+        cross-vocab handoff, all the things you'd want to do at the
         inference layer reduce to integer compares on the stream. Detokenize
         becomes a byproduct, not a per-token cost.
       </figcaption>
@@ -290,7 +290,7 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
     margin-bottom: 2rem;
   }
 
-  /* Metrics ribbon — headline savings, prominent above the figure.
+  /* Metrics ribbon, headline savings, prominent above the figure.
      Six honest-range stats; each cell is a flex item so the row wraps
      gracefully at narrow viewports. Subtle gradient strip on top so
      visitors can't miss the numbers when they scroll past the lede. */
@@ -409,7 +409,7 @@ const codecCells = Array.from({ length: codecTokenCount }, (_unused, t) => {
   }
 
   /* Compression sweep: a thin line travels top -> bottom inside the funnel,
-     repeating every few seconds. Decorative — does NOT gate cell visibility. */
+     repeating every few seconds. Decorative, does NOT gate cell visibility. */
   .sweep {
     animation: sweep 5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
     opacity: 0;

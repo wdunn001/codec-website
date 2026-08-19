@@ -1,12 +1,12 @@
-`F6cf`!Browser safety — @codecai/web-safety`!`f
+`F6cf`!Browser safety (@codecai/web-safety)`!`f
 
-`F999Optional client-side safety layer. Catches secrets, PII, jailbreak templates, dangerous commands, and host-blocked patterns before the prompt hits the wire — keeps doomed inputs out of the inference budget. New in v0.4.`f
+`F999Optional client-side safety layer. Catches secrets, PII, jailbreak templates, dangerous commands, and host-blocked patterns before the prompt hits the wire, which keeps doomed inputs out of the inference budget. New in v0.4.`f
 
 `F999`*Frameworks`*`f
 
 -
 
-'@codecai/web-safety' is the optional client-side safety layer that ships with Codec v0.4. It's a sibling of `['@codecai/web'`:/page/codecai/docs/typescript.mu] — install it alongside when you want to prevent doomed prompts from consuming wire, server inference budget, or classifier-tier compute.
+'@codecai/web-safety' is the optional client-side safety layer that ships with Codec v0.4. It's a sibling of `['@codecai/web'`:/page/codecai/docs/typescript.mu]. Install it alongside when you want to prevent doomed prompts from consuming wire, server inference budget, or classifier-tier compute.
 
 The package is framework-free. Host apps ('leet', 'codec-website', future clients) render their own UI on top of the framework-agnostic 'SafetyGate' state machine.
 
@@ -17,7 +17,7 @@ The package is framework-free. Host apps ('leet', 'codec-website', future client
 npm install @codecai/web-safety @codecai/web
 `=
 
-Optional peer dependencies — only installed if you opt into the corresponding classifier:
+Optional peer dependencies, only installed if you opt into the corresponding classifier:
 
 `F999`*code (bash):`*`f
 `=
@@ -27,7 +27,7 @@ npm install @mlc-ai/web-llm             # for the opt-in Llama Guard 3 1B (WebGP
 
 >>>Two layers
 
->>>>Layer 1 — Prefilter (always-on, no network, no model load)
+>>>>Layer 1 Prefilter (always-on, no network, no model load)
 
 Catches obviously-doomed inputs via regex + Shannon-entropy detection. Pure JavaScript, runs in browsers, Node, edge runtimes. Five categories:
 
@@ -38,7 +38,7 @@ Catches obviously-doomed inputs via regex + Shannon-entropy detection. Pure Java
 │                    │ keys, SSH key headers, JWTs                                  │ 'ghp_…', │
 │                    │                                                              │ 'sk-ant- │
 │                    │                                                              │ …'       │
-│ 'pii'              │ Email, US phone, SSN, Luhn-valid credit-card candidates      │ —        │
+│ 'pii'              │ Email, US phone, SSN, Luhn-valid credit-card candidates      │ n/a      │
 │ 'high_entropy'     │ base64/hex runs ≥ 24 chars with Shannon ≥ 4.0 bits           │ Unknown- │
 │                    │                                                              │ vendor   │
 │                    │                                                              │ API keys │
@@ -56,7 +56,7 @@ Catches obviously-doomed inputs via regex + Shannon-entropy detection. Pure Java
 │                    │                                                              │ zero     │
 │                    │                                                              │ of=/dev/ │
 │                    │                                                              │ sda'     │
-│ 'blocked_action'   │ Host-supplied patterns — empty by default                    │ Internal │
+│ 'blocked_action'   │ Host-supplied patterns, empty by default                     │ Internal │
 │                    │                                                              │ hostname │
 │                    │                                                              │ s,       │
 │                    │                                                              │ '--privi │
@@ -92,14 +92,14 @@ if (decision.kind === "blocked") {
 // ... tokenize and send via @codecai/web as usual
 `=
 
->>>>Layer 3 — Browser-side classifier registry (opt-in)
+>>>>Layer 3 Browser-side classifier registry (opt-in)
 
 When regex doesn't catch the nuance, fall through to a semantic classifier. The registry mirrors the codec-supervisor server registry exactly so policy decisions stay symmetric across hosts.
 
 Two shipped classifiers:
 
-• `!Prompt Guard 86M (default tier)`! — Transformers.js, ≈80 MB ONNX, CPU/WASM. Best for always-on inbound-prompt classification.
-• `!Llama Guard 3 1B (opt-in tier)`! — codec-web-llm, ≈1 GB WebGPU quant. Same 14-category Llama Guard taxonomy as the server-side classifier so policy decisions are symmetric across mesh peers.
+• `!Prompt Guard 86M (default tier)`!, Transformers.js, ≈80 MB ONNX, CPU/WASM. Best for always-on inbound-prompt classification.
+• `!Llama Guard 3 1B (opt-in tier)`!, codec-web-llm, ≈1 GB WebGPU quant. Same 14-category Llama Guard taxonomy as the server-side classifier so policy decisions are symmetric across mesh peers.
 
 `F999`*code (ts):`*`f
 `=
@@ -123,7 +123,7 @@ if (result.scores.jailbreak >= 0.5) {
 
 >>>Host-supplied blocked patterns
 
-Deployments often need patterns the generic rules can't anticipate — internal hostnames, "no 'rm -rf /prod'", regulator-mandated refusals. Inject them via 'PrefilterOptions.blockedActionPatterns':
+Deployments often need patterns the generic rules can't anticipate (internal hostnames, "no 'rm -rf /prod'", regulator-mandated refusals). Inject them via 'PrefilterOptions.blockedActionPatterns':
 
 `F999`*code (ts):`*`f
 `=
@@ -138,25 +138,25 @@ const matches = scanText(promptText, {
 });
 `=
 
-These patterns are decided by the host application and don't ship in the npm package. They never cross the wire either — the prefilter runs locally before any encode + send.
+These patterns are decided by the host application and don't ship in the npm package. They never cross the wire either. The prefilter runs locally before any encode + send.
 
 >>>Public-by-design vs. server-side private
 
-The client-side prefilter rules are `!public by design`! — they ship in the npm package source, visible via 'npm view @codecai/web-safety' or by reading 'src/prefilter.ts' in the Codec repo (https://github.com/wdunn001/Codec/tree/main/packages/web-safety). The vendor-anchored secret patterns are public anyway (AWS publishes the 'AKIA' prefix; GitHub publishes the 'ghp_' prefix); the jailbreak templates are public (well-documented in adversarial-prompt literature); the destructive-command literals are common-knowledge unix.
+The client-side prefilter rules are `!public by design`!. They ship in the npm package source, visible via 'npm view @codecai/web-safety' or by reading 'src/prefilter.ts' in the Codec repo (https://github.com/wdunn001/Codec/tree/main/packages/web-safety). The vendor-anchored secret patterns are public anyway (AWS publishes the 'AKIA' prefix; GitHub publishes the 'ghp_' prefix); the jailbreak templates are public (well-documented in adversarial-prompt literature); the destructive-command literals are common-knowledge unix.
 
 This is the `!opposite boundary`! from the server-side policy disclosure contract introduced in Codec v0.4 (https://github.com/wdunn001/Codec/blob/main/spec/versions/v0.4.md#safety-policy-negotiation):
 
 • `!Server-side, private`!: operator-internal banned-token-ID lists, regex patterns, classifier thresholds, multi-token patterns. Live in 'codec-supervisor/policies_dir/'. `*Never serialised to the wire.`*
-• `!Server-side, public`!: the sanitized descriptor at '.well-known/codec/policies/<id>.json' — categories + actions + classifier family + summary counts. Listed publicly so clients can verify `*what shape`* of enforcement applies, without leaking `*what's enforced`*.
+• `!Server-side, public`!: the sanitized descriptor at '.well-known/codec/policies/<id>.json', categories + actions + classifier family + summary counts. Listed publicly so clients can verify `*what shape`* of enforcement applies, without leaking `*what's enforced`*.
 • `!Client-side, public`! (this package): regex rules that run in the browser before transmission. The `*output`* of the prefilter (gate-redacted text, or "user cancelled") reaches the wire, never the rule list.
 
 The two halves are complementary, not duplicating. A host that runs both gets defense-in-depth: cheap regex catches the obvious cases on the client, server-side enforcement catches the subtle cases the model would have otherwise complied with.
 
 >>>See also
 
-• `['@codecai/web'`:/page/codecai/docs/typescript.mu] — the base tokenizer + detokenizer this package pairs with.
-• Codec v0.4 safety-policy negotiation (https://github.com/wdunn001/Codec/blob/main/spec/versions/v0.4.md#safety-policy-negotiation) — the wire-level contract.
-• 'codec-supervisor' (https://github.com/wdunn001/codec-supervisor) — the server-side companion shipping the policy admin REST + the matching 'SafetyClassifier' Python registry.
+• `['@codecai/web'`:/page/codecai/docs/typescript.mu], the base tokenizer + detokenizer this package pairs with.
+• Codec v0.4 safety-policy negotiation (https://github.com/wdunn001/Codec/blob/main/spec/versions/v0.4.md#safety-policy-negotiation), the wire-level contract.
+• 'codec-supervisor' (https://github.com/wdunn001/codec-supervisor), the server-side companion shipping the policy admin REST + the matching 'SafetyClassifier' Python registry.
 • Source on GitHub (https://github.com/wdunn001/Codec/tree/main/packages/web-safety)
 
 -

@@ -1,4 +1,4 @@
-`F6cf`!Cross-vocab — Translator`!`f
+`F6cf`!Cross-vocab (Translator)`!`f
 
 `F999Re-tokenize a stream from one model's vocab to another's, mid-flight, without ever materializing UTF-8.`f
 
@@ -6,7 +6,7 @@
 
 -
 
-'Translator' is for the case where two models in your pipeline use different vocabs — say, a Qwen-vocab planner upstream and a Llama-vocab executor downstream — and you want them to talk to each other without going through English.
+'Translator' is for the case where two models in your pipeline use different vocabs (say, a Qwen-vocab planner upstream and a Llama-vocab executor downstream) and you want them to talk to each other without going through English.
 
 Without Codec, the handoff goes:
 
@@ -66,7 +66,7 @@ This means: in real streaming use, 'tr.translate(frame.ids, partial: !frame.done
 
 >>>Static translation table
 
-If you don't need streaming — e.g., you're translating a fixed prompt before sending it — you can precompute the table directly:
+If you don't need streaming (e.g., you're translating a fixed prompt before sending it), you can precompute the table directly:
 
 `F999`*code (ts):`*`f
 `=
@@ -94,8 +94,8 @@ Faster setup, but you lose stream safety. Use the stateful 'Translator' whenever
 
 >>>See also
 
-• `[TypeScript`:/page/codecai/docs/typescript.mu] / `[Python`:/page/codecai/docs/python.mu] / `[.NET`:/page/codecai/docs/dotnet.mu] / `[Rust`:/page/codecai/docs/rust.mu] / `[Java`:/page/codecai/docs/java.mu] walkthroughs — each ends with a Translator section.
-• PROTOCOL.md (https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md) — the wire spec.
+• `[TypeScript`:/page/codecai/docs/typescript.mu] / `[Python`:/page/codecai/docs/python.mu] / `[.NET`:/page/codecai/docs/dotnet.mu] / `[Rust`:/page/codecai/docs/rust.mu] / `[Java`:/page/codecai/docs/java.mu] walkthroughs, each ends with a Translator section.
+• PROTOCOL.md (https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md), the wire spec.
 
 -
 

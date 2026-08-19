@@ -1,4 +1,4 @@
-`F6cf`!Java — codec`!`f
+`F6cf`!Java (codec)`!`f
 
 `F999JDK 17+ binding. java.net.http.HttpClient, Iterator + Flow.Publisher streams, Jackson JSON, msgpack-java for frames. Maven-ready.`f
 
@@ -21,7 +21,7 @@
 
 For now, install from source: 'mvn install' from 'packages/java/' of the Codec repo (https://github.com/wdunn001/Codec) into your local Maven repo.
 
-The library brings two transitive dependencies: 'com.fasterxml.jackson.core:jackson-databind' for map JSON and 'org.msgpack:msgpack-core' for frame parsing. Everything else is JDK built-in — sha256 via 'java.security.MessageDigest', regex with 'Pattern.UNICODE_CHARACTER_CLASS', HTTP via 'java.net.http.HttpClient'.
+The library brings two transitive dependencies: 'com.fasterxml.jackson.core:jackson-databind' for map JSON and 'org.msgpack:msgpack-core' for frame parsing. Everything else is JDK built-in, sha256 via 'java.security.MessageDigest', regex with 'Pattern.UNICODE_CHARACTER_CLASS', HTTP via 'java.net.http.HttpClient'.
 
 >>>The four-step shape
 
@@ -44,7 +44,7 @@ TokenizerMap map = MapLoader.load(new LoadOptions.Builder()
     .build());
 `=
 
-The hash is verified against the bytes on the wire before the JSON parses. Mismatch throws 'TokenizerMapHashMismatchException'. For an async fetch, use 'MapLoader.loadAsync(...)' — returns a 'CompletableFuture<TokenizerMap>'.
+The hash is verified against the bytes on the wire before the JSON parses. Mismatch throws 'TokenizerMapHashMismatchException'. For an async fetch, use 'MapLoader.loadAsync(...)', which returns a 'CompletableFuture<TokenizerMap>'.
 
 >>>>2. Send a request
 
@@ -83,7 +83,7 @@ HttpResponse<java.io.InputStream> resp = http.send(req,
     HttpResponse.BodyHandlers.ofInputStream());
 `=
 
-'HttpResponse.BodyHandlers.ofInputStream()' is the JDK equivalent of "don't buffer the body" — exactly what streaming needs.
+'HttpResponse.BodyHandlers.ofInputStream()' is the JDK equivalent of "don't buffer the body", exactly what streaming needs.
 
 >>>>3. Decode the binary stream
 
@@ -127,7 +127,7 @@ while (frames.hasNext()) {
 }
 `=
 
-'Detokenizer' is `!stateful`! — partial multi-byte UTF-8 sequences buffer across 'render()' calls when 'partial=true'. A 4-byte 🚀 split across two frames round-trips identically. Call 'detok.reset()' between unrelated streams.
+'Detokenizer' is `!stateful`!. Partial multi-byte UTF-8 sequences buffer across 'render()' calls when 'partial=true'. A 4-byte 🚀 split across two frames round-trips identically. Call 'detok.reset()' between unrelated streams.
 
 >>>Encoding (sending IDs, not text)
 
@@ -139,13 +139,13 @@ int[] ids = tok.encode("System: be concise.\nUser: what's BPE?");
 ObjectMapper json = new ObjectMapper();
 String body = json.writeValueAsString(Map.of(
     "model",         "Qwen/Qwen2.5-7B-Instruct",
-    "prompt",        ids,           // int[] — the server reads as token IDs
+    "prompt",        ids,           // int[], the server reads as token IDs
     "stream_format", "msgpack",
     "max_tokens",    256
 ));
 `=
 
-Greedy by merge priority — not left-to-right. Bit-identical to the upstream tokenizer across all reference bindings.
+Greedy by merge priority, not left-to-right. Bit-identical to the upstream tokenizer across all reference bindings.
 
 >>>Watching for tool calls
 
@@ -169,7 +169,7 @@ while (frames.hasNext()) {
 }
 `=
 
-The watcher's IDs are 'long[]' because Java has no unsigned 32-bit primitive — 'long' losslessly carries the full uint32 range. A single compare per token; no detokenization on the hot path. See `[Tool calling`:/page/codecai/docs/tool-calling.mu].
+The watcher's IDs are 'long[]' because Java has no unsigned 32-bit primitive. A 'long' losslessly carries the full uint32 range. A single compare per token; no detokenization on the hot path. See `[Tool calling`:/page/codecai/docs/tool-calling.mu].
 
 >>>Translating across vocabularies
 
@@ -215,9 +215,9 @@ public Flux<String> chat(@RequestBody ChatRequest req) {
 >>>Production checklist
 
 • `!Pin the map hash`! in 'LoadOptions'.
-• `!'HttpResponse.BodyHandlers.ofInputStream()'`! — anything else buffers the whole response.
+• `!'HttpResponse.BodyHandlers.ofInputStream()'`!. Anything else buffers the whole response.
 • `!Reuse 'HttpClient' and 'Detokenizer'.`! Both are designed for reuse; new 'Detokenizer' instances mid-stream drop the UTF-8 buffer. Call 'reset()' at stream boundaries instead.
-• `!Maven Central`! is the target — until publish, install locally with 'mvn install' from 'packages/java/'.
+• `!Maven Central`! is the target. Until publish, install locally with 'mvn install' from 'packages/java/'.
 
 >>>See also
 

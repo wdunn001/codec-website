@@ -67,8 +67,8 @@ container comes up (typically within 30 seconds).
 
 ## Stack
 
-- [Astro 5](https://astro.build) — static site generator, ships zero JS for
-  this site (animations are pure CSS on inline SVG).
+- [Astro 5](https://astro.build), a static site generator that ships zero JS
+  for this site (animations are pure CSS on inline SVG).
 - TypeScript (strict), system fonts (Inter / JetBrains Mono fallbacks).
 - nginx 1.27-alpine for serving, with aggressive gzip + immutable cache
   headers on hashed assets.

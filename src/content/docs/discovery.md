@@ -1,16 +1,16 @@
 ---
-title: Self-hosted discovery — .well-known/codec/
-description: Publish vocab maps at a known URL on a domain you control. Clients then only need the origin and the map ID — no out-of-band URL+hash exchange.
+title: Self-hosted discovery (.well-known/codec/)
+description: Publish vocab maps at a known URL on a domain you control. Clients then only need the origin and the map ID, no out-of-band URL+hash exchange.
 section: Reference
 order: 3
 ---
 
 There are **two paths to a loaded map**, and you almost always want the first:
 
-1. **Automatic discovery** &mdash; the server's response carries a `Codec-Tokenizer-Map: <id> sha256:<short>` header. The client extracts `<id>` + the server's origin, fetches `<origin>/.well-known/codec/maps/<id>.json` (which is either the inline map or a hash-pinned pointer to a CDN), verifies the hash, and caches the parsed map. **No URL or hash in your config &mdash; the protocol carries them.** See `discoverMap({ origin, id })` in [`@codecai/web/discover`](#typescript--codecaiwebdiscover) and `discover_map(origin=..., id=...)` in [`codecai.discover`](#python--codecaidiscover).
-2. **Manual pinning** &mdash; `loadMap({ url, hash })` if you want to bind to a specific URL and sha256 yourself (e.g. air-gapped deployments, supply-chain audits, or pinning a frozen version against vendor rotations).
+1. **Automatic discovery.** The server's response carries a `Codec-Tokenizer-Map: <id> sha256:<short>` header. The client extracts `<id>` + the server's origin, fetches `<origin>/.well-known/codec/maps/<id>.json` (which is either the inline map or a hash-pinned pointer to a CDN), verifies the hash, and caches the parsed map. **No URL or hash in your config. The protocol carries them.** See `discoverMap({ origin, id })` in [`@codecai/web/discover`](#typescript-codecaiwebdiscover) and `discover_map(origin=..., id=...)` in [`codecai.discover`](#python-codecaidiscover).
+2. **Manual pinning**, `loadMap({ url, hash })` if you want to bind to a specific URL and sha256 yourself (e.g. air-gapped deployments, supply-chain audits, or pinning a frozen version against vendor rotations).
 
-`.well-known/codec/` is the convention that makes path 1 work without a central registry: a model maintainer publishes a small static document at a stable path on their domain, and clients resolve from `(origin, id)` alone. No registry, no central authority &mdash; just the same trust model as `robots.txt` or `.well-known/openid-configuration`.
+`.well-known/codec/` is the convention that makes path 1 work without a central registry: a model maintainer publishes a small static document at a stable path on their domain, and clients resolve from `(origin, id)` alone. No registry, no central authority, just the same trust model as `robots.txt` or `.well-known/openid-configuration`.
 
 > The full convention is specified in [`spec/WELL_KNOWN_DISCOVERY.md`](https://github.com/wdunn001/Codec/blob/main/spec/WELL_KNOWN_DISCOVERY.md). [PROTOCOL.md](https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md) lists it as the resolution to Open Question #3 (decentralised first; a registry remains an option for cross-org and air-gapped use).
 
@@ -25,7 +25,7 @@ Map IDs preserve `/` as a path separator (`qwen/qwen2` &rarr; `maps/qwen/qwen2.j
 
 ## Two forms for the per-map document
 
-### Form A &mdash; pointer (recommended)
+### Form A (pointer, recommended)
 
 A small JSON document (~150 bytes) that says "the real map is over there at the CDN, and here's its sha256":
 
@@ -38,11 +38,11 @@ A small JSON document (~150 bytes) that says "the real map is over there at the 
 }
 ```
 
-The client fetches this once (cached), validates that the pointer's `id` matches the requested ID, follows the `url`, and verifies the bytes against `hash`. If the CDN is later compromised, the hash mismatch fails closed &mdash; the trust anchor is the origin's TLS plus the pointer's `hash` field.
+The client fetches this once (cached), validates that the pointer's `id` matches the requested ID, follows the `url`, and verifies the bytes against `hash`. If the CDN is later compromised, the hash mismatch fails closed. The trust anchor is the origin's TLS plus the pointer's `hash` field.
 
 Pointers do **not** chain: a pointer that points at another pointer is rejected.
 
-### Form B &mdash; inline map
+### Form B (inline map)
 
 For small maps it's fine to serve the entire `TokenizerMap` directly at the well-known path:
 
@@ -73,7 +73,7 @@ Detected by the presence of `vocab` (v2) or `tokens` (v1). Integrity rests on th
 }
 ```
 
-Clients **may** read the index to enumerate available maps, but it's never required &mdash; resolving an individual map by ID always works.
+Clients **may** read the index to enumerate available maps, but it's never required. Resolving an individual map by ID always works.
 
 ## Recommended HTTP headers
 
@@ -89,7 +89,7 @@ CORS is required if browser clients will fetch directly.
 
 ## Client API
 
-### TypeScript &mdash; `@codecai/web/discover`
+### TypeScript (`@codecai/web/discover`)
 
 ```ts
 import { discoverMap, discoverIndex } from "@codecai/web/discover";
@@ -149,9 +149,9 @@ export class MapDiscoveryNotFoundError extends MapDiscoveryError {
 }
 ```
 
-The `discover` module is a separate subpath import so tree-shaking can drop it when you don't use it. Maps loaded via `discoverMap` share the `loadMap` cache &mdash; subsequent calls hit memory, no network.
+The `discover` module is a separate subpath import so tree-shaking can drop it when you don't use it. Maps loaded via `discoverMap` share the `loadMap` cache. Subsequent calls hit memory, no network.
 
-### Python &mdash; `codecai.discover`
+### Python (`codecai.discover`)
 
 ```python
 from codecai import Detokenizer, discover_map
@@ -202,7 +202,7 @@ async def discover_index(
 
 Both functions are coroutines. A 404 raises `MapDiscoveryNotFoundError`; malformed pointers raise `MapDiscoveryError`; CDN bytes that don't match the pointer's hash raise `TokenizerMapHashMismatchError`.
 
-## Publishing &mdash; `codecai-maps well-known`
+## Publishing with `codecai-maps well-known`
 
 The maps CLI ships a `well-known` subcommand to emit the static directory tree for you:
 
@@ -232,7 +232,7 @@ public/
 
 ## End-to-end
 
-Putting it together &mdash; vendor side once:
+Putting it together, vendor side once:
 
 ```bash
 codecai-maps well-known --map=./qwen2.json \
@@ -251,21 +251,21 @@ const map = await discoverMap({ origin: "https://example.com", id: "qwen2" });
 
 Network trace:
 
-1. `GET https://example.com/.well-known/codec/maps/qwen2.json` &mdash; pointer doc, ~150 bytes.
+1. `GET https://example.com/.well-known/codec/maps/qwen2.json`, pointer doc, ~150 bytes.
 2. Client validates that `pointer.id === "qwen2"` and the hash format is well-formed.
-3. `GET https://cdn.example.com/qwen2.json` &mdash; the actual map, hash-verified.
+3. `GET https://cdn.example.com/qwen2.json`, the actual map, hash-verified.
 4. Parsed and cached. Subsequent `discoverMap({ origin, id })` calls hit memory.
 
 ## When to use this vs `loadMap`
 
 - **You're a model vendor or maintainer.** Publish at `.well-known/codec/` so consumers can resolve your map by ID alone. They don't have to track URL changes or hash rotations through your release notes; the pointer is the source of truth.
-- **You're a consumer pinning to a frozen map.** Keep using `loadMap({ url, hash })` &mdash; you already know exactly what you want, and a pinned hash is stricter than "whatever the vendor publishes today."
+- **You're a consumer pinning to a frozen map.** Keep using `loadMap({ url, hash })`. You already know exactly what you want, and a pinned hash is stricter than "whatever the vendor publishes today."
 
 The two coexist. `discoverMap` ultimately calls into the same loader, so caching, error types, and the rest of the pipeline are identical.
 
 ## See also
 
-- [`spec/WELL_KNOWN_DISCOVERY.md`](https://github.com/wdunn001/Codec/blob/main/spec/WELL_KNOWN_DISCOVERY.md) &mdash; the full convention.
-- [TypeScript walkthrough](/docs/typescript/) &mdash; `loadMap` and the rest of the surface.
-- [Python walkthrough](/docs/python/) &mdash; `load_map` and friends.
-- [Protocol overview](/docs/protocol/) &mdash; where this fits in the spec.
+- [`spec/WELL_KNOWN_DISCOVERY.md`](https://github.com/wdunn001/Codec/blob/main/spec/WELL_KNOWN_DISCOVERY.md), the full convention.
+- [TypeScript walkthrough](/docs/typescript/), `loadMap` and the rest of the surface.
+- [Python walkthrough](/docs/python/), `load_map` and friends.
+- [Protocol overview](/docs/protocol/), where this fits in the spec.

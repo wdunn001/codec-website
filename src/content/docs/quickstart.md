@@ -5,9 +5,9 @@ section: Start
 order: 2
 ---
 
-This is the fastest path. Pick the language you'd like to write the *client* in &mdash; the *server* (sglang or vLLM) speaks Codec on the same `/v1/completions` endpoint it already serves; no special build.
+This is the fastest path. Pick the language you'd like to write the *client* in. The *server* (sglang or vLLM) speaks Codec on the same `/v1/completions` endpoint it already serves; no special build.
 
-> **Server prerequisites.** You need an LLM server that speaks Codec on its completions endpoint. The fastest path is the pre-built [`codec-sglang` Docker image](/docs/codec-sglang/) &mdash; `docker run --gpus all -p 8080:8080 wdunn001/codec-sglang:latest` and you're done. vLLM and llama.cpp ship as [`codec-vllm`](/docs/codec-vllm/) and [`codec-llamacpp`](/docs/codec-llamacpp/) on the same image story.
+> **Server prerequisites.** You need an LLM server that speaks Codec on its completions endpoint. The fastest path is the pre-built [`codec-sglang` Docker image](/docs/codec-sglang/), `docker run --gpus all -p 8080:8080 wdunn001/codec-sglang:latest` and you're done. vLLM and llama.cpp ship as [`codec-vllm`](/docs/codec-vllm/) and [`codec-llamacpp`](/docs/codec-llamacpp/) on the same image story.
 
 ## TypeScript / Node
 
@@ -138,9 +138,9 @@ Full walkthrough: [C guide](/docs/c/).
 
 In every language, the recipe is the same four steps:
 
-1. **Load a vocab map** &mdash; tells your client which tokenizer the server's IDs belong to. Maps are sha256-content-addressed and cached.
-2. **POST a completion request** &mdash; identical to your normal `/v1/completions` call, with one extra field: `stream_format: "msgpack"` (or `"protobuf"`).
-3. **Decode the binary stream** &mdash; helper functions yield one `CodecFrame` per `{ids, done, finish_reason}`.
-4. **Detokenize at the edge** &mdash; only when a human is going to read it. Internal hops keep the IDs.
+1. **Load a vocab map**, which tells your client which tokenizer the server's IDs belong to. Maps are sha256-content-addressed and cached.
+2. **POST a completion request**, identical to your normal `/v1/completions` call, with one extra field: `stream_format: "msgpack"` (or `"protobuf"`).
+3. **Decode the binary stream.** Helper functions yield one `CodecFrame` per `{ids, done, finish_reason}`.
+4. **Detokenize at the edge**, only when a human is going to read it. Internal hops keep the IDs.
 
 That's the whole API. The same four-step shape appears in every binding.

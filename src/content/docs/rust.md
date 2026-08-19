@@ -1,11 +1,11 @@
 ---
-title: Rust — codec-rs
+title: Rust (codec-rs)
 description: Native Rust crate. Sync iterators by default, async via the tokio feature. Hand-rolled protobuf, zero-cost token IDs, full sha256 map verification.
 section: Frameworks
 order: 5
 ---
 
-`codec-rs` is the Rust binding. The wire-format primitives are sync and runtime-agnostic &mdash; an iterator over `std::io::Read`. Async stream variants wrap them behind the `tokio` feature for callers that already speak `AsyncRead`.
+`codec-rs` is the Rust binding. The wire-format primitives are sync and runtime-agnostic, an iterator over `std::io::Read`. Async stream variants wrap them behind the `tokio` feature for callers that already speak `AsyncRead`.
 
 It's the natural fit for embedding Codec into inference engines (TGI is Rust; that's where this lives most happily) and for any high-throughput proxy that wants to forward token IDs without ever lifting them through a language runtime.
 
@@ -15,7 +15,7 @@ It's the natural fit for embedding Codec into inference engines (TGI is Rust; th
 cargo add codec-rs
 ```
 
-By default the `http` feature is on (pulls `reqwest` for `MapLoader`). For a minimal build &mdash; e.g. embedding inside a server that brings its own HTTP client &mdash; turn it off:
+By default the `http` feature is on (pulls `reqwest` for `MapLoader`). For a minimal build (e.g. embedding inside a server that brings its own HTTP client), turn it off:
 
 ```toml
 [dependencies]
@@ -49,7 +49,7 @@ let map = MapLoader::default().load(LoadOptions {
 }).await?;
 ```
 
-`MapLoader` is async; for sync code call `MapLoader::default().load_blocking(opts)`. The hash is verified before parsing &mdash; mismatch returns `LoadError::HashMismatch`.
+`MapLoader` is async; for sync code call `MapLoader::default().load_blocking(opts)`. The hash is verified before parsing. A mismatch returns `LoadError::HashMismatch`.
 
 ### 2. Send a request
 
@@ -119,7 +119,7 @@ for frame in decode_msgpack_stream(Cursor::new(&bytes)) {
 }
 ```
 
-`Detokenizer` is **stateful** &mdash; it persists partial UTF-8 bytes across `render()` calls when `partial: true`. A 4-byte 🚀 split across two frames round-trips identically. Call `detok.reset()` between unrelated streams.
+`Detokenizer` is **stateful**. It persists partial UTF-8 bytes across `render()` calls when `partial: true`. A 4-byte 🚀 split across two frames round-trips identically. Call `detok.reset()` between unrelated streams.
 
 ## Encoding (sending IDs, not text)
 
@@ -137,7 +137,7 @@ let body = json!({
 });
 ```
 
-`BPETokenizer::encode` is bit-identical to the upstream model's tokenizer (verified against HuggingFace tokenizers reference for Qwen-2 across all reference bindings). Greedy by merge priority &mdash; not left-to-right.
+`BPETokenizer::encode` is bit-identical to the upstream model's tokenizer (verified against HuggingFace tokenizers reference for Qwen-2 across all reference bindings). Greedy by merge priority, not left-to-right.
 
 ## Watching for tool calls
 
@@ -161,7 +161,7 @@ for frame in decode_msgpack_stream(Cursor::new(&bytes)) {
 }
 ```
 
-A single `u32` compare per token, no detokenization on the hot path. The watcher never reads `map.vocab` &mdash; only `map.special_tokens` resolution at construction time. See [Tool calling](/docs/tool-calling/).
+A single `u32` compare per token, no detokenization on the hot path. The watcher never reads `map.vocab`, only `map.special_tokens` resolution at construction time. See [Tool calling](/docs/tool-calling/).
 
 ## Translating across vocabularies
 

@@ -6,9 +6,9 @@
 
 -
 
-This is the fastest path. Pick the language you'd like to write the `*client`* in — the `*server`* (sglang or vLLM) speaks Codec on the same '/v1/completions' endpoint it already serves; no special build.
+This is the fastest path. Pick the language you'd like to write the `*client`* in. The `*server`* (sglang or vLLM) speaks Codec on the same '/v1/completions' endpoint it already serves; no special build.
 
-`F999┃ `!Server prerequisites.`! You need an LLM server that speaks Codec on its completions endpoint. The fastest path is the pre-built `['codec-sglang' Docker image`:/page/codecai/docs/codec-sglang.mu] — 'docker run --gpus all -p 8080:8080 wdunn001/codec-sglang:latest' and you're done. vLLM and llama.cpp ship as `['codec-vllm'`:/page/codecai/docs/codec-vllm.mu] and `['codec-llamacpp'`:/page/codecai/docs/codec-llamacpp.mu] on the same image story.`f
+`F999┃ `!Server prerequisites.`! You need an LLM server that speaks Codec on its completions endpoint. The fastest path is the pre-built `['codec-sglang' Docker image`:/page/codecai/docs/codec-sglang.mu], 'docker run --gpus all -p 8080:8080 wdunn001/codec-sglang:latest' and you're done. vLLM and llama.cpp ship as `['codec-vllm'`:/page/codecai/docs/codec-vllm.mu] and `['codec-llamacpp'`:/page/codecai/docs/codec-llamacpp.mu] on the same image story.`f
 
 >>>TypeScript / Node
 
@@ -147,10 +147,10 @@ Full walkthrough: `[C guide`:/page/codecai/docs/c.mu].
 
 In every language, the recipe is the same four steps:
 
-1. `!Load a vocab map`! — tells your client which tokenizer the server's IDs belong to. Maps are sha256-content-addressed and cached.
-2. `!POST a completion request`! — identical to your normal '/v1/completions' call, with one extra field: 'stream_format: "msgpack"' (or '"protobuf"').
-3. `!Decode the binary stream`! — helper functions yield one 'CodecFrame' per '{ids, done, finish_reason}'.
-4. `!Detokenize at the edge`! — only when a human is going to read it. Internal hops keep the IDs.
+1. `!Load a vocab map`!, which tells your client which tokenizer the server's IDs belong to. Maps are sha256-content-addressed and cached.
+2. `!POST a completion request`!, identical to your normal '/v1/completions' call, with one extra field: 'stream_format: "msgpack"' (or '"protobuf"').
+3. `!Decode the binary stream.`! Helper functions yield one 'CodecFrame' per '{ids, done, finish_reason}'.
+4. `!Detokenize at the edge`!, only when a human is going to read it. Internal hops keep the IDs.
 
 That's the whole API. The same four-step shape appears in every binding.
 

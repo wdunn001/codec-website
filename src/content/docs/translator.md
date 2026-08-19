@@ -1,11 +1,11 @@
 ---
-title: Cross-vocab — Translator
+title: Cross-vocab (Translator)
 description: Re-tokenize a stream from one model's vocab to another's, mid-flight, without ever materializing UTF-8.
 section: Reference
 order: 2
 ---
 
-`Translator` is for the case where two models in your pipeline use different vocabs &mdash; say, a Qwen-vocab planner upstream and a Llama-vocab executor downstream &mdash; and you want them to talk to each other without going through English.
+`Translator` is for the case where two models in your pipeline use different vocabs (say, a Qwen-vocab planner upstream and a Llama-vocab executor downstream) and you want them to talk to each other without going through English.
 
 Without Codec, the handoff goes:
 
@@ -64,7 +64,7 @@ This means: in real streaming use, `tr.translate(frame.ids, partial: !frame.done
 
 ## Static translation table
 
-If you don't need streaming &mdash; e.g., you're translating a fixed prompt before sending it &mdash; you can precompute the table directly:
+If you don't need streaming (e.g., you're translating a fixed prompt before sending it), you can precompute the table directly:
 
 ```ts
 import { staticTranslationTable } from "@codecai/web";
@@ -91,5 +91,5 @@ Faster setup, but you lose stream safety. Use the stateful `Translator` whenever
 
 ## See also
 
-- [TypeScript](/docs/typescript/) / [Python](/docs/python/) / [.NET](/docs/dotnet/) / [Rust](/docs/rust/) / [Java](/docs/java/) walkthroughs &mdash; each ends with a Translator section.
-- [PROTOCOL.md](https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md) &mdash; the wire spec.
+- [TypeScript](/docs/typescript/) / [Python](/docs/python/) / [.NET](/docs/dotnet/) / [Rust](/docs/rust/) / [Java](/docs/java/) walkthroughs, each ends with a Translator section.
+- [PROTOCOL.md](https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md), the wire spec.

@@ -1,12 +1,12 @@
 `F6cf`!codec-tool-kit (Codec-native tool authors)`!`f
 
-`F999SDK for building Codec-native bolt-on tools. Pre-cache the tokenizer at build time, hashtable-lookup at runtime — the gateway stays a pure token router and tools live in their own repos.`f
+`F999SDK for building Codec-native bolt-on tools. Pre-cache the tokenizer at build time, hashtable-lookup at runtime. The gateway stays a pure token router and tools live in their own repos.`f
 
 `F999`*Server`*`f
 
 -
 
-'@codecai/tool-kit' is the SDK for authoring net-new Codec-native tools. `!Tools should be bolt-ons`!: independently versioned, deployed, and hosted by their author — but speak token IDs natively when the model is one they've pre-built a cache for.
+'@codecai/tool-kit' is the SDK for authoring net-new Codec-native tools. `!Tools should be bolt-ons`!: independently versioned, deployed, and hosted by their author, but speak token IDs natively when the model is one they've pre-built a cache for.
 
 The architectural premise: every modern AI tool call pays 'detokenize → JSON → tool → JSON → re-tokenize' on the round-trip. Most of that work is repeated thousands of times for the same response fragments ('"It is currently "', '" UTC."', '"°F"', common error messages). This SDK lets a tool author tokenize those fragments `!once at build time`!, ship the cached IDs, and pay nothing on the hot path.
 
@@ -46,7 +46,7 @@ Zero runtime dependencies. ~6 KB minified. Works in Node, Bun, Deno, and (for th
 
 A bolt-on tool has three artifacts:
 
->>>>1. 'manifest.json' — the contract
+>>>>1. 'manifest.json' (the contract)
 
 `F999`*code (json):`*`f
 `=
@@ -73,7 +73,7 @@ A bolt-on tool has three artifacts:
 
 The gateway reads this once at registration to verify the tool's model bindings match what's loaded.
 
->>>>2. 'build-cache.ts' — pre-cache at build time
+>>>>2. 'build-cache.ts' (pre-cache at build time)
 
 `F999`*code (ts):`*`f
 `=
@@ -101,7 +101,7 @@ writeFileSync('cache/qwen25-0.5b-instruct.json', JSON.stringify(cache));
 
 Runs once at build time, against each model in the manifest. The cache file is the shipped artifact.
 
->>>>3. 'src/index.ts' — runtime
+>>>>3. 'src/index.ts' (runtime)
 
 `F999`*code (ts):`*`f
 `=
@@ -165,9 +165,9 @@ An earlier sketch had the gateway dispatch tools in-process. Three reasons that 
 
 1. `!Modularity.`! Tools want their own release cadence, security review, dependencies, and deploy surface. Locking them into the inference server forces every tool change into a server release.
 2. `!Independent hosting.`! A team that builds a Codec-native search tool wants to host it in their own repo, on their own infra, with their own SLOs. The gateway only needs the manifest URL.
-3. `!Pre-cached tokenization belongs at the tool, not the gateway.`! Every tool knows its own response shape better than any gateway can. Putting the cache in the tool means each tool ships `*exactly the fragments it emits`* — no central dictionary to maintain, no cross-tool coupling.
+3. `!Pre-cached tokenization belongs at the tool, not the gateway.`! Every tool knows its own response shape better than any gateway can. Putting the cache in the tool means each tool ships `*exactly the fragments it emits`*, no central dictionary to maintain, no cross-tool coupling.
 
-The wire savings are the same as in-process dispatch. The latency win is one extra hop (tool ↔ gateway, typically a unix socket or LAN RTT — single-digit ms) — worth it for the operational decoupling.
+The wire savings are the same as in-process dispatch. The latency win is one extra hop (tool ↔ gateway, typically a unix socket or LAN RTT of single-digit ms), worth it for the operational decoupling.
 
 >>>Source & links
 
@@ -177,10 +177,10 @@ The wire savings are the same as in-process dispatch. The latency win is one ext
 
 >>>See also
 
-• `[codec-leaf`:/page/codecai/docs/codec-leaf.mu] — companion SDK for `*existing`* MCP servers
-• `[codec-metamcp`:/page/codecai/docs/codec-metamcp.mu] — Codec-aware MCP gateway that dispatches both leaf-mode results and bolt-on tools
-• `[Tool calling`:/page/codecai/docs/tool-calling.mu] — in-stream 'ToolWatcher' for engine-side tool-call detection
-• Protocol map (https://codecai.net/protocol-map/) — where tool-kit sits in the three-pathway picture
+• `[codec-leaf`:/page/codecai/docs/codec-leaf.mu], companion SDK for `*existing`* MCP servers
+• `[codec-metamcp`:/page/codecai/docs/codec-metamcp.mu], Codec-aware MCP gateway that dispatches both leaf-mode results and bolt-on tools
+• `[Tool calling`:/page/codecai/docs/tool-calling.mu], in-stream 'ToolWatcher' for engine-side tool-call detection
+• Protocol map (https://codecai.net/protocol-map/), where tool-kit sits in the three-pathway picture
 
 -
 

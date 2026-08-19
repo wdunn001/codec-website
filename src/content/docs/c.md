@@ -1,5 +1,5 @@
 ---
-title: C — libcodec
+title: C (libcodec)
 description: C99 reference implementation. CMake, single header, no dependencies, ABI-stable struct layout. For embedded clients and FFI bridges.
 section: Frameworks
 order: 4
@@ -46,7 +46,7 @@ Headline types:
 | `codec_frame_t`         | Owned struct: `{ids, ids_len, done, finish_reason}`. |
 | `codec_status_t`        | Return codes (`CODEC_OK`, `CODEC_ENOMEM`, etc). |
 
-**Memory model.** Functions that produce heap allocations document the ownership in the header (`out_text` is malloc'd; caller frees). The opaque types each have a paired `_free`. There are no global allocators &mdash; if you need an arena, wrap the `_new` calls.
+**Memory model.** Functions that produce heap allocations document the ownership in the header (`out_text` is malloc'd; caller frees). The opaque types each have a paired `_free`. There are no global allocators. If you need an arena, wrap the `_new` calls.
 
 ## Loading a vocab map
 
@@ -55,7 +55,7 @@ char *json = NULL;
 size_t json_len = 0;
 read_whole_file("qwen2.json", &json, &json_len); /* your code */
 
-/* Constant-time SHA-256 verification — panic if it doesn't match. */
+/* Constant-time SHA-256 verification, panic if it doesn't match. */
 codec_status_t st = codec_map_verify_sha256(
     json, json_len,
     "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791"
@@ -69,7 +69,7 @@ if (st != CODEC_OK) { fprintf(stderr, "map parse failed\n"); return 1; }
 free(json); /* the parsed map owns its own copy */
 ```
 
-Unlike the higher-level bindings, `libcodec` does not fetch over HTTP &mdash; you bring the bytes. This keeps the dependency surface to libc.
+Unlike the higher-level bindings, `libcodec` does not fetch over HTTP. You bring the bytes. This keeps the dependency surface to libc.
 
 ## Decoding a stream
 
@@ -114,7 +114,7 @@ codec_detokenizer_free(detok);
 codec_msgpack_stream_free(stream);
 ```
 
-This is `packages/c/examples/stream_decode.c` boiled down. The runnable version &mdash; with libcurl wired in &mdash; lives in the repo.
+This is `packages/c/examples/stream_decode.c` boiled down. The runnable version (with libcurl wired in) lives in the repo.
 
 ## Watching for tool calls
 
@@ -143,11 +143,11 @@ while (codec_msgpack_stream_next(stream, &frame) == CODEC_OK) {
 codec_tool_watcher_free(w);
 ```
 
-This hot loop is the one we benchmark at **0.61 ns/token** &mdash; on a 1M-token stream that's 0.61 ms total. The text-path equivalent (detokenize + regex) takes 60.4 ms. See [`bench_watcher.c`](https://github.com/wdunn001/Codec/blob/main/packages/c/examples/bench_watcher.c) for the full microbench harness.
+This hot loop is the one we benchmark at **0.61 ns/token**. On a 1M-token stream that's 0.61 ms total. The text-path equivalent (detokenize + regex) takes 60.4 ms. See [`bench_watcher.c`](https://github.com/wdunn001/Codec/blob/main/packages/c/examples/bench_watcher.c) for the full microbench harness.
 
 ## Encoding (text &rarr; IDs)
 
-libcodec ships a runtime BPE encoder bit-identical to the higher-level bindings. Pretok runs on the regex-free [pre-tokenizer program](https://github.com/wdunn001/Codec/blob/main/spec/PRETOKENIZER_PROGRAM.md) using generated Unicode tables &mdash; **no PCRE2 dependency**.
+libcodec ships a runtime BPE encoder bit-identical to the higher-level bindings. Pretok runs on the regex-free [pre-tokenizer program](https://github.com/wdunn001/Codec/blob/main/spec/PRETOKENIZER_PROGRAM.md) using generated Unicode tables, **no PCRE2 dependency**.
 
 ```c
 codec_bpe_encoder_t *enc = NULL;
@@ -166,7 +166,7 @@ codec_bpe_encoder_free(enc);
 
 Output matches the upstream model's tokenizer to the exact ID sequence (verified against the real Qwen-2 tokenizer fixture under `test/test_bpe.c`).
 
-The companion [`codec_translator`](https://github.com/wdunn001/Codec/blob/main/packages/c/src/translator.c) does cross-vocab handoff (`ids_A → utf-8 → ids_B`) the same way the other Codec clients do &mdash; streaming-safe with word-boundary buffering.
+The companion [`codec_translator`](https://github.com/wdunn001/Codec/blob/main/packages/c/src/translator.c) does cross-vocab handoff (`ids_A → utf-8 → ids_B`) the same way the other Codec clients do, streaming-safe with word-boundary buffering.
 
 ### Optional at build time: opt out for embedded / IoT (~25 KB lighter)
 
@@ -180,7 +180,7 @@ cmake -S . -B build \
   -DCODEC_WITH_BPE_ENCODER=OFF
 ```
 
-The decode-side API surface (Detokenizer, ToolWatcher, stream decoders, frame codec, compression, safety-policy) is unchanged. The public-API symbols for the dropped surface still link &mdash; `codec_bpe_encoder_new` / `codec_bpe_encode` / `codec_translator_new` / `codec_translator_translate` / `codec_pretok_run_program` and friends return `CODEC_ERR_NOT_BUILT` consistently &mdash; so consumer code doesn't need any `#ifdef` guards.
+The decode-side API surface (Detokenizer, ToolWatcher, stream decoders, frame codec, compression, safety-policy) is unchanged. The public-API symbols for the dropped surface still link (`codec_bpe_encoder_new` / `codec_bpe_encode` / `codec_translator_new` / `codec_translator_translate` / `codec_pretok_run_program` and friends return `CODEC_ERR_NOT_BUILT` consistently), so consumer code doesn't need any `#ifdef` guards.
 
 | Build | `libcodec.a` size (x86-64 Release) |
 |---|---|
@@ -191,14 +191,14 @@ Cortex-M / Xtensa / RISC-V cross-compiles save proportionally more after `-Os` s
 
 ## When to use libcodec specifically
 
-- **Embedded / cross-compile targets** &mdash; routers, smart speakers, microcontrollers with enough RAM for a vocab map (LoRaWAN / NB-IoT endpoints typically pair with the decode-only build + a [`@codecai/tool-kit`](/docs/codec-tool-kit/) bolt-on for the encode side).
-- **FFI from another runtime** &mdash; Rust crate via `bindgen`, Go via `cgo`, Lua via FFI. The C ABI is the lingua franca.
-- **You want the smallest possible footprint** &mdash; libcodec is < 30 KB stripped (decode-only) / ~50 KB stripped (full BPE). No JIT, no GC, no runtime.
+- **Embedded / cross-compile targets** such as routers, smart speakers, and microcontrollers with enough RAM for a vocab map (LoRaWAN / NB-IoT endpoints typically pair with the decode-only build + a [`@codecai/tool-kit`](/docs/codec-tool-kit/) bolt-on for the encode side).
+- **FFI from another runtime** (Rust crate via `bindgen`, Go via `cgo`, Lua via FFI). The C ABI is the lingua franca.
+- **You want the smallest possible footprint.** libcodec is < 30 KB stripped (decode-only) / ~50 KB stripped (full BPE). No JIT, no GC, no runtime.
 
 For day-to-day server work, prefer one of the higher-level bindings.
 
 ## See also
 
-- [stream_decode.c](https://github.com/wdunn001/Codec/blob/main/packages/c/examples/stream_decode.c) &mdash; the canonical runnable example.
-- [bench_watcher.c](https://github.com/wdunn001/Codec/blob/main/packages/c/examples/bench_watcher.c) &mdash; microbench harness.
-- [packages/c/ on GitHub](https://github.com/wdunn001/Codec/tree/main/packages/c) &mdash; full source.
+- [stream_decode.c](https://github.com/wdunn001/Codec/blob/main/packages/c/examples/stream_decode.c), the canonical runnable example.
+- [bench_watcher.c](https://github.com/wdunn001/Codec/blob/main/packages/c/examples/bench_watcher.c), microbench harness.
+- [packages/c/ on GitHub](https://github.com/wdunn001/Codec/tree/main/packages/c), full source.

@@ -1,13 +1,13 @@
 ---
-title: HTTP compression picker — @codecai/wire-compress
+title: HTTP compression picker (@codecai/wire-compress)
 description: Picks the right Content-Encoding for streaming responses based on client support and payload size. Framework-agnostic, zero dependencies, ~5 KB. The companion library every @codecai/* client and Codec-aware gateway uses to negotiate gzip / brotli / dict-zstd / identity.
 section: Frameworks
 order: 7
 ---
 
-`@codecai/wire-compress` is the small, framework-agnostic library that decides which `Content-Encoding` a streaming response should use. **~5 KB minified, zero runtime dependencies.** It ships server-side `pick()` for choosing the encoding and client-side `buildAcceptEncoding()` for building the matching request header — both calibrated against the Codec [v0.4.1 wire benchmark](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md).
+`@codecai/wire-compress` is the small, framework-agnostic library that decides which `Content-Encoding` a streaming response should use. **~5 KB minified, zero runtime dependencies.** It ships server-side `pick()` for choosing the encoding and client-side `buildAcceptEncoding()` for building the matching request header, both calibrated against the Codec [v0.4.1 wire benchmark](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md).
 
-The conventional advice is "always brotli for HTTP." That's right for static web assets. It's wrong for **streaming responses with bursty small frames** &mdash; SSE, Codec, gRPC-Web text, server-streamed JSON. Brotli's per-block overhead doesn't amortise across 10&ndash;25 byte frames; gzip and dict-zstd do. This package encodes the measured decision so you don't have to relitigate it per server.
+The conventional advice is "always brotli for HTTP." That's right for static web assets. It's wrong for **streaming responses with bursty small frames** (SSE, Codec, gRPC-Web text, server-streamed JSON). Brotli's per-block overhead doesn't amortise across 10-25 byte frames; gzip and dict-zstd do. This package encodes the measured decision so you don't have to relitigate it per server.
 
 ## Install
 
@@ -15,9 +15,9 @@ The conventional advice is "always brotli for HTTP." That's right for static web
 npm install @codecai/wire-compress
 ```
 
-Works with any HTTP framework &mdash; Express, Fastify, Hono, Node's `http`, Bun, Deno, Cloudflare Workers. Pure functions, no middleware.
+Works with any HTTP framework (Express, Fastify, Hono, Node's `http`, Bun, Deno, Cloudflare Workers). Pure functions, no middleware.
 
-## Server side — pick the encoding
+## Server side (pick the encoding)
 
 ```ts
 import { pick } from '@codecai/wire-compress';
@@ -37,9 +37,9 @@ app.get('/stream', (req, res) => {
 });
 ```
 
-The picker returns `{ encoding, reason }`. `reason` is a human-readable log string explaining why this encoding was selected &mdash; useful when a deployment is debugging "why is the gateway not using zstd?" without having to instrument the decision tree by hand.
+The picker returns `{ encoding, reason }`. `reason` is a human-readable log string explaining why this encoding was selected, useful when a deployment is debugging "why is the gateway not using zstd?" without having to instrument the decision tree by hand.
 
-## Client side — build Accept-Encoding
+## Client side (build Accept-Encoding)
 
 ```ts
 import { buildAcceptEncoding } from '@codecai/wire-compress';
@@ -66,20 +66,20 @@ fetch('/stream', {
 | client accepts br only | br (fallback) |
 | nothing else | identity |
 
-Defaults are calibrated against measured streaming binary frames (Codec on sglang &mdash; see [`RESULTS.md` §1c&ndash;1g](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md) in the parent repo).
+Defaults are calibrated against measured streaming binary frames (Codec on sglang, see [`RESULTS.md` §1c-1g](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md) in the parent repo).
 
 ### zstd is dict-only
 
 The picker enforces a hard rule: **`Content-Encoding: zstd` is selected ONLY when both `zstdHasDict` and `zstdEnabled` are true.** Either gate failing &rarr; fall through to gzip.
 
-- **Without a dict**, no-dict zstd's wire-byte advantage over gzip is essentially zero on Codec streams (both reach &asymp;3.4&nbsp;B/token, within noise &mdash; [`RESULTS.md` §1f](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md)) &mdash; and on shipped middleware (sglang, vLLM/llama.cpp PR equivs) zstd buffers the whole response, regressing TTFB by 334&times; at 2K tokens. No-dict zstd is the worst of both worlds: same bytes as gzip, much worse TTFB.
-- **With a dict + streaming middleware**, dict-zstd beats gzip by **16&ndash;38%** on bytes ([`RESULTS.md` §1g](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md)) at +0.13&nbsp;ms streaming TTFB &mdash; sub-millisecond, dwarfed by network.
+- **Without a dict**, no-dict zstd's wire-byte advantage over gzip is essentially zero on Codec streams (both reach &asymp;3.4&nbsp;B/token, within noise, see [`RESULTS.md` §1f](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md)), and on shipped middleware (sglang, vLLM/llama.cpp PR equivs) zstd buffers the whole response, regressing TTFB by 334&times; at 2K tokens. No-dict zstd is the worst of both worlds: same bytes as gzip, much worse TTFB.
+- **With a dict + streaming middleware**, dict-zstd beats gzip by **16-38%** on bytes ([`RESULTS.md` §1g](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md)) at +0.13&nbsp;ms streaming TTFB, sub-millisecond, dwarfed by network.
 
 The dict isn't an optimisation layered on top of zstd. It's the **precondition** for zstd being on the menu at all.
 
 ### What about brotli?
 
-Brotli has wider client coverage than zstd &mdash; Safari, iOS, older Firefox all ship `br` but not zstd. So brotli matters as a **fallback**, not a primary choice. The picker reflects that:
+Brotli has wider client coverage than zstd. Safari, iOS, and older Firefox all ship `br` but not zstd. So brotli matters as a **fallback**, not a primary choice. The picker reflects that:
 
 - If client supports gzip &rarr; never use br (gzip wins on this workload at every size we measured).
 - If client supports br but not gzip or zstd &rarr; use br. Strictly better than identity.
@@ -89,7 +89,7 @@ For the modern web (Chrome 123+, Firefox 126+) the picker lands on zstd; for old
 
 ### What about identity?
 
-Identity loses at every size we measured &mdash; even at 16 tokens, compressed Codec is &ge;2&times; smaller than raw. The CPU cost of gzip/zstd on a single CodecFrame is sub-microsecond. So identity is **only** chosen when the client refuses everything else, or when you explicitly restrict `serverSupports`.
+Identity loses at every size we measured. Even at 16 tokens, compressed Codec is &ge;2&times; smaller than raw. The CPU cost of gzip/zstd on a single CodecFrame is sub-microsecond. So identity is **only** chosen when the client refuses everything else, or when you explicitly restrict `serverSupports`.
 
 ## API
 
@@ -143,19 +143,19 @@ This logic is genuinely useful outside Codec. Anywhere you have:
 
 The thresholds were measured for streaming token frames specifically. They generalise to other small-frame streaming workloads (chat APIs, log streams, telemetry) but you may want to recalibrate for your data.
 
-## Polyglot ports — same picker in C# and C
+## Polyglot ports (same picker in C# and C)
 
 The picker isn&rsquo;t just a TypeScript module. The same Pareto-decision tree ships natively in **Codec.Net** (C#) and **libcodec** (C99), and every release replays the **12,960-vector cross-language conformance suite** to assert all three implementations pick the same encoding for the same input.
 
 | Language | Package | Public API entry | Test target |
 |---|---|---|---|
 | TypeScript | [`@codecai/wire-compress`](https://www.npmjs.com/package/@codecai/wire-compress) | `pick({ ... })` | `npm test` in `packages/wire-compress/` |
-| C# / .NET 8+ | [`Codec.Net`](https://www.nuget.org/packages/Codec.Net) | `Codec.Wire.Picker.Pick(new PickInput { ... })` | `dotnet test` &mdash; `PickerConformanceTests` |
-| C99 | `libcodec` &mdash; CMake `codec::codec` target | `codec_wire_pick(&in, &out)` from `codec/codec_wire_picker.h` | `ctest -R test_wire_picker` |
+| C# / .NET 8+ | [`Codec.Net`](https://www.nuget.org/packages/Codec.Net) | `Codec.Wire.Picker.Pick(new PickInput { ... })` | `dotnet test`, `PickerConformanceTests` |
+| C99 | `libcodec`, CMake `codec::codec` target | `codec_wire_pick(&in, &out)` from `codec/codec_wire_picker.h` | `ctest -R test_wire_picker` |
 
-Same hard rule across all three: **dictless zstd is never chosen.** Same `PickReasonCode` enum (`dict_zstd_default`, `gzip_no_dict`, `per_stack_overrode_zstd`, &hellip;). Same stack profiles (`default`, `sglang`, `llama.cpp`). The conformance suite walks 12,960 inputs &mdash; all 15 standard `Accept-Encoding` shapes &times; 9 payload sizes &times; 4 stack profiles &times; 4 flag combos &times; 2 interactivity modes &times; 3 sample profiles &mdash; and asserts byte-for-byte parity on `(encoding, reason_code)` for every vector. CI gates on it.
+Same hard rule across all three: **dictless zstd is never chosen.** Same `PickReasonCode` enum (`dict_zstd_default`, `gzip_no_dict`, `per_stack_overrode_zstd`, &hellip;). Same stack profiles (`default`, `sglang`, `llama.cpp`). The conformance suite walks 12,960 inputs (all 15 standard `Accept-Encoding` shapes &times; 9 payload sizes &times; 4 stack profiles &times; 4 flag combos &times; 2 interactivity modes &times; 3 sample profiles) and asserts byte-for-byte parity on `(encoding, reason_code)` for every vector. CI gates on it.
 
-### C# &mdash; `Codec.Net`
+### C# (`Codec.Net`)
 
 ```csharp
 using Codec.Wire;
@@ -174,7 +174,7 @@ if (pick.Encoding != Codec.Wire.Encoding.Identity)
 
 `Codec.Net` targets `net8.0` and ships the picker alongside the existing tokenizer / detokenizer / dict-zstd helpers. Brotli + gzip are built into the BCL (`System.IO.Compression.BrotliStream` / `GZipStream`); zstd is left to the caller&rsquo;s choice of NuGet (`ZstdSharp.Port` is what the test project uses).
 
-### C &mdash; `libcodec`
+### C (`libcodec`)
 
 ```c
 #include "codec/codec_wire_picker.h"
@@ -191,7 +191,7 @@ if (r.encoding != CODEC_WIRE_ENC_IDENTITY)
     set_header("Content-Encoding", codec_wire_encoding_name(r.encoding));
 ```
 
-No malloc, no thread-locals, no external runtime deps &mdash; suitable for ESP32 firmware hot paths and Linux server hot paths alike. Brotli / gzip / zstd link-in is the caller&rsquo;s choice (libbrotli, zlib, libzstd); `libcodec` itself just owns the **decision**.
+No malloc, no thread-locals, no external runtime deps, suitable for ESP32 firmware hot paths and Linux server hot paths alike. Brotli / gzip / zstd link-in is the caller&rsquo;s choice (libbrotli, zlib, libzstd); `libcodec` itself just owns the **decision**.
 
 ## Source &amp; links
 
@@ -201,10 +201,10 @@ No malloc, no thread-locals, no external runtime deps &mdash; suitable for ESP32
 - Source: [`packages/wire-compress`](https://github.com/wdunn001/Codec/tree/main/packages/wire-compress)
 - Conformance vectors: [`packages/wire-compress/test/conformance-vectors.json`](https://github.com/wdunn001/Codec/blob/main/packages/wire-compress/test/conformance-vectors.json) (12,960 cases)
 - Crossover chart: [`packages/bench/docs/crossover-summary.png`](https://raw.githubusercontent.com/wdunn001/Codec/main/packages/bench/docs/crossover-summary.png)
-- Benchmark data: [`packages/bench/RESULTS.md`](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md) §1c&ndash;1g
+- Benchmark data: [`packages/bench/RESULTS.md`](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md) §1c-1g
 
 ## See also
 
-- [Protocol &raquo; Compression](/docs/protocol/#compression) &mdash; the wire-level negotiation this picker implements.
-- [`@codecai/web`](/docs/typescript/) &mdash; the canonical TypeScript client; pairs with the picker for end-to-end compressed Codec streams.
-- [codec-metamcp](/docs/codec-metamcp/) &mdash; the Codec-aware MCP gateway that uses this picker to negotiate encoding on tool-call results.
+- [Protocol &raquo; Compression](/docs/protocol/#compression), the wire-level negotiation this picker implements.
+- [`@codecai/web`](/docs/typescript/), the canonical TypeScript client; pairs with the picker for end-to-end compressed Codec streams.
+- [codec-metamcp](/docs/codec-metamcp/), the Codec-aware MCP gateway that uses this picker to negotiate encoding on tool-call results.

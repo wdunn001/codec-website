@@ -6,7 +6,7 @@
 
 -
 
-`F999┃ `!If you just want a working server`!, use the pre-built `[codec-sglang Docker image`:/page/codecai/docs/codec-sglang.mu] — one container, GPU-ready, supervisor and patches already applied. This page is for the DIY path: vanilla upstream sglang plus the Codec patches.`f
+`F999┃ `!If you just want a working server`!, use the pre-built `[codec-sglang Docker image`:/page/codecai/docs/codec-sglang.mu], one container, GPU-ready, supervisor and patches already applied. This page is for the DIY path: vanilla upstream sglang plus the Codec patches.`f
 
 sglang (https://github.com/sgl-project/sglang) is the easiest path to a Codec-speaking server. With the Codec patches applied, the standard '/v1/completions' endpoint accepts 'stream_format: "msgpack" | "protobuf"' against any model it can serve.
 
@@ -20,9 +20,9 @@ docker run --gpus all -p 30000:30000 --ipc host \
   wdunn001/codec-sglang:latest
 `=
 
-That's it — the server now speaks both JSON-SSE and Codec on the same endpoint. Clients pick which one they want via the request body.
+That's it. The server now speaks both JSON-SSE and Codec on the same endpoint. Clients pick which one they want via the request body.
 
-`F999┃ `!Why a fork?`! sglang upstream merges new transports through formal proposals; while the Codec patches stabilise we ship them in 'wdunn001/sglang' (CUDA 12 builds in 'wdunn001/codec-supervisor' (https://github.com/wdunn001/codec-supervisor)). The patch is a thin overlay — cherry-pickable on any recent upstream nightly.`f
+`F999┃ `!Why a fork?`! sglang upstream merges new transports through formal proposals; while the Codec patches stabilise we ship them in 'wdunn001/sglang' (CUDA 12 builds in 'wdunn001/codec-supervisor' (https://github.com/wdunn001/codec-supervisor)). The patch is a thin overlay, cherry-pickable on any recent upstream nightly.`f
 
 >>>Request shape
 
@@ -45,13 +45,13 @@ Accept-Encoding: gzip
 
 Server responds with 'Content-Type: application/codec+msgpack' and a sequence of length-prefixed msgpack frames. Every other knob (temperature, top-p, max_tokens, stop sequences) works exactly as before.
 
-If the client omits 'stream_format' (or sets 'stream: true'), sglang behaves exactly as upstream — you get JSON-SSE. So one server can simultaneously serve a JSON SaaS chat UI and a Codec-native agent fleet.
+If the client omits 'stream_format' (or sets 'stream: true'), sglang behaves exactly as upstream. You get JSON-SSE. So one server can simultaneously serve a JSON SaaS chat UI and a Codec-native agent fleet.
 
 >>>Server-side ToolWatcher
 
-The Codec patches add an in-server tool-call detector that runs on the token-ID stream `*before`* the stream leaves the server. When the model emits a tool-call region, sglang surfaces it as a discrete event in the Codec stream — with a reserved control-ID frame the client picks up via 'ToolWatcher.feed()'.
+The Codec patches add an in-server tool-call detector that runs on the token-ID stream `*before`* the stream leaves the server. When the model emits a tool-call region, sglang surfaces it as a discrete event in the Codec stream, with a reserved control-ID frame the client picks up via 'ToolWatcher.feed()'.
 
-This is the source of the tool-call detection speedup measured in RESULTS.md (https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md) — `!26.7×`! on the v0.4.1 lab box (EPYC 8124P / gcc:13) running the libcodec C99 microbench, with the speedup ratio in ToolWatcher's favour by '~26-100×' depending on host. The server skips its usual "detokenize and regex-match against tool delimiters" step entirely; the client gets pre-segmented frames and can dispatch with no further parsing.
+This is the source of the tool-call detection speedup measured in RESULTS.md (https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md), `!26.7×`! on the v0.4.1 lab box (EPYC 8124P / gcc:13) running the libcodec C99 microbench, with the speedup ratio in ToolWatcher's favour by '~26-100×' depending on host. The server skips its usual "detokenize and regex-match against tool delimiters" step entirely; the client gets pre-segmented frames and can dispatch with no further parsing.
 
 `F999`*code (python):`*`f
 `=
@@ -65,7 +65,7 @@ async for frame in decode_msgpack_stream(resp.aiter_raw()):
             await dispatch(detok.render(ev.ids))
 `=
 
-The same client-side code works whether or not the server runs the in-server detector — if the server doesn't pre-segment, the watcher segments client-side. The server-side detector just moves the work earlier in the pipeline.
+The same client-side code works whether or not the server runs the in-server detector. If the server doesn't pre-segment, the watcher segments client-side. The server-side detector just moves the work earlier in the pipeline.
 
 >>>End-to-end agentic example numbers
 
@@ -82,11 +82,11 @@ Live runs from RESULTS.md (https://github.com/wdunn001/Codec/blob/main/RESULTS.m
 
 >>>Configuration knobs
 
-'stream_format' is the only Codec-specific request knob. The compression negotiation is the standard HTTP 'Accept-Encoding'. 'gzip, identity' is the safe default for any streaming workload — gzip preserves TTFT and gives 30–40× wire savings on Codec frames.
+'stream_format' is the only Codec-specific request knob. The compression negotiation is the standard HTTP 'Accept-Encoding'. 'gzip, identity' is the safe default for any streaming workload. gzip preserves TTFT and gives 30-40× wire savings on Codec frames.
 
 >>>>zstd, with a dict
 
-'zstd' is supported but `!only when the server has a pre-trained dictionary loaded for the request's 'stream_format'`! — see `[Protocol » Compression`:/page/codecai/docs/protocol.mu] for the rule and the rationale. Without a dict, sglang's compression module falls through to gzip even if the client advertised 'zstd' — no-dict zstd's bytes match gzip but the buffered middleware adds a 334× TTFB cliff at 2K tokens.
+'zstd' is supported but `!only when the server has a pre-trained dictionary loaded for the request's 'stream_format'`!. See `[Protocol » Compression`:/page/codecai/docs/protocol.mu] for the rule and the rationale. Without a dict, sglang's compression module falls through to gzip even if the client advertised 'zstd'. No-dict zstd's bytes match gzip but the buffered middleware adds a 334× TTFB cliff at 2K tokens.
 
 The reference dicts in the main repo's 'dictionaries/' (https://github.com/wdunn001/Codec/tree/main/dictionaries) are trained for Qwen-2.5 / msgpack and Qwen-2.5 / protobuf. Load them at server startup:
 
@@ -109,19 +109,19 @@ Codec-Zstd-Dict:  sha256:<hex of the dict bytes>
 Vary:             Accept-Encoding
 `=
 
-Clients use the 'Codec-Zstd-Dict' header to pick the right local dict before decompressing. With dict-zstd the wire is `!16–38% smaller`! than gzip (RESULTS.md §1g (https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md)) at +0.13 ms TTFB — sub-millisecond, dwarfed by network. For deployments that ship a dict alongside the model, zstd is the right pick for both interactive and agent traffic.
+Clients use the 'Codec-Zstd-Dict' header to pick the right local dict before decompressing. With dict-zstd the wire is `!16-38% smaller`! than gzip (RESULTS.md §1g (https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md)) at +0.13 ms TTFB, sub-millisecond, dwarfed by network. For deployments that ship a dict alongside the model, zstd is the right pick for both interactive and agent traffic.
 
-Deployments that don't load a dict keep getting gzip on every request — backward-compatible by default. Empty registry → zstd never picked.
+Deployments that don't load a dict keep getting gzip on every request, backward-compatible by default. Empty registry → zstd never picked.
 
 >>>vLLM and llama.cpp
 
-The same surface area — 'stream_format' request field, server-side 'ToolWatcher', dict-gated zstd, and the 'Codec-Zstd-Dict' response header — is shipped in pre-built form as `['codec-vllm'`:/page/codecai/docs/codec-vllm.mu] and `['codec-llamacpp'`:/page/codecai/docs/codec-llamacpp.mu].
+The same surface area ('stream_format' request field, server-side 'ToolWatcher', dict-gated zstd, and the 'Codec-Zstd-Dict' response header) is shipped in pre-built form as `['codec-vllm'`:/page/codecai/docs/codec-vllm.mu] and `['codec-llamacpp'`:/page/codecai/docs/codec-llamacpp.mu].
 
 >>>See also
 
-• `[TypeScript`:/page/codecai/docs/typescript.mu], `[Python`:/page/codecai/docs/python.mu], `[.NET`:/page/codecai/docs/dotnet.mu] — client walkthroughs.
-• `[Tool calling`:/page/codecai/docs/tool-calling.mu] — detail on 'ToolWatcher' events and dispatch.
-• PROTOCOL.md (https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md) — the wire spec.
+• `[TypeScript`:/page/codecai/docs/typescript.mu], `[Python`:/page/codecai/docs/python.mu], `[.NET`:/page/codecai/docs/dotnet.mu], client walkthroughs.
+• `[Tool calling`:/page/codecai/docs/tool-calling.mu], detail on 'ToolWatcher' events and dispatch.
+• PROTOCOL.md (https://github.com/wdunn001/Codec/blob/main/spec/PROTOCOL.md), the wire spec.
 
 -
 

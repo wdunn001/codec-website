@@ -1,14 +1,14 @@
 ---
 title: codec-leaf (MCP tool authors)
-description: The Codec leaf-mode contract for MCP tool authors. Wrap tool results with token IDs against a pinned tokenizer map, and a Codec-aware gateway forwards them verbatim — no re-tokenization, no KV-cache risk.
+description: The Codec leaf-mode contract for MCP tool authors. Wrap tool results with token IDs against a pinned tokenizer map, and a Codec-aware gateway forwards them verbatim, no re-tokenization, no KV-cache risk.
 section: Server
 order: 7
 ---
 
 `@codecai/mcp-leaf` is the tool-author surface for the Codec leaf-mode contract. The principle is simple:
 
-- The MCP **gateway** ([`codec-metamcp`](/docs/codec-metamcp/)) tokenizes tool results by default — necessary back-compat for legacy MCP servers, but every gateway hop pays the tokenizer cost.
-- The MCP **tool** knows the tokenizer the receiving model expects. If it does the work once and ships the IDs alongside the original text, the gateway becomes a transparent ID pipe — the cheapest possible hop on the wire.
+- The MCP **gateway** ([`codec-metamcp`](/docs/codec-metamcp/)) tokenizes tool results by default, necessary back-compat for legacy MCP servers, but every gateway hop pays the tokenizer cost.
+- The MCP **tool** knows the tokenizer the receiving model expects. If it does the work once and ships the IDs alongside the original text, the gateway becomes a transparent ID pipe, the cheapest possible hop on the wire.
 
 `codec-leaf` is the smallest change that graduates a tool to that path. Two function calls.
 
@@ -31,7 +31,7 @@ const meta = await makeMetaTokenizer({
   mapHash: 'sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791',
 });
 
-// In your existing tool handler — whatever you used to return:
+// In your existing tool handler, whatever you used to return:
 const result = {
   content: [{ type: 'text', text: 'It is currently 14:30 UTC.' }],
 };
@@ -63,7 +63,7 @@ Non-Codec-aware clients in the same MCP namespace ignore the `_meta` field per t
 
 ### Wire trade-off, measured
 
-Leaf is **purely additive** — the IDs ride alongside the text, not in place of it. That means the `_meta` envelope (`map_id` sha256 hex + ids array in JSON) is a fixed ~210-byte cost per text block. On a ~30-character timestamp result it's a wire-loss (`105 B → 316 B`, leaf 3× larger); on a 1&nbsp;KB search result it's a wire-win. The crossover where leaf wire&nbsp;&le;&nbsp;plain wire sits at **~300+ characters per text block**. The consumer-CPU win is unconditional: re-tokenize is O(chars), `readCodecMeta()` is O(blocks).
+Leaf is **purely additive**, the IDs ride alongside the text, not in place of it. That means the `_meta` envelope (`map_id` sha256 hex + ids array in JSON) is a fixed ~210-byte cost per text block. On a ~30-character timestamp result it's a wire-loss (`105 B → 316 B`, leaf 3× larger); on a 1&nbsp;KB search result it's a wire-win. The crossover where leaf wire&nbsp;&le;&nbsp;plain wire sits at **~300+ characters per text block**. The consumer-CPU win is unconditional: re-tokenize is O(chars), `readCodecMeta()` is O(blocks).
 
 Measured against the reference [`codec-time-leaf`](https://hub.docker.com/r/wdunn001/codec-time-leaf) server (20 warm `get_current_time` calls, qwen/qwen2 map, MCP stdio):
 
@@ -71,7 +71,7 @@ Measured against the reference [`codec-time-leaf`](https://hub.docker.com/r/wdun
 |--------------------------------------------|-------------:|------------------:|--------:|
 | plain MCP (consumer re-tokenizes text)     |          105 |          0.052 ms | 0.5 ms  |
 | mcp-leaf (consumer reads ids from `_meta`) |          316 |          0.004 ms | 0.4 ms  |
-| **delta**                                  | **+211 bytes** | **12.4× faster** | — |
+| **delta**                                  | **+211 bytes** | **12.4× faster** | n/a |
 
 Driver: [`packages/bench/src/leaf-live.ts`](https://github.com/wdunn001/Codec/blob/main/packages/bench/src/leaf-live.ts). Captured to [`packages/bench/results/2026-05-15T20-00-00Z/agent-loop/leaf.txt`](https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-15T20-00-00Z/agent-loop/leaf.txt). 20/20 integrity: every leaf sample's `ids` equal `tokenizer.encode(text)` under the declared `map_id`.
 
@@ -84,7 +84,7 @@ import { hasCodecMeta, takeIds, readCodecMeta, stripCodecMeta } from '@codecai/m
 
 if (hasCodecMeta(callToolResult)) {
   const ids = takeIds(callToolResult);
-  // Feed `ids` straight into the model — no tokenizer call.
+  // Feed `ids` straight into the model, no tokenizer call.
 }
 ```
 
@@ -98,13 +98,13 @@ A Codec-aware gateway like [codec-metamcp](/docs/codec-metamcp/) detects the lea
 
 ```
 [Codec][leaf] downstream tool returned pre-tokenized result for vocab
-  887311099cdc… — gateway shim bypassed.
+  887311099cdc… gateway shim bypassed.
 ```
 
 Versus the legacy path:
 
 ```
-[Codec][shim] tokenizing tool result for vocab 887311099cdc… —
+[Codec][shim] tokenizing tool result for vocab 887311099cdc…
   leaf-mode MCP server would skip this.
 ```
 
@@ -149,17 +149,17 @@ Without `CODEC_MAP_URL` the server runs as a plain MCP server and the gateway sh
 
 Your tool's `mapUrl` + `mapHash` MUST match the tokenizer the receiving model expects. Three sources:
 
-- **CDN-hosted reference maps** at [`wdunn001/codec-maps`](https://github.com/wdunn001/codec-maps) — pre-built for Qwen, Llama, Mistral, etc. Pin the `sha256` for integrity.
-- **Self-hosted** — build with [`maps-cli`](https://github.com/wdunn001/Codec/tree/main/packages/maps-cli) from any Hugging Face repo and serve it from your own CDN.
-- **`Codec-Tokenizer-Map` response header** — if your tool calls upstream Codec-aware engines, lift the negotiated map URL straight from the header.
+- **CDN-hosted reference maps** at [`wdunn001/codec-maps`](https://github.com/wdunn001/codec-maps), pre-built for Qwen, Llama, Mistral, etc. Pin the `sha256` for integrity.
+- **Self-hosted.** Build with [`maps-cli`](https://github.com/wdunn001/Codec/tree/main/packages/maps-cli) from any Hugging Face repo and serve it from your own CDN.
+- **`Codec-Tokenizer-Map` response header.** If your tool calls upstream Codec-aware engines, lift the negotiated map URL straight from the header.
 
 Mismatched vocab between leaf-tokenized output and the receiving model corrupts the KV cache. The reader-side `readCodecMeta()` validates this; on the writer side, prefer pinning a single map and refusing to start the server if `mapHash` doesn't match the fetched bytes.
 
 ## When NOT to graduate to leaf mode
 
-- **Tool returns a non-text resource** (image, audio, binary) — `_meta['ai.codec/leaf-tokenization']` only applies to text content blocks. The gateway shim handles the binary side.
-- **Receiving model's tokenizer is unstable** — if you don't know the vocab the model will use at call time, leave the gateway to tokenize against its negotiated map.
-- **Tool result is multi-recipient** — leaf mode is per-vocab. Multi-fanout to different models with different vocabs needs the gateway to re-tokenize per recipient anyway.
+- **Tool returns a non-text resource** (image, audio, binary). `_meta['ai.codec/leaf-tokenization']` only applies to text content blocks. The gateway shim handles the binary side.
+- **Receiving model's tokenizer is unstable.** If you don't know the vocab the model will use at call time, leave the gateway to tokenize against its negotiated map.
+- **Tool result is multi-recipient.** Leaf mode is per-vocab. Multi-fanout to different models with different vocabs needs the gateway to re-tokenize per recipient anyway.
 
 In all three cases the legacy path keeps working. Leaf mode is purely additive.
 
@@ -172,6 +172,6 @@ In all three cases the legacy path keeps working. Leaf mode is purely additive.
 
 ## See also
 
-- [codec-metamcp](/docs/codec-metamcp/) &mdash; the Codec-aware MCP gateway that detects the leaf-mode payload and bypasses its shim.
-- [Tool calling](/docs/tool-calling/) &mdash; the in-stream `ToolWatcher` for engine-side tool-call detection (the parallel mechanism on the engine side of the same problem).
-- [Protocol map](/protocol-map/) &mdash; where leaf-mode sits in the three-pathway picture.
+- [codec-metamcp](/docs/codec-metamcp/), the Codec-aware MCP gateway that detects the leaf-mode payload and bypasses its shim.
+- [Tool calling](/docs/tool-calling/), the in-stream `ToolWatcher` for engine-side tool-call detection (the parallel mechanism on the engine side of the same problem).
+- [Protocol map](/protocol-map/), where leaf-mode sits in the three-pathway picture.
