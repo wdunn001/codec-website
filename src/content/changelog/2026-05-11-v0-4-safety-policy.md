@@ -33,7 +33,7 @@ Three new fields on the existing handshake, all optional / additive:
 A v0.3 client sees an extra string on a known enum, ignores the new
 optional fields, and continues working. A v0.4 client talking to a
 v0.3 server sees no policy advertised and falls back to "unknown
-enforcement", which is exactly the same posture v0.3 had.
+enforcement". That is exactly the same posture v0.3 had.
 
 ## The "publishable descriptor" boundary
 
@@ -59,7 +59,7 @@ descriptor.
 - **Classifier registry** with two opt-in classifiers: Prompt Guard
   86M (Transformers.js, ~80 MB CPU default tier) and Llama Guard 3
   1B (codec-web-llm, ~1 GB WebGPU opt-in tier). Same 14-category
-  Llama Guard taxonomy as the server-side classifier, so policy
+  Llama Guard taxonomy as the server-side classifier. Policy
   decisions stay symmetric across hosts.
 
 62 tests, no host-framework dependency. Hosts (leet, codec-website,
@@ -95,7 +95,7 @@ framework-free `SafetyGate`.
   (`@codecai/web`, `codecai`, `codec-rs`, `Codec.Net`,
   `ai.codec:codec`). Before this fix, `BPETokenizer.encode("<|im_start|>...<|im_end|>")`
   on Qwen-2.5 split chat-template delimiters into 6 byte-level
-  tokens each (`<`, `|`, `im`, `_start`, `|`, `>`) instead of
+  tokens each (`<`, `|`, `im`, `_start`, `|`, `>`) in place of
   emitting the single atomic vocab ID. Visible because Qwen-2.5-0.5B
   is small enough that wrong tokenization produces incoherent
   replies.
@@ -103,7 +103,7 @@ framework-free `SafetyGate`.
   pre-tokenizer patterns use the ES2025 RegExp Pattern Modifiers
   inline-flag group that throws on Chrome <125, iOS Safari <18,
   Firefox <132, Node <23. The encoder now rewrites
-  `(?i:abc)` → `(?:[aA][bB][cC])` as the third fallback, so BPE
+  `(?i:abc)` → `(?:[aA][bB][cC])` as the third fallback. BPE
   encoding works on every shipped mobile-leaning runtime.
 - **`pre_tokenizer_program` runtime port to Rust**, `codec-rs`
   BPE now works against Qwen-2 / Llama-3 / Phi-4 / cl100k_base
@@ -112,7 +112,7 @@ framework-free `SafetyGate`.
 - **convert-tiktoken merge derivation fix**, the previous
   `max(rank(left), rank(right))` heuristic picked splits that
   aren't reachable via greedy BPE from initial bytes. Vocab tokens
-  like `Hello` on o200k_base encoded as `["H", "ello"]` instead of
+  like `Hello` on o200k_base encoded as `["H", "ello"]` in place of
   `[13225]`. Replaced with Karpathy-style greedy-BPE simulation
   that emits reachable splits. Affected every shipped OpenAI
   tokenizer in codec-maps; now HF-byte-identical.

@@ -3,7 +3,7 @@ title: v0.3 latent modality (VAE latents on the wire)
 date: "2026-05-09"
 kind: feature
 version: v0.3.0
-summary: Image and video diffusion models now stream VAE latents instead of decoded pixels. 48× smaller wire weight, decode at the leaf.
+summary: Image and video diffusion models now stream VAE latents in place of decoded pixels. 48× smaller wire weight, decode at the leaf.
 links:
   - label: GitHub release v0.3.0
     url: https://github.com/wdunn001/Codec/releases/tag/v0.3.0

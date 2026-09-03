@@ -1,13 +1,13 @@
 ---
 title: codec-metamcp (Docker)
-description: MetaMCP gateway with Codec binary transport. The MCP aggregator, but tool-call results ship as length-prefixed msgpack instead of newline-delimited JSON-RPC.
+description: MetaMCP gateway with Codec binary transport. The MCP aggregator, but tool-call results ship as length-prefixed msgpack in place of newline-delimited JSON-RPC.
 section: Server
 order: 4
 ---
 
 `codec-metamcp` is a pre-built Docker image of [MetaMCP](https://github.com/metatool-ai/metamcp) (the MCP aggregator/orchestrator/gateway) with the Codec binary transport patch applied. Stand it up like the upstream image, point any MCP client at it, and tool-heavy sessions ship dramatically smaller wire bytes when the client opts into Codec.
 
-Unlike [codec-sglang](/docs/codec-sglang/) / [codec-vllm](/docs/codec-vllm/) / [codec-llamacpp](/docs/codec-llamacpp/), this image **doesn't bundle a Python control plane**. MetaMCP already ships an admin UI as its frontend (Next.js) for namespace + server management, so there's nothing for `codec-supervisor` to add. The image is just MetaMCP, built from the [`wdunn001/metamcp` fork](https://github.com/wdunn001/metamcp/tree/feat/codec-binary-transport).
+Unlike [codec-sglang](/docs/codec-sglang/) / [codec-vllm](/docs/codec-vllm/) / [codec-llamacpp](/docs/codec-llamacpp/), this image **doesn't bundle a Python control plane**. MetaMCP already ships an admin UI as its frontend (Next.js) for namespace + server management. There is nothing for `codec-supervisor` to add. The image is just MetaMCP, built from the [`wdunn001/metamcp` fork](https://github.com/wdunn001/metamcp/tree/feat/codec-binary-transport).
 
 ## Quick start
 
@@ -40,7 +40,7 @@ Add `Accept-Encoding: zstd, br, gzip, identity` for the full v0.4.1 compression 
 
 For tool-heavy sessions (long file reads, web fetches, RAG context, model-generated text piped through tools), the wire weight collapses. Same physics as the [cross-stack benchmark matrix](https://github.com/wdunn001/Codec/blob/main/packages/bench/results/2026-05-08T01-15-02Z/MATRIX.md):
 
-- **Length-prefixed msgpack/protobuf framing** instead of newline-delimited JSON-RPC envelopes
+- **Length-prefixed msgpack/protobuf framing** in place of newline-delimited JSON-RPC envelopes
 - **Full v0.4.1 compression stack** (gzip + brotli + dict-zstd) on top via standard `Accept-Encoding` negotiation, per spec preference order `zstd > br > gzip > identity`
 - **TTFB unchanged.** First-body-byte stays within 1&nbsp;ms of the JSON-RPC path on the same server
 - **MCP-shaped zstd dictionary negotiation.** The gateway loads a pre-trained 16&nbsp;KB dict at startup and emits a `Codec-Zstd-Dict: sha256:…` header so a Codec-aware client can fetch the matching dict and decompress every frame against it. **+78.8&nbsp;% wire-byte reduction over no-dict zstd; ~4.7× over JSON+gzip** on real MCP traffic ([2026-05-08T22-24-23Z bench](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-08T22-24-23Z/mcp)).

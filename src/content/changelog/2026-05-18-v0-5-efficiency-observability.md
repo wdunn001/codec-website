@@ -25,9 +25,9 @@ v0.5.0 ships four new wire surfaces, all opt-in, without changing the v0.4 happy
 
 **Delta-varint stream encoding.** New `stream_format` values `"msgpack-delta"` and `"protobuf-delta"`. Frames carry `base_id` plus zigzag-encoded deltas against the prior frame's last identifier; stateless framing preserved. ~10-15% wire reduction pre-zstd, ~3-5% post-zstd. Python reference impl; engine-side emit pending in v0.5.x.
 
-**Discoverable Zstandard dictionaries.** Engines now publish their pre-trained dicts at `<origin>/.well-known/codec/dicts/<sha256>.zstd`. Hash-pinned: the client MUST verify the bytes hash to the URL component. Closes the v0.4.1 silent-COPY-dicts-drop regression class. Dictionary drift now fails loudly (404 or hash-mismatch) instead of falling back silently to identity bytes. Release-checklist §1.7 codifies a four-sub-gate audit; the v0.5 cut actually caught a llama.cpp regression where `master` was vanilla upstream without the codec patches and the engine was silently serving identity-encoded msgpack.
+**Discoverable Zstandard dictionaries.** Engines now publish their pre-trained dicts at `<origin>/.well-known/codec/dicts/<sha256>.zstd`. Hash-pinned: the client MUST verify the bytes hash to the URL component. Closes the v0.4.1 silent-COPY-dicts-drop regression class. Dictionary drift now fails loudly with a 404 or a hash-mismatch. The silent fallback to identity bytes is gone. Release-checklist §1.7 codifies a four-sub-gate audit; the v0.5 cut actually caught a llama.cpp regression where `master` was vanilla upstream without the codec patches and the engine was silently serving identity-encoded msgpack.
 
-**GPU-side latent quantize fast path.** `LatentStreamEncoderOptions.gpu_quantize=True` accepts a CUDA `torch.Tensor`, quantizes on-device, and transfers the int4/int8 result instead of the fp16 latent. ~75% PCIe reduction on int4 SDXL; smaller wins at SD-1.5.
+**GPU-side latent quantize fast path.** `LatentStreamEncoderOptions.gpu_quantize=True` accepts a CUDA `torch.Tensor`, quantizes on-device, and transfers the int4/int8 result in place of the fp16 latent. ~75% PCIe reduction on int4 SDXL; smaller wins at SD-1.5.
 
 **Bolt-on tool dispatcher.** The engine can dispatch directly to tools published via the `@codecai/tool-kit` manifest, without ever detokenizing the model's `<tool_call>` region. Manifest schema + `_codec_meta` envelope let a tool author publish pre-tokenized IDs that flow into and out of the engine's generation context.
 
@@ -51,7 +51,7 @@ Upstream PRs filed at [sgl-project/sglang#25544](https://github.com/sgl-project/
 
 ## Bench: byte-identical to v0.4.1
 
-The §1 + §1b numbers are unchanged from v0.4.1, which is exactly what wire-additive is supposed to mean. The §1.7 and §1.9 gates added in this release exist to guarantee that, not change it.
+The §1 + §1b numbers are unchanged from v0.4.1. That is exactly what wire-additive is supposed to mean. The §1.7 and §1.9 gates added in this release exist to guarantee that.
 
 **§1b engine-output @ 2K tokens, Codec msgpack + dict-zstd:**
 

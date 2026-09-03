@@ -20,7 +20,7 @@ import { loadMap, Detokenizer, decodeStream } from "@codecai/web";
 
 const map = await loadMap({
   url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-  hash: "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+  hash: "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
 });
 
 const resp = await fetch("http://localhost:8000/v1/completions", {
@@ -55,7 +55,7 @@ from codecai import Detokenizer, decode_msgpack_stream, load_map
 async def main():
     m = await load_map(
         url="https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-        hash="sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+        hash="sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
     )
     detok = Detokenizer(m)
     async with httpx.AsyncClient() as client:
@@ -88,7 +88,7 @@ using Codec;
 
 var map = await MapLoader.LoadAsync(new LoadOptions {
     Url  = "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-    Hash = "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+    Hash = "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
 });
 
 using var http = new HttpClient();
@@ -138,7 +138,7 @@ Full walkthrough: [C guide](/docs/c/).
 
 In every language, the recipe is the same four steps:
 
-1. **Load a vocab map**, which tells your client which tokenizer the server's IDs belong to. Maps are sha256-content-addressed and cached.
+1. **Load a vocab map**. It tells your client which tokenizer the server's IDs belong to. Maps are sha256-content-addressed and cached.
 2. **POST a completion request**, identical to your normal `/v1/completions` call, with one extra field: `stream_format: "msgpack"` (or `"protobuf"`).
 3. **Decode the binary stream.** Helper functions yield one `CodecFrame` per `{ids, done, finish_reason}`.
 4. **Detokenize at the edge**, only when a human is going to read it. Internal hops keep the IDs.

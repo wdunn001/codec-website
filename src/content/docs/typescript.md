@@ -31,7 +31,7 @@ import {
 ```ts
 const map = await loadMap({
   url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-  hash: "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+  hash: "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
 });
 ```
 
@@ -52,7 +52,7 @@ const map = await discoverMap({ origin: "https://example.com", id: "qwen2" });
 
 ### 2. Send a request
 
-A Codec request is **a normal `/v1/completions` POST with one extra body field** (`stream_format`) **and two Codec request HEADERS**: `Accept-Encoding` (compression menu) + `Codec-Client-Version` (capability advertisement, v0.4 normative). The server reads `stream_format` from the body and switches its response from JSON-SSE to binary frames; it reads `Accept-Encoding` to pick the smallest valid encoding per spec preference `zstd > br > gzip > identity`. See [Protocol &raquo; Request vs response](/docs/protocol/#request-vs-response-where-each-codec-knob-lives) for why `stream_format` lives in the body rather than as a `Codec-Stream-Format` header (short answer: piggybacks on OpenAI's request schema so the patch slots into upstream engines without forking the request validator).
+A Codec request is **a normal `/v1/completions` POST with one extra body field** (`stream_format`) **and two Codec request HEADERS**: `Accept-Encoding` (compression menu) + `Codec-Client-Version` (capability advertisement, v0.4 normative). The server reads `stream_format` from the body and switches its response from JSON-SSE to binary frames; it reads `Accept-Encoding` to pick the smallest valid encoding per spec preference `zstd > br > gzip > identity`. See [Protocol &raquo; Request vs response](/docs/protocol/#request-vs-response-where-each-codec-knob-lives) for why `stream_format` lives in the body and not in a `Codec-Stream-Format` header (short answer: piggybacks on OpenAI's request schema so the patch slots into upstream engines without forking the request validator).
 
 ```ts
 const resp = await fetch("http://localhost:8000/v1/completions", {
@@ -105,7 +105,7 @@ for await (const frame of decodeStream(resp.body!, "msgpack")) {
 
 `Detokenizer` is **stateful**. It buffers UTF-8 fragments across calls so a multi-byte character split across two frames renders correctly. Pass `{ partial: true }` while the stream is open and `{ partial: false }` (or omit) on the final flush; the partial flag tells the detokenizer to hold incomplete bytes back until the next call.
 
-## Encoding (sending IDs, not text)
+## Encoding (text to token IDs)
 
 If you already have token IDs (for example, the *previous* response in an agent loop), skip the server's tokenizer:
 
@@ -162,11 +162,11 @@ import { Translator } from "@codecai/web";
 
 const qwen = await loadMap({
   url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-  hash: "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+  hash: "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
 });
 const llama = await loadMap({
   url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/meta-llama/llama-3.json",
-  hash: "sha256:79b707aea8c2b41c2883ec7913b0c4a0c880044ac844d89a9a03e779eb92db04",
+  hash: "sha256:1df0d6a894b844712979207a0521c3887026f3dde427fb75b2984307a57d797f",
 });
 
 const tr = new Translator(qwen, llama);
@@ -177,7 +177,7 @@ for await (const frame of decodeStream(qwenResp.body!, "msgpack")) {
 }
 ```
 
-The translator goes IDs → IDs without ever materializing UTF-8. It handles byte-level boundaries the same way `Detokenizer` does, so you can stream it.
+The translator goes IDs → IDs without ever materializing UTF-8. It handles byte-level boundaries the same way `Detokenizer` does. You can stream it.
 
 Full reference: [Translator](/docs/translator/).
 

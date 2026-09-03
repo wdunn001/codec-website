@@ -41,7 +41,7 @@ curl http://localhost:8080/v1/completions \
 
 The negotiator honors the spec preference order `zstd > br > gzip > identity` and picks the smallest. On Qwen2.5-0.5B-Instruct fp16 at 2&nbsp;K tokens, the dict-zstd path lands at **140&nbsp;B**, **3,868&times;** smaller than the JSON-SSE baseline (529&nbsp;KB), with TTFB ~40.8&nbsp;ms (within ~1&nbsp;ms of the JSON path on the same server).
 
-llama-server ignores the `model` field for routing (single-model-per-process), so `"x"` is fine.
+llama-server ignores the `model` field for routing (single-model-per-process). Any value works, including `"x"`.
 
 > **GPU prereq:** NVIDIA Container Toolkit + `--gpus all`. The image is built for compute capability `sm_86` (RTX 3090); use `--build-arg CUDA_DOCKER_ARCH=<arch>` if you rebuild for a different GPU.
 

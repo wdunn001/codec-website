@@ -79,7 +79,7 @@ The dict isn't an optimisation layered on top of zstd. It's the **precondition**
 
 ### What about brotli?
 
-Brotli has wider client coverage than zstd. Safari, iOS, and older Firefox all ship `br` but not zstd. So brotli matters as a **fallback**, not a primary choice. The picker reflects that:
+Brotli has wider client coverage than zstd. Safari, iOS, and older Firefox all ship `br` but not zstd. So brotli matters as a **fallback**. The picker reflects that:
 
 - If client supports gzip &rarr; never use br (gzip wins on this workload at every size we measured).
 - If client supports br but not gzip or zstd &rarr; use br. Strictly better than identity.
@@ -136,10 +136,10 @@ Pretty-prints the rule for log lines or `--help` output.
 This logic is genuinely useful outside Codec. Anywhere you have:
 
 - Streaming responses (SSE, gRPC-Web text, event streams)
-- Many small frames rather than one big blob
+- Many small frames, one blob each
 - Mixed clients (modern browsers, mobile webviews, CLI tools, IoT)
 
-&hellip;the right encoding depends on size and client support, and the standard "always-brotli" advice is wrong. Drop this in instead of writing your own switch statement.
+&hellip;the right encoding depends on size and client support, and the standard "always-brotli" advice is wrong. Drop this in and skip writing your own switch statement.
 
 The thresholds were measured for streaming token frames specifically. They generalise to other small-frame streaming workloads (chat APIs, log streams, telemetry) but you may want to recalibrate for your data.
 

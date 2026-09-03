@@ -25,7 +25,7 @@ One pass. No UTF-8.
 
 The translator pre-computes a **byte-level translation table** between the two vocabs at construction. For each token in the source vocab, it knows the corresponding sequence of one or more tokens in the target vocab. Translation at runtime is a flat lookup, plus a small amount of state for handling tokens that split UTF-8 sequences across boundaries (the same problem `Detokenizer` solves).
 
-The table only depends on the two maps, so two long-running agents talking back and forth share one translator instance.
+The table only depends on the two maps. Two long-running agents talking back and forth share one translator instance.
 
 ## Pattern: pipe between two agents
 
@@ -34,11 +34,11 @@ import { Translator, decodeStream, loadMap } from "@codecai/web";
 
 const qwen = await loadMap({
   url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-  hash: "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+  hash: "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
 });
 const llama = await loadMap({
   url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/meta-llama/llama-3.json",
-  hash: "sha256:79b707aea8c2b41c2883ec7913b0c4a0c880044ac844d89a9a03e779eb92db04",
+  hash: "sha256:1df0d6a894b844712979207a0521c3887026f3dde427fb75b2984307a57d797f",
 });
 
 const tr = new Translator(qwen, llama);

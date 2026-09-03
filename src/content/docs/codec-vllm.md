@@ -9,7 +9,7 @@ order: 2
 
 - **vLLM** with the Codec patches already applied, token-native binary transport on `/v1/completions` and `/v1/chat/completions`.
 - **codec-supervisor**, the same FastAPI admin sidecar as [codec-sglang](/docs/codec-sglang/), handling model uploads, Hugging Face pulls, hot-swaps, and reverse-proxying the vLLM backend.
-- All upstream vLLM kernels (compiled `_C.abi3.so`, `_flashmla_C.abi3.so`, `_moe_C.abi3.so`, etc.) intact, the codec patches are a surgical file overlay (9 changed `.py` files), not a recompile.
+- All upstream vLLM kernels (compiled `_C.abi3.so`, `_flashmla_C.abi3.so`, `_moe_C.abi3.so`, etc.) intact, the codec patches are a surgical file overlay of 9 changed `.py` files. No recompile is involved.
 
 > **Why this base image?** The codec routes need vLLM's per-endpoint module split (the post-refactor layout where `/v1/completions` and `/v1/chat/completions` are their own modules). The image is built on top of a vLLM build that has it.
 
@@ -25,7 +25,7 @@ docker run -d --gpus all \
   wdunn001/codec-vllm:latest
 ```
 
-The container boots the supervisor on `:8080`, which then launches the vLLM backend with `Qwen/Qwen2.5-0.5B-Instruct` (or whatever you set in `CODEC_INITIAL_MODEL`). First boot pulls weights from Hugging Face into the persistent cache volume.
+The container boots the supervisor on `:8080`. The supervisor then launches the vLLM backend with `Qwen/Qwen2.5-0.5B-Instruct` (or whatever you set in `CODEC_INITIAL_MODEL`). First boot pulls weights from Hugging Face into the persistent cache volume.
 
 > **GPU prereq:** NVIDIA Container Toolkit installed, and `--gpus all` (or a specific device list). The image targets recent CUDA. The `--ipc host` flag is required for vLLM's shared-memory CUDA IPC.
 
@@ -44,7 +44,7 @@ curl http://localhost:8080/v1/completions \
   -d '{"model":"Qwen/Qwen2.5-0.5B-Instruct","prompt":"Hello","max_tokens":20,"stream":true,"stream_format":"msgpack"}'
 ```
 
-Unlike sglang, vLLM **strictly validates the `model` field**. Pass the loaded model id, not a placeholder. Use `/admin/status` to check the current model.
+Unlike sglang, vLLM **strictly validates the `model` field**. Pass the loaded model id. A placeholder will fail validation. Use `/admin/status` to check the current model.
 
 The codec patches on vLLM ship the full compression stack (gzip + brotli + dict-zstd) and negotiate via `Accept-Encoding` per the spec preference order `zstd > br > gzip > identity`. All 6 Codec clients (TS/Web, Python, .NET, Rust, Java, C) decode every encoding byte-identically. On Qwen2.5-0.5B-Instruct at 2&nbsp;K tokens the dict-zstd path lands at **3.9&nbsp;KB** (~**137&times;** smaller than the 518&nbsp;KB JSON-SSE baseline; the ratio is content-bound at this engine because vLLM's sampler emits less compressible output at temp&nbsp;0; see the synthetic-stream cells for the protocol-only headline).
 

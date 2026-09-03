@@ -5,7 +5,7 @@ section: Reference
 order: 1
 ---
 
-The standard "regex-match `<tool_call>...</tool_call>` in the streaming text" approach has a problem: every chunk that arrives over the wire has to be detokenized to UTF-8 first, which means decoding bytes the model just produced as integers, just to scan them as text, just to dispatch on the result.
+The standard "regex-match `<tool_call>...</tool_call>` in the streaming text" approach has a problem: every chunk that arrives over the wire has to be detokenized to UTF-8 first. That means decoding bytes the model just produced as integers, just to scan them as text, just to dispatch on the result.
 
 `ToolWatcher` skips the detokenization. It matches on the **token IDs** of the delimiters (a single `uint32` compare per token) and yields events directly from the binary stream.
 
@@ -13,7 +13,7 @@ The standard "regex-match `<tool_call>...</tool_call>` in the streaming text" ap
 
 A tokenizer's special tokens (`<tool_call>`, `</tool_call>`, `<|im_start|>`, etc.) have **reserved IDs** that don't appear in any normal text. When the model emits the start delimiter, exactly one ID flows by; ditto the end delimiter. Watching for those IDs is O(1) per token with an integer comparison.
 
-The text-path equivalent has to: pull bytes off the wire, msgpack-decode the IDs, look up each ID in the vocab, concatenate the bytes, parse them as UTF-8, run a regex against the cumulative text, and only then dispatch. That's a lot of work for every chunk that *isn't* a tool call, which is most of them.
+The text-path equivalent has to: pull bytes off the wire, msgpack-decode the IDs, look up each ID in the vocab, concatenate the bytes, parse them as UTF-8, run a regex against the cumulative text, and only then dispatch. That's a lot of work for every chunk that *isn't* a tool call. Most of them are not.
 
 ## The events ToolWatcher yields
 
@@ -36,7 +36,7 @@ import { Detokenizer, ToolWatcher, decodeStream, loadMap } from "@codecai/web";
 
 const map = await loadMap({
   url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-  hash: "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+  hash: "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
 });
 const detok = new Detokenizer(map);
 const watcher = new ToolWatcher(map, "<tool_call>", "</tool_call>");
@@ -72,7 +72,7 @@ Python looks the same with `watcher.feed(frame.ids)` returning a list of events;
 
 ## When the server pre-segments
 
-If your server runs the [in-server ToolWatcher](/docs/sglang/#server-side-toolwatcher), the server emits Codec frames where tool-call regions are already marked with reserved control IDs. Client-side `ToolWatcher.feed()` still works the same way. It picks up the server's markers instead of doing the matching itself. Strictly faster, but you don't write different client code.
+If your server runs the [in-server ToolWatcher](/docs/sglang/#server-side-toolwatcher), the server emits Codec frames where tool-call regions are already marked with reserved control IDs. Client-side `ToolWatcher.feed()` still works the same way. It picks up the server's markers and skips the matching itself. Strictly faster, but you don't write different client code.
 
 ## Performance
 

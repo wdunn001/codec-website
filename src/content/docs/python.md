@@ -30,7 +30,7 @@ from codecai import (
 ```python
 map = await load_map(
     url="https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-    hash="sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+    hash="sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
 )
 ```
 
@@ -95,7 +95,7 @@ async for frame in decode_msgpack_stream(resp.aiter_raw()):
 
 `Detokenizer` is stateful and **stream-safe**. It buffers split UTF-8 sequences across `render` calls. Pass `partial=True` while the stream is open; the final call (or any call where you know the stream is done) should be `partial=False` so the buffer flushes.
 
-## Encoding (sending IDs, not text)
+## Encoding (text to token IDs)
 
 If you already have token IDs:
 
@@ -204,11 +204,11 @@ from codecai import Translator
 
 qwen  = await load_map(
     url="https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-    hash="sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+    hash="sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
 )
 llama = await load_map(
     url="https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/meta-llama/llama-3.json",
-    hash="sha256:79b707aea8c2b41c2883ec7913b0c4a0c880044ac844d89a9a03e779eb92db04",
+    hash="sha256:1df0d6a894b844712979207a0521c3887026f3dde427fb75b2984307a57d797f",
 )
 
 tr = Translator(qwen, llama)
@@ -251,7 +251,7 @@ Yields `("text", str)` for normal output and `("tool", str)` when the model emit
 ## Production checklist
 
 - **Pin the map hash.** Mismatch = supply-chain alarm.
-- **Use `client.stream`, not `client.post`.** Otherwise the entire response buffers in memory.
+- **Use `client.stream`.** With `client.post` the entire response buffers in memory.
 - **Reuse `Detokenizer` and `BPETokenizer`** across requests; both are stateless across-stream (the detokenizer's buffer resets at each new stream).
 - **Async ergonomics.** Wrap the decode loop in a `try/finally` if you need to clean up. `aiter_raw()` doesn't auto-close.
 

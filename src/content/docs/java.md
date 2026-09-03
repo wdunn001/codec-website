@@ -36,11 +36,11 @@ import ai.codec.*;
 ```java
 TokenizerMap map = MapLoader.load(new LoadOptions.Builder()
     .url("https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json")
-    .hash("sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791")
+    .hash("sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad")
     .build());
 ```
 
-The hash is verified against the bytes on the wire before the JSON parses. Mismatch throws `TokenizerMapHashMismatchException`. For an async fetch, use `MapLoader.loadAsync(...)`, which returns a `CompletableFuture<TokenizerMap>`.
+The hash is verified against the bytes on the wire before the JSON parses. Mismatch throws `TokenizerMapHashMismatchException`. For an async fetch, use `MapLoader.loadAsync(...)`. It returns a `CompletableFuture<TokenizerMap>`.
 
 ### 2. Send a request
 
@@ -121,7 +121,7 @@ while (frames.hasNext()) {
 
 `Detokenizer` is **stateful**. Partial multi-byte UTF-8 sequences buffer across `render()` calls when `partial=true`. A 4-byte 🚀 split across two frames round-trips identically. Call `detok.reset()` between unrelated streams.
 
-## Encoding (sending IDs, not text)
+## Encoding (text to token IDs)
 
 ```java
 BPETokenizer tok = new BPETokenizer(map);
@@ -136,7 +136,7 @@ String body = json.writeValueAsString(Map.of(
 ));
 ```
 
-Greedy by merge priority, not left-to-right. Bit-identical to the upstream tokenizer across all reference bindings.
+Greedy by merge priority. Bit-identical to the upstream tokenizer across all reference bindings.
 
 ## Watching for tool calls
 
@@ -166,11 +166,11 @@ The watcher's IDs are `long[]` because Java has no unsigned 32-bit primitive. A 
 ```java
 TokenizerMap qwen  = MapLoader.load(new LoadOptions.Builder()
     .url("https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json")
-    .hash("sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791")
+    .hash("sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad")
     .build());
 TokenizerMap llama = MapLoader.load(new LoadOptions.Builder()
     .url("https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/meta-llama/llama-3.json")
-    .hash("sha256:79b707aea8c2b41c2883ec7913b0c4a0c880044ac844d89a9a03e779eb92db04")
+    .hash("sha256:1df0d6a894b844712979207a0521c3887026f3dde427fb75b2984307a57d797f")
     .build());
 
 Translator tr = new Translator(qwen, llama);

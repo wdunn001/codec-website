@@ -9,7 +9,7 @@ This is a tour of [PROTOCOL.md](https://github.com/wdunn001/Codec/blob/main/spec
 
 ## Layers
 
-Codec is deliberately three thin layers on top of HTTP, not one fat envelope:
+Codec is deliberately three thin layers on top of HTTP:
 
 | Layer | What it carries | What it does NOT carry |
 |---|---|---|
@@ -161,7 +161,7 @@ Codec is **streaming-safe with gzip**. Set `Accept-Encoding: gzip, identity` on 
 
 zstd without a pre-trained dictionary is a trap on Codec streams: its wire-byte advantage over gzip is essentially zero (both reach &asymp;3.4&nbsp;B/token, within noise, see [RESULTS.md §1f](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md)) but the shipped buffered middleware in every gateway eats a **334&times; TTFB cliff** at 2K tokens (11&nbsp;ms &rarr; 3,684&nbsp;ms). Same bytes as gzip, much worse first-token latency.
 
-**The pre-trained dictionary is the precondition for using zstd at all**, not an optimization layered on top. Tokenizer maps now declare zstd dictionaries inline:
+**The pre-trained dictionary is the precondition for using zstd at all**. It is no optimization layered on top. Tokenizer maps now declare zstd dictionaries inline:
 
 ```json
 {
@@ -185,7 +185,7 @@ zstd without a pre-trained dictionary is a trap on Codec streams: its wire-byte 
 }
 ```
 
-A server with a matching dict loaded compresses against it; a client decompresses against the same one (matched by hash). The two formats train against different byte distributions, so dicts are not interchangeable across `msgpack` / `protobuf`. Without a loaded dict, servers MUST fall through to gzip. The picker enforces this and the [`@codecai/wire-compress`](/docs/wire-compress/) library refuses to advertise zstd unless a matching dict is in place.
+A server with a matching dict loaded compresses against it; a client decompresses against the same one (matched by hash). The two formats train against different byte distributions. Dicts are not interchangeable across `msgpack` / `protobuf`. Without a loaded dict, servers MUST fall through to gzip. The picker enforces this and the [`@codecai/wire-compress`](/docs/wire-compress/) library refuses to advertise zstd unless a matching dict is in place.
 
 With a dict, dict-zstd beats gzip by **16-38%** on bytes ([RESULTS.md §1g](https://github.com/wdunn001/Codec/blob/main/packages/bench/RESULTS.md)) at +0.13&nbsp;ms streaming TTFB, sub-millisecond, dwarfed by network. So for a deployment with a dict shipped alongside the model, zstd is the right pick for both interactive and agent traffic.
 
@@ -195,19 +195,19 @@ When a server responds with `Content-Encoding: zstd`, it MUST emit the hash of t
 
 ```http
 Content-Encoding: zstd
-Codec-Zstd-Dict:  sha256:79b707aea8c2b41c2883ec7913b0c4a0c880044ac844d89a9a03e779eb92db04
+Codec-Zstd-Dict:  sha256:1df0d6a894b844712979207a0521c3887026f3dde427fb75b2984307a57d797f
 Vary:             Accept-Encoding
 ```
 
 The header value is `sha256:` followed by the lowercase hex digest of the raw dictionary bytes, same shape as the `hash` field in `zstd_dictionaries[]` entries.
 
-Clients check the hash against a dict they have loaded. Hash mismatch is a fatal stream error (wrong-dict zstd decompression yields garbage); a missing header on a zstd response is a server protocol error. Why a header rather than inferring from `tokenizer_id`: a single tokenizer can have multiple dict versions over time (re-trained on fresher corpora, specialised per workload). The header lets a deployment upgrade its dict without bumping the tokenizer-map version, and lets intermediaries identify the active dict by reading headers alone.
+Clients check the hash against a dict they have loaded. Hash mismatch is a fatal stream error (wrong-dict zstd decompression yields garbage); a missing header on a zstd response is a server protocol error. Why a header, when `tokenizer_id` could be inferred from: a single tokenizer can have multiple dict versions over time (re-trained on fresher corpora, specialised per workload). The header lets a deployment upgrade its dict without bumping the tokenizer-map version, and lets intermediaries identify the active dict by reading headers alone.
 
 Reference dicts ship at [`dictionaries/`](https://github.com/wdunn001/Codec/tree/main/dictionaries) in the main repo; the training pipeline is [`packages/bench/scripts/train-zstd-dict.py`](https://github.com/wdunn001/Codec/blob/main/packages/bench/scripts/train-zstd-dict.py).
 
 ## Request vs response (where each Codec knob lives)
 
-Codec piggybacks on the OpenAI `/v1/completions` body schema rather than redefining the request envelope. That makes the asymmetry confusing at first. Some Codec configuration is in the **request body**, some is in **HTTP headers** (request and response), some only shows up on the response side. The table:
+Codec piggybacks on the OpenAI `/v1/completions` body schema. It does not redefine the request envelope. That makes the asymmetry confusing at first. Some Codec configuration is in the **request body**, some is in **HTTP headers** (request and response), some only shows up on the response side. The table:
 
 | Knob | Where | Why |
 |---|---|---|
@@ -223,7 +223,7 @@ Codec piggybacks on the OpenAI `/v1/completions` body schema rather than redefin
 | `Codec-Min-Version`, `Codec-Required-Features` | **response header on 426** (v0.4) | Server's enforcement floor. Returned when the client's `Codec-Client-Version` falls short. |
 | `finish_reason: "policy_violation"` | **in-frame field** (v0.4) | Surfaces inside a `CodecFrame.finish_reason` when a server-side safety action fired mid-stream. Not a header. |
 
-**Why no `Codec-Stream-Format` header?** We considered it. The OpenAI request body already carries `model` + `prompt` + `max_tokens` + `stream`, so making `stream_format` a sibling field there was the smallest possible patch into upstream sglang / vllm / llama.cpp's request validator, one extra optional field, JSON-Schema-compatible, no header parser changes. The v0.5 plan covers a separate negotiation path (OPTIONS preflight + a persistent `Codec-Session` token) that would let frequent agent-mesh clients drop most per-request bytes, but the per-request knob staying in the body is by design.
+**Why no `Codec-Stream-Format` header?** We considered it. The OpenAI request body already carries `model` + `prompt` + `max_tokens` + `stream`. Making `stream_format` a sibling field there was the smallest possible patch into upstream sglang / vllm / llama.cpp's request validator, one extra optional field, JSON-Schema-compatible, no header parser changes. The v0.5 plan covers a separate negotiation path (OPTIONS preflight + a persistent `Codec-Session` token) that would let frequent agent-mesh clients drop most per-request bytes, but the per-request knob staying in the body is by design.
 
 A complete v0.4.1 client request looks like:
 
@@ -278,9 +278,9 @@ Every Codec response carries a small set of HTTP response headers that name the 
 ### What v0.4.1 changed about the headers
 
 - **No new headers, no header bytes on the wire change.** v0.4.1 is wire-additive over v0.4.
-- **Brotli per-chunk-flush bug fixed** in both sglang + vllm forks. `Content-Encoding: br` now compresses correctly across chunk boundaries instead of inflating small streams (was 1,159 B on a 975 B identity stream pre-fix; now Pareto-front for 32-256-token msgpack).
+- **Brotli per-chunk-flush bug fixed** in both sglang + vllm forks. `Content-Encoding: br` now compresses correctly across chunk boundaries. Small streams no longer inflate (was 1,159 B on a 975 B identity stream pre-fix; now Pareto-front for 32-256-token msgpack).
 - **`Codec-Zstd-Dict` decode now works across all 6 clients.** Pre-v0.4.1 only the Python client decoded the dict-zstd payload correctly; the other 5 either silently returned compressed bytes or threw "Dictionary mismatch". v0.4.1 ships real dict-zstd support in TS/Web, .NET, Rust, Java, and C, gated by a shared cross-client interop fixture. The header was always emitted correctly; the client side just couldn't act on it.
-- **llama.cpp gained brotli + zstd.** Pre-v0.4.1 the llama.cpp fork only supported identity + gzip. v0.4.1 adds `codec_brotli_streamer` + `codec_zstd_streamer` + the `codec_zstd_dict_registry`, so the same `Content-Encoding` negotiation now works on all three engines. The `/codec/schema` endpoint also lands so the engine-acceptance pytest can probe llama.cpp the same way it probes sglang and vllm.
+- **llama.cpp gained brotli + zstd.** Pre-v0.4.1 the llama.cpp fork only supported identity + gzip. v0.4.1 adds `codec_brotli_streamer` + `codec_zstd_streamer` + the `codec_zstd_dict_registry`. The same `Content-Encoding` negotiation now works on all three engines. The `/codec/schema` endpoint also lands so the engine-acceptance pytest can probe llama.cpp the same way it probes sglang and vllm.
 
 ### The 426 dance
 
@@ -300,7 +300,7 @@ Content-Type: application/json
 }
 ```
 
-The client can upgrade and retry, or surface the requirement to the user. A v0.3 client that doesn't understand 426 just sees an HTTP error, graceful from the spec's perspective. The body's `client_version` echoes what the server saw, so a misconfigured `Codec-Client-Version` shows up at debug time.
+The client can upgrade and retry, or surface the requirement to the user. A v0.3 client that doesn't understand 426 just sees an HTTP error, graceful from the spec's perspective. The body's `client_version` echoes what the server saw. A misconfigured `Codec-Client-Version` shows up at debug time.
 
 ## Polyglot bit-identical
 

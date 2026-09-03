@@ -25,7 +25,7 @@ Each Codec frame is **4-byte big-endian length** + **msgpack or protobuf body**.
 
 ## Where Codec earns its keep
 
-Codec is opt-in per request (`stream_format: "msgpack" | "protobuf"`, default `"json"`), so adding it never disturbs existing JSON-SSE traffic on the same endpoint. Pick the format that fits the call.
+Codec is opt-in per request (`stream_format: "msgpack" | "protobuf"`, default `"json"`). Adding it never disturbs existing JSON-SSE traffic on the same endpoint. Pick the format that fits the call.
 
 - **Inference gateways.** Token IDs at the wire and at the dispatch layer. ToolWatcher signals fire on raw IDs in real time; the gateway's text-touching code (JSON-RPC dispatch to MCP servers, human-display sinks) runs once at the seam. The [MetaMCP gateway](/docs/codec-metamcp/) ships this pattern as a docker image; the same primitive is reusable in any proxy, agent runtime, or middleware.
 - **Heterogeneous model meshes.** `Translator` carries one model's stream into another's vocabulary without UTF-8 ever crossing the wire. Measured Llama-3 &rarr; Qwen-2 handoff: **15.1&times; smaller wire** with bridge CPU within noise of detokenize+retokenize, byte-identical Qwen-2 output. Source: [`packages/bench/results/2026-05-15T20-00-00Z/translator/`](https://github.com/wdunn001/Codec/tree/main/packages/bench/results/2026-05-15T20-00-00Z/translator).
@@ -34,7 +34,7 @@ Codec is opt-in per request (`stream_format: "msgpack" | "protobuf"`, default `"
 - **Human-facing chat UIs.** ~67&times; smaller wire on a short reply, **~1,700&times;** on long ones (sglang), TTFB within 1&nbsp;ms of JSON-SSE. The client decodes once into a string at the edge before render; mobile, edge, and chat-platform-scale traffic all benefit. Bandwidth drops without users seeing anything except faster paint on flaky networks.
 - **Observable inference.** Routing, sampling decisions, anomaly detection, SLO checks, everything you'd want a service mesh to do, all reduce to integer comparisons on token streams. No log-scraping a JSON envelope; no detokenize-every-chunk pipeline.
 
-The one constraint: **Codec is a wire-and-dispatch primitive, not a JSON-to-Codec transformation gateway.** Both client and server need to speak it. If you're calling a third-party JSON-only API you don't control, that's outside Codec's scope. We can't compress bytes a service refuses to emit. Stand up your own and you control both ends.
+The one constraint: **Codec is a wire-and-dispatch primitive. It is no JSON-to-Codec transformation gateway.** Both client and server need to speak it. If you're calling a third-party JSON-only API you don't control, that's outside Codec's scope. We can't compress bytes a service refuses to emit. Stand up your own and you control both ends.
 
 ### Stand up a Codec-speaking server in 30 seconds
 

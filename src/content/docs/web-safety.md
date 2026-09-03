@@ -1,6 +1,6 @@
 ---
 title: Browser safety (@codecai/web-safety)
-description: Optional client-side safety layer. Catches secrets, PII, jailbreak templates, dangerous commands, and host-blocked patterns before the prompt hits the wire, which keeps doomed inputs out of the inference budget. New in v0.4.
+description: Optional client-side safety layer. Catches secrets, PII, jailbreak templates, dangerous commands, and host-blocked patterns before the prompt hits the wire. Doomed inputs stay out of the inference budget. New in v0.4.
 section: Frameworks
 order: 5
 ---
@@ -116,7 +116,7 @@ This is the **opposite boundary** from the server-side policy disclosure contrac
 - **Server-side, public**: the sanitized descriptor at `.well-known/codec/policies/<id>.json`, categories + actions + classifier family + summary counts. Listed publicly so clients can verify *what shape* of enforcement applies, without leaking *what's enforced*.
 - **Client-side, public** (this package): regex rules that run in the browser before transmission. The *output* of the prefilter (gate-redacted text, or "user cancelled") reaches the wire, never the rule list.
 
-The two halves are complementary, not duplicating. A host that runs both gets defense-in-depth: cheap regex catches the obvious cases on the client, server-side enforcement catches the subtle cases the model would have otherwise complied with.
+The two halves are complementary. A host that runs both gets defense-in-depth: cheap regex catches the obvious cases on the client, server-side enforcement catches the subtle cases the model would have otherwise complied with.
 
 ## See also
 

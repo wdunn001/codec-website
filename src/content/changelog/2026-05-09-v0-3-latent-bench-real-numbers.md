@@ -24,7 +24,7 @@ The third v0.3 negotiation pathway (**VAE latents on the wire**) landed on real 
 
 For context: a 512×512 RGB JPEG (web quality 85) is ~80-150 KB. The 512 latent at int8 (16.4 KB) is **5-10× smaller than JPEG and ~90× smaller than raw fp16 pixels**. The client runs `vae_decode` locally. Pixels never touch the wire.
 
-Per-pipeline zstd dicts aren't loaded in this run, so gzip/zstd-on-top doesn't reduce further (raw fp16 latents are near-Gaussian and need structural-pre-pass dicts to compress; tracked as the next concrete step). Even without compression, the int4 pipeline produces a 3.9× reduction by structure alone.
+Per-pipeline zstd dicts aren't loaded in this run. gzip/zstd-on-top therefore doesn't reduce further (raw fp16 latents are near-Gaussian and need structural-pre-pass dicts to compress; tracked as the next concrete step). Even without compression, the int4 pipeline produces a 3.9× reduction by structure alone.
 
 ## All three v0.3 pathways are now live end-to-end on the lab
 

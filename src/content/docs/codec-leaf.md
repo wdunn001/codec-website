@@ -28,7 +28,7 @@ import { makeMetaTokenizer, wrapToolCall } from '@codecai/mcp-leaf';
 // Once at server startup. Pinned to the tokenizer map your receiving model uses.
 const meta = await makeMetaTokenizer({
   mapUrl:  'https://cdn.jsdelivr.net/gh/wdunn001/codec-maps@main/maps/qwen/qwen2.json',
-  mapHash: 'sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791',
+  mapHash: 'sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad',
 });
 
 // In your existing tool handler, whatever you used to return:
@@ -63,7 +63,7 @@ Non-Codec-aware clients in the same MCP namespace ignore the `_meta` field per t
 
 ### Wire trade-off, measured
 
-Leaf is **purely additive**, the IDs ride alongside the text, not in place of it. That means the `_meta` envelope (`map_id` sha256 hex + ids array in JSON) is a fixed ~210-byte cost per text block. On a ~30-character timestamp result it's a wire-loss (`105 B → 316 B`, leaf 3× larger); on a 1&nbsp;KB search result it's a wire-win. The crossover where leaf wire&nbsp;&le;&nbsp;plain wire sits at **~300+ characters per text block**. The consumer-CPU win is unconditional: re-tokenize is O(chars), `readCodecMeta()` is O(blocks).
+Leaf is **purely additive**, the IDs ride alongside the text and leave it in place. That means the `_meta` envelope (`map_id` sha256 hex + ids array in JSON) is a fixed ~210-byte cost per text block. On a ~30-character timestamp result it's a wire-loss (`105 B → 316 B`, leaf 3× larger); on a 1&nbsp;KB search result it's a wire-win. The crossover where leaf wire&nbsp;&le;&nbsp;plain wire sits at **~300+ characters per text block**. The consumer-CPU win is unconditional: re-tokenize is O(chars), `readCodecMeta()` is O(blocks).
 
 Measured against the reference [`codec-time-leaf`](https://hub.docker.com/r/wdunn001/codec-time-leaf) server (20 warm `get_current_time` calls, qwen/qwen2 map, MCP stdio):
 
@@ -136,7 +136,7 @@ Wire it into an MCP client config:
       "args": ["-y", "@codecai/codec-time-leaf"],
       "env": {
         "CODEC_MAP_URL":  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps@main/maps/qwen/qwen2.json",
-        "CODEC_MAP_HASH": "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791"
+        "CODEC_MAP_HASH": "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad"
       }
     }
   }

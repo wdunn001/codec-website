@@ -1,13 +1,13 @@
 ---
 title: codec-comfyui (Docker)
-description: ComfyUI image-generation server with the Codec v0.3 latent transport patch. Streams VAE latents on the wire instead of decoded pixels, 48× smaller, decoder runs at the leaf.
+description: ComfyUI image-generation server with the Codec v0.3 latent transport patch. Streams VAE latents on the wire in place of decoded pixels, 48× smaller, decoder runs at the leaf.
 section: Server
 order: 5
 ---
 
-`codec-comfyui` is a pre-built Docker image of [ComfyUI](https://github.com/comfyanonymous/ComfyUI) with the Codec v0.3 latent transport patch applied. Stand it up like any image-gen server, point any Codec-aware client at it, and image generations ship as **VAE latents** instead of decoded pixels, same physics as text-token streams in [codec-sglang](/docs/codec-sglang/) / [codec-vllm](/docs/codec-vllm/), but for diffusion.
+`codec-comfyui` is a pre-built Docker image of [ComfyUI](https://github.com/comfyanonymous/ComfyUI) with the Codec v0.3 latent transport patch applied. Stand it up like any image-gen server, point any Codec-aware client at it, and image generations ship as **VAE latents** in place of decoded pixels, same physics as text-token streams in [codec-sglang](/docs/codec-sglang/) / [codec-vllm](/docs/codec-vllm/), but for diffusion.
 
-Why latents and not pixels: a 512×512 RGB frame at fp16 is ~1.5&nbsp;MB; the SD-1 latent that produced it is 4×64×64 fp16 = **32&nbsp;KB**, a 48× reduction. With per-channel int8 quantization on top, the wire weight collapses further. The client does `vae_decode` locally and never re-encodes, so the round-trip pixel quality is bounded by the published per-pipeline LPIPS thresholds (see [`spec/PIPELINES.md`](https://github.com/wdunn001/Codec/blob/main/spec/PIPELINES.md)).
+Why latents and not pixels: a 512×512 RGB frame at fp16 is ~1.5&nbsp;MB; the SD-1 latent that produced it is 4×64×64 fp16 = **32&nbsp;KB**, a 48× reduction. With per-channel int8 quantization on top, the wire weight collapses further. The client does `vae_decode` locally and never re-encodes. Round-trip pixel quality is bounded by the published per-pipeline LPIPS thresholds (see [`spec/PIPELINES.md`](https://github.com/wdunn001/Codec/blob/main/spec/PIPELINES.md)).
 
 This image is built from the [`wdunn001/ComfyUI` fork](https://github.com/wdunn001/ComfyUI/tree/feat/codec-latent-transport) at branch `feat/codec-latent-transport`. The fork is the canonical surface. ComfyUI's plugin/custom-node architecture would let us ship the codec endpoints as a custom node, but the latent-frame emitter and zstd-dict overlay touch enough of the request loop that maintaining a downstream fork is cleaner.
 
@@ -62,7 +62,7 @@ Body is one `LatentStreamHeader` followed by one `LatentFrame` (image) or `N` `L
 | `delta+int8`      | int8 residual against prior keyframe| 2× + temporal collapse | Video only                          |
 | `delta+int4`      | int4 residual against prior keyframe| 4× + temporal collapse | Video, most aggressive              |
 
-Adding a pipeline is an additive v0.3+ point release. The registry is normative, not extensible per-deployment.
+Adding a pipeline is an additive v0.3+ point release. The registry is normative. Deployments cannot extend it.
 
 ## Pointing a Codec client at it
 

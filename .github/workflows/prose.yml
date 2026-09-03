@@ -1,0 +1,39 @@
+# House writing rules for the public site.
+#
+# This is the copy a first-time reader sees, so it gates hardest. The gate
+# blocks dash glyphs, clauses defined against their opposite, counts announced
+# before a list, and clause joins with ", so", ", which", or ", because".
+# Serial lists of three or more items are the one permitted exception and are
+# reported as advisory.
+#
+# prose-lint.py exits non-zero on findings it explicitly permits, so it cannot
+# be used as a gate directly. prose-gate.py classifies first.
+
+name: prose
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  house-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: docs pages
+        run: python scripts/prose-gate.py $(git ls-files 'src/content/docs/*.md')
+
+      # Changelog entries are dated records of past releases. They are gated
+      # too, since they render on the public site, but separately so a failure
+      # names which body of copy regressed.
+      - name: changelog entries
+        run: python scripts/prose-gate.py $(git ls-files 'src/content/changelog/*.md')

@@ -180,7 +180,7 @@ cmake -S . -B build \
   -DCODEC_WITH_BPE_ENCODER=OFF
 ```
 
-The decode-side API surface (Detokenizer, ToolWatcher, stream decoders, frame codec, compression, safety-policy) is unchanged. The public-API symbols for the dropped surface still link (`codec_bpe_encoder_new` / `codec_bpe_encode` / `codec_translator_new` / `codec_translator_translate` / `codec_pretok_run_program` and friends return `CODEC_ERR_NOT_BUILT` consistently), so consumer code doesn't need any `#ifdef` guards.
+The decode-side API surface (Detokenizer, ToolWatcher, stream decoders, frame codec, compression, safety-policy) is unchanged. The public-API symbols for the dropped surface still link (`codec_bpe_encoder_new` / `codec_bpe_encode` / `codec_translator_new` / `codec_translator_translate` / `codec_pretok_run_program` and friends return `CODEC_ERR_NOT_BUILT` consistently). Consumer code needs no `#ifdef` guards.
 
 | Build | `libcodec.a` size (x86-64 Release) |
 |---|---|

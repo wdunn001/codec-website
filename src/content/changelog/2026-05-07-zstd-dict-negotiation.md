@@ -2,7 +2,7 @@
 title: zstd dictionary negotiation via Codec-Zstd-Dict header
 date: "2026-05-07"
 kind: improvement
-summary: Servers advertise the active zstd dict on the wire; clients fetch it once and decompress every frame against it. Identification by sha256, not URL.
+summary: Servers advertise the active zstd dict on the wire; clients fetch it once and decompress every frame against it. Identification is by sha256.
 links:
   - label: GitHub release v0.2.5
     url: https://github.com/wdunn001/Codec/releases/tag/v0.2.5

@@ -261,7 +261,7 @@ Network trace:
 - **You're a model vendor or maintainer.** Publish at `.well-known/codec/` so consumers can resolve your map by ID alone. They don't have to track URL changes or hash rotations through your release notes; the pointer is the source of truth.
 - **You're a consumer pinning to a frozen map.** Keep using `loadMap({ url, hash })`. You already know exactly what you want, and a pinned hash is stricter than "whatever the vendor publishes today."
 
-The two coexist. `discoverMap` ultimately calls into the same loader, so caching, error types, and the rest of the pipeline are identical.
+The two coexist. `discoverMap` ultimately calls into the same loader. Caching, error types, and the rest of the pipeline are identical.
 
 ## See also
 

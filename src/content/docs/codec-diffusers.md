@@ -5,11 +5,11 @@ section: Server
 order: 6
 ---
 
-`codec-diffusers` is a pre-built Docker image of the [HuggingFace diffusers](https://github.com/huggingface/diffusers) reference path with the Codec v0.3 latent transport patch applied. It exposes the same `/v1/images/generations` and `/v1/videos/generations` endpoints as [codec-comfyui](/docs/codec-comfyui/), and the wire shape is byte-identical, but it sits on top of `diffusers` instead of ComfyUI's workflow engine.
+`codec-diffusers` is a pre-built Docker image of the [HuggingFace diffusers](https://github.com/huggingface/diffusers) reference path with the Codec v0.3 latent transport patch applied. It exposes the same `/v1/images/generations` and `/v1/videos/generations` endpoints as [codec-comfyui](/docs/codec-comfyui/), and the wire shape is byte-identical, It sits on top of `diffusers` where the other sits on ComfyUI's workflow engine.
 
-This image **doubles as the bench/golden perceptual-conformance reference**. The `torch` + `diffusers` + `transformers` versions pinned in this image define the SSIM / PSNR / LPIPS contract every latent bench cell resolves against. Bumping any of them re-pins the perceptual contract. Operators tracking conformance across runs MUST pin to a specific image digest, not `:latest`.
+This image **doubles as the bench/golden perceptual-conformance reference**. The `torch` + `diffusers` + `transformers` versions pinned in this image define the SSIM / PSNR / LPIPS contract every latent bench cell resolves against. Bumping any of them re-pins the perceptual contract. Operators tracking conformance across runs MUST pin to a specific image digest, never `:latest`.
 
-The patch is built from the [`wdunn001/diffusers` fork](https://github.com/wdunn001/diffusers/tree/feat/codec-latent-transport) at branch `feat/codec-latent-transport`. `diffusers` is a *library*, not a server, so the fork adds an `examples/codec_server/` FastAPI wrapper that loads any `StableDiffusionPipeline` / `StableVideoDiffusionPipeline` / etc. and serves Codec latent streams.
+The patch is built from the [`wdunn001/diffusers` fork](https://github.com/wdunn001/diffusers/tree/feat/codec-latent-transport) at branch `feat/codec-latent-transport`. `diffusers` is a *library*. The fork therefore adds an `examples/codec_server/` FastAPI wrapper that loads any `StableDiffusionPipeline` / `StableVideoDiffusionPipeline` / etc. and serves Codec latent streams.
 
 ## Quick start
 

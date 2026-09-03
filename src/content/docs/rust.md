@@ -44,7 +44,7 @@ use codec_rs::{
 ```rust
 let map = MapLoader::default().load(LoadOptions {
     url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json".into(),
-    hash: Some("sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791".into()),
+    hash: Some("sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad".into()),
     ..Default::default()
 }).await?;
 ```
@@ -121,7 +121,7 @@ for frame in decode_msgpack_stream(Cursor::new(&bytes)) {
 
 `Detokenizer` is **stateful**. It persists partial UTF-8 bytes across `render()` calls when `partial: true`. A 4-byte 🚀 split across two frames round-trips identically. Call `detok.reset()` between unrelated streams.
 
-## Encoding (sending IDs, not text)
+## Encoding (text to token IDs)
 
 ```rust
 use codec_rs::BPETokenizer;
@@ -137,7 +137,7 @@ let body = json!({
 });
 ```
 
-`BPETokenizer::encode` is bit-identical to the upstream model's tokenizer (verified against HuggingFace tokenizers reference for Qwen-2 across all reference bindings). Greedy by merge priority, not left-to-right.
+`BPETokenizer::encode` is bit-identical to the upstream model's tokenizer (verified against HuggingFace tokenizers reference for Qwen-2 across all reference bindings). Greedy by merge priority.
 
 ## Watching for tool calls
 
@@ -170,12 +170,12 @@ use codec_rs::Translator;
 
 let qwen  = MapLoader::default().load(LoadOptions {
     url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json".into(),
-    hash: Some("sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791".into()),
+    hash: Some("sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad".into()),
     ..Default::default()
 }).await?;
 let llama = MapLoader::default().load(LoadOptions {
     url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/meta-llama/llama-3.json".into(),
-    hash: Some("sha256:79b707aea8c2b41c2883ec7913b0c4a0c880044ac844d89a9a03e779eb92db04".into()),
+    hash: Some("sha256:1df0d6a894b844712979207a0521c3887026f3dde427fb75b2984307a57d797f".into()),
     ..Default::default()
 }).await?;
 

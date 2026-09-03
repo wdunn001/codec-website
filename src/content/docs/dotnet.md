@@ -28,7 +28,7 @@ using Codec;
 ```csharp
 var map = await MapLoader.LoadAsync(new LoadOptions {
     Url  = "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-    Hash = "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+    Hash = "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
 });
 ```
 
@@ -93,7 +93,7 @@ await foreach (var frame in StreamDecoder.DecodeMsgpackStreamAsync(body)) {
 
 `Detokenizer` is **stateful**. The same instance persists UTF-8 buffer state across calls so split sequences render correctly. Set `Partial = true` while the stream is open.
 
-## Encoding (sending IDs, not text)
+## Encoding (text to token IDs)
 
 ```csharp
 var tok = new BPETokenizer(map);
@@ -137,11 +137,11 @@ Single `uint` compare per token, no detokenization on the hot path. See [Tool ca
 ```csharp
 var qwen  = await MapLoader.LoadAsync(new LoadOptions {
     Url  = "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-    Hash = "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+    Hash = "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
 });
 var llama = await MapLoader.LoadAsync(new LoadOptions {
     Url  = "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/meta-llama/llama-3.json",
-    Hash = "sha256:79b707aea8c2b41c2883ec7913b0c4a0c880044ac844d89a9a03e779eb92db04",
+    Hash = "sha256:1df0d6a894b844712979207a0521c3887026f3dde427fb75b2984307a57d797f",
 });
 
 var tr = new Translator(qwen, llama);

@@ -13,11 +13,11 @@ links:
     url: https://github.com/wdunn001/metamcp/commit/e8c3fca
 ---
 
-The first end-to-end bench of [`codec-time-leaf`](https://hub.docker.com/r/wdunn001/codec-time-leaf) in a real `codec-metamcp` namespace surfaced a real bug: the SDK's `CompatibilityCallToolResultSchema` strict-validates each content block against the closed `text|image|audio|resource` union, which rejects any `_codec_meta` sibling block, exactly what a Codec-aware leaf-mode MCP server emits.
+The first end-to-end bench of [`codec-time-leaf`](https://hub.docker.com/r/wdunn001/codec-time-leaf) in a real `codec-metamcp` namespace surfaced a real bug: the SDK's `CompatibilityCallToolResultSchema` strict-validates each content block against the closed `text|image|audio|resource` union. That rejects any `_codec_meta` sibling block, exactly what a Codec-aware leaf-mode MCP server emits.
 
 Net effect on v0.3.0: all leaf-mode results crashed with `MCP error -32602: Invalid tools/call result` *before* the leaf-bypass detector could run.
 
-**v0.3.1 fix**: a hand-rolled `CodecAwareCallToolResultSchema` that validates the envelope shape but uses `.passthrough()` per content block, so `_codec_meta` (and any future custom content type) survives parsing. The gateway no longer needs strict per-type validation. The downstream MCP server already validated its own response.
+**v0.3.1 fix**: a hand-rolled `CodecAwareCallToolResultSchema` that validates the envelope shape but uses `.passthrough()` per content block. `_codec_meta` (and any future custom content type) therefore survives parsing. The gateway no longer needs strict per-type validation. The downstream MCP server already validated its own response.
 
 Bench numbers from the v0.3.1 run (`2026-05-09T11-10-48Z`):
 

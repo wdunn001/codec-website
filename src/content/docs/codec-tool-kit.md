@@ -11,7 +11,7 @@ The architectural premise: every modern AI tool call pays `detokenize → JSON �
 
 ## Why this exists alongside [codec-leaf](/docs/codec-leaf/)
 
-Two SDKs, two scopes:
+The two SDKs cover different scopes:
 
 | | [`@codecai/mcp-leaf`](/docs/codec-leaf/) | `@codecai/tool-kit` |
 |---|---|---|
@@ -150,7 +150,7 @@ An earlier sketch had the gateway dispatch tools in-process. Three reasons that 
 
 1. **Modularity.** Tools want their own release cadence, security review, dependencies, and deploy surface. Locking them into the inference server forces every tool change into a server release.
 2. **Independent hosting.** A team that builds a Codec-native search tool wants to host it in their own repo, on their own infra, with their own SLOs. The gateway only needs the manifest URL.
-3. **Pre-cached tokenization belongs at the tool, not the gateway.** Every tool knows its own response shape better than any gateway can. Putting the cache in the tool means each tool ships *exactly the fragments it emits*, no central dictionary to maintain, no cross-tool coupling.
+3. **Pre-cached tokenization belongs at the tool.** Every tool knows its own response shape better than any gateway can. Putting the cache in the tool means each tool ships *exactly the fragments it emits*, no central dictionary to maintain, no cross-tool coupling.
 
 The wire savings are the same as in-process dispatch. The latency win is one extra hop (tool ↔ gateway, typically a unix socket or LAN RTT of single-digit ms), worth it for the operational decoupling.
 

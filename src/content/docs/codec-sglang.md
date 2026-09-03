@@ -25,7 +25,7 @@ docker run -d --gpus all \
   wdunn001/codec-sglang:latest
 ```
 
-The container boots the supervisor on `:8080`, which then launches the sglang backend with `Qwen/Qwen2.5-0.5B-Instruct` (or whatever you set in `CODEC_INITIAL_MODEL`). First boot pulls weights from Hugging Face into the persistent cache volume.
+The container boots the supervisor on `:8080`. The supervisor then launches the sglang backend with `Qwen/Qwen2.5-0.5B-Instruct` (or whatever you set in `CODEC_INITIAL_MODEL`). First boot pulls weights from Hugging Face into the persistent cache volume.
 
 > **GPU prereq:** NVIDIA Container Toolkit installed, and `--gpus all` (or a specific device list). See [the NVIDIA install docs](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html). The image targets CUDA 12.
 
@@ -78,7 +78,7 @@ docker run --gpus all -p 8080:8080 \
   wdunn001/codec-sglang:latest
 ```
 
-The mount is read-only inside the container, so the supervisor can't mutate your weights.
+The mount is read-only inside the container. The supervisor cannot mutate your weights.
 
 ### 3. Hot-swap via the admin API after boot
 
@@ -206,7 +206,7 @@ import { loadMap, Detokenizer, decodeStream } from "@codecai/web";
 
 const map = await loadMap({
   url:  "https://cdn.jsdelivr.net/gh/wdunn001/codec-maps/maps/qwen/qwen2.json",
-  hash: "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+  hash: "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
 });
 
 // stream_format lives in the BODY (piggybacks on OpenAI's request schema);
