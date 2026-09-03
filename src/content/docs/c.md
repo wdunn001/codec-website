@@ -58,7 +58,7 @@ read_whole_file("qwen2.json", &json, &json_len); /* your code */
 /* Constant-time SHA-256 verification, panic if it doesn't match. */
 codec_status_t st = codec_map_verify_sha256(
     json, json_len,
-    "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791"
+    "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad"
 );
 if (st != CODEC_OK) { fprintf(stderr, "map hash mismatch\n"); return 1; }
 

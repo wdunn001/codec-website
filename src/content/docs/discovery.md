@@ -33,7 +33,7 @@ A small JSON document (~150 bytes) that says "the real map is over there at the 
 {
   "id": "qwen2",
   "url": "https://cdn.example.com/qwen2.json",
-  "hash": "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+  "hash": "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
   "published_at": "2026-05-06T12:00:00Z"
 }
 ```

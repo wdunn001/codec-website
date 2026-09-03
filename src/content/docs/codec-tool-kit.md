@@ -52,7 +52,7 @@ A bolt-on tool has three artifacts:
   "models": [
     {
       "modelId": "Qwen/Qwen2.5-0.5B-Instruct",
-      "tokenizerHash": "sha256:887311099cdc09e7022001a01fa1da396750d669b7ed2c242a000b9badd09791",
+      "tokenizerHash": "sha256:62c2f94fcbdb9b49d51632314e64aa65894496bc39751cb90866049657a262ad",
       "cacheFile": "cache/qwen25-0.5b-instruct.json"
     }
   ]

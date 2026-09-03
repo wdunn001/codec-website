@@ -50,7 +50,7 @@ The wrapped result keeps every original `text` block intact and attaches a per-b
       "text": "It is currently 14:30 UTC.",
       "_meta": {
         "ai.codec/leaf-tokenization": {
-          "map_id": "sha256:887311099cdc…",
+          "map_id": "sha256:62c2f94fcbdb…",
           "ids": [2132, 374, 5023, 220, 16, 19, 25, 18, 15, 27269, 13]
         }
       }
@@ -98,13 +98,13 @@ A Codec-aware gateway like [codec-metamcp](/docs/codec-metamcp/) detects the lea
 
 ```
 [Codec][leaf] downstream tool returned pre-tokenized result for vocab
-  887311099cdc… gateway shim bypassed.
+  62c2f94fcbdb… gateway shim bypassed.
 ```
 
 Versus the legacy path:
 
 ```
-[Codec][shim] tokenizing tool result for vocab 887311099cdc…
+[Codec][shim] tokenizing tool result for vocab 62c2f94fcbdb…
   leaf-mode MCP server would skip this.
 ```
 
