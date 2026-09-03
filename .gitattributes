@@ -1,0 +1,8 @@
+# Shell scripts run on Linux deploy hosts. A CRLF line ending makes the
+# kernel read the shebang as "/bin/bash\r" and the script fails to execute.
+# Windows checkouts of this repo would otherwise get CRLF from core.autocrlf.
+*.sh text eol=lf
+
+# Same reasoning for anything else copied into a container verbatim.
+Dockerfile text eol=lf
+*.conf text eol=lf
